@@ -9,7 +9,7 @@ fn status() -> Result<Snapshot, String> {
     rust::status()
 }
 #[tauri::command]
-fn start(request: Request) -> Result<Snapshot, String> {
+async fn start(request: Request) -> Result<Snapshot, String> {
     rust::start(request)
 }
 

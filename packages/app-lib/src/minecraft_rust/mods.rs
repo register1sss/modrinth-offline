@@ -806,7 +806,9 @@ mod tests {
             .unwrap();
         std::fs::write(home.join("horizon-mods.txt"), b"mod.u3_fixes:true\n")
             .unwrap();
-        let files = bundles(&home).unwrap();
+        // Production profile_home returns a canonical path. Match it here too:
+        // Windows canonicalization adds the verbatim prefix to the child path.
+        let files = bundles(&std::fs::canonicalize(&home).unwrap()).unwrap();
         let receipt =
             json!({"files":files,"settings":settings_hash(&home).unwrap()});
         std::fs::write(

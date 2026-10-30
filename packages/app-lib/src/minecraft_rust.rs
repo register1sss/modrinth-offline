@@ -1,5 +1,6 @@
 //! Horizon's released CLI, not its GUI. No arbitrary executables, commands or game arguments.
-//! Pinned official runtime, isolated launcher/game homes, upstream ownership checks preserved.
+//! Pinned official runtime and isolated homes. Offline starts the prepared engine directly;
+//! Microsoft authentication and ownership checks remain on licensed play and Mojang downloads.
 use crate::{assistant::redact, State};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
@@ -36,6 +37,7 @@ pub struct Snapshot {
     pub supported: bool,
     pub runtime: bool,
     pub prepared: bool,
+    pub offline_ready: bool,
     pub release: String,
     pub running: bool,
     pub action: String,
@@ -56,6 +58,7 @@ impl Default for Snapshot {
             supported: cfg!(all(windows, target_arch = "x86_64")),
             runtime: false,
             prepared: false,
+            offline_ready: false,
             release: RELEASE.into(),
             running: false,
             action: String::new(),
@@ -301,13 +304,25 @@ async fn cli(root: &Path, args: &[&str], capture: bool) -> Result<Vec<u8>> {
     ] {
         cmd.env_remove(key);
     }
+    let auth = args == ["account", "sign-in"];
+    let play = args.first() == Some(&"play");
+    run_command(cmd, capture, auth, play).await
+}
+async fn run_command(
+    mut cmd: tokio::process::Command,
+    capture: bool,
+    auth: bool,
+    play: bool,
+) -> Result<Vec<u8>> {
+    cmd.stdin(std::process::Stdio::null())
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::piped())
+        .kill_on_drop(true);
     #[cfg(windows)]
     cmd.creation_flags(0x08000000);
     let mut child = cmd
         .spawn()
         .map_err(|e| format!("Could not start Horizon: {e}"))?;
-    let auth = args == ["account", "sign-in"];
-    let play = args.first() == Some(&"play");
     let result = async {
         let stdout = read_pipe(
             child.stdout.take().ok_or("No Horizon output")?,
@@ -363,9 +378,14 @@ async fn refresh(root: &Path) -> Result<()> {
     let instances = query(root, &["--json", "instance", "list"]).await?;
     let versions = query(root, &["--json", "versions", "--installed"]).await?;
     let prepared = prepared_at(root, &versions);
+    let offline_ready = versions["selected"]
+        .as_str()
+        .and_then(|tag| checked_engine(root, tag).ok())
+        .is_some();
     change(|s| {
         s.runtime = true;
         s.prepared = prepared;
+        s.offline_ready = offline_ready;
         s.accounts = accounts;
         s.instances = instances;
         s.versions = versions;
@@ -417,6 +437,9 @@ async fn run(r: Request) -> Result<()> {
     tokio::fs::create_dir_all(&root)
         .await
         .map_err(|e| e.to_string())?;
+    tokio::fs::create_dir_all(root.join("game"))
+        .await
+        .map_err(|e| e.to_string())?;
     if r.action == "install" {
         change(|s| s.stage = "download_runtime".into());
         install_runtime(&root).await?;
@@ -428,6 +451,12 @@ async fn run(r: Request) -> Result<()> {
         });
         // The released backend checks game archive integrity; no Minecraft files are bundled.
         cli(&root, &["install", "latest"], false).await?;
+        let versions =
+            query(&root, &["--json", "versions", "--installed"]).await?;
+        let tag = versions["selected"]
+            .as_str()
+            .ok_or("Horizon did not select an installed version")?;
+        stamp_installed_engine(&root, tag)?;
     } else if r.action != "refresh" {
         verified(&root).await?;
         match r.action.as_str() {
@@ -456,9 +485,9 @@ async fn run(r: Request) -> Result<()> {
                 let instances =
                     query(&root, &["--json", "instance", "list"]).await?;
                 let id = selected_instance(&instances, &r.profile)?;
-                let accounts =
-                    query(&root, &["--json", "account", "list"]).await?;
                 if r.action == "play_online" {
+                    let accounts =
+                        query(&root, &["--json", "account", "list"]).await?;
                     if !accounts["accounts"].as_array().map_or(false, |a| {
                         a.iter().any(|i| i["uuid"].as_str() == Some(&r.account))
                     }) {
@@ -468,17 +497,185 @@ async fn run(r: Request) -> Result<()> {
                     }
                     cli(&root, &["account", "select", "--", &r.account], false)
                         .await?;
+                    change(|s| s.stage = "playing".into());
+                    cli(&root, &["play", "--instance", &id], false).await?;
                 } else {
-                    cli(&root, &["account", "offline", "--", &r.name], false)
-                        .await?;
+                    // Do not call account offline / play: those are owner-gated in the manager.
+                    // The native engine supports its own offline --name without a session file.
+                    let versions =
+                        query(&root, &["--json", "versions", "--installed"])
+                            .await?;
+                    let paths =
+                        offline_paths(&root, &instances, &versions, &id)?;
+                    let cmd = offline_command(&paths, &r.name);
+                    change(|s| s.stage = "playing".into());
+                    run_command(cmd, false, false, true).await?;
                 }
-                change(|s| s.stage = "playing".into());
-                cli(&root, &["play", "--instance", &id], false).await?;
             }
             _ => return Err("Unsupported Minecraft Rust action".into()),
         }
     }
     refresh(&root).await
+}
+fn safe_component(s: &str) -> bool {
+    !s.is_empty()
+        && s != "."
+        && s != ".."
+        && s.bytes()
+            .all(|b| b.is_ascii_alphanumeric() || b"._-@".contains(&b))
+}
+fn version_dir(root: &Path, tag: &str) -> Result<PathBuf> {
+    if !safe_component(tag) {
+        return Err("Invalid Horizon version".into());
+    }
+    let base = std::fs::canonicalize(root.join("launcher/versions"))
+        .map_err(|_| "Install Horizon first".to_string())?;
+    let dir = std::fs::canonicalize(base.join(tag))
+        .map_err(|_| "The Horizon version is missing".to_string())?;
+    if !dir.starts_with(&base)
+        || dir == base
+        || !dir.join(".installed").is_file()
+    {
+        return Err("Invalid Horizon version folder".into());
+    }
+    Ok(dir)
+}
+fn engine_hash(path: &Path) -> Result<String> {
+    use std::io::Read;
+    let mut file = std::fs::File::open(path).map_err(|e| e.to_string())?;
+    if file.metadata().map_err(|e| e.to_string())?.len() > 256 * 1024 * 1024 {
+        return Err("Horizon engine exceeds the size limit".into());
+    }
+    let mut hash = Sha256::new();
+    let mut buf = [0u8; 65536];
+    loop {
+        let n = file.read(&mut buf).map_err(|e| e.to_string())?;
+        if n == 0 {
+            break;
+        }
+        hash.update(&buf[..n]);
+    }
+    Ok(format!("{:x}", hash.finalize()))
+}
+fn engine_in(dir: &Path) -> Result<PathBuf> {
+    let exe = std::fs::canonicalize(dir.join("horizon-client.exe")).map_err(
+        |_| "Horizon engine is missing. Update the game".to_string(),
+    )?;
+    if exe.parent() != Some(dir) {
+        return Err("Horizon engine is outside its version folder".into());
+    }
+    Ok(exe)
+}
+fn stamp_installed_engine(root: &Path, tag: &str) -> Result<()> {
+    let dir = version_dir(root, tag)?;
+    let hash = engine_hash(&engine_in(&dir)?)?;
+    let temp = tempfile::Builder::new()
+        .prefix(".u3-engine-")
+        .tempfile_in(&dir)
+        .map_err(|e| e.to_string())?;
+    std::fs::write(temp.path(), hash).map_err(|e| e.to_string())?;
+    temp.persist(dir.join(".u3-engine-sha256"))
+        .map_err(|e| e.to_string())?;
+    Ok(())
+}
+fn checked_engine(root: &Path, tag: &str) -> Result<PathBuf> {
+    let dir = version_dir(root, tag)?;
+    let exe = engine_in(&dir)?;
+    let stamp = std::fs::read_to_string(dir.join(".u3-engine-sha256"))
+        .map_err(|_| {
+            "Update the game once to enable verified offline launch".to_string()
+        })?;
+    if stamp.len() != 64 || engine_hash(&exe)? != stamp {
+        return Err(
+            "Horizon engine changed. Update the game before offline launch"
+                .into(),
+        );
+    }
+    Ok(exe)
+}
+#[derive(Debug)]
+struct OfflinePaths {
+    program: PathBuf,
+    resources: PathBuf,
+    home: PathBuf,
+}
+fn offline_paths(
+    root: &Path,
+    instances: &Value,
+    versions: &Value,
+    id: &str,
+) -> Result<OfflinePaths> {
+    selected_instance(instances, id)?;
+    let instance = instances
+        .as_array()
+        .and_then(|v| v.iter().find(|i| i["id"].as_str() == Some(id)))
+        .ok_or("Choose a Horizon profile")?;
+    if !matches!(instance["kind"].as_str(), Some("default" | "own")) {
+        return Err(
+            "Offline launch supports local Horizon profiles only".into()
+        );
+    }
+    let tag = instance["version"]
+        .as_str()
+        .or_else(|| versions["selected"].as_str())
+        .ok_or("Choose an installed Horizon version")?;
+    if !versions["installed"]
+        .as_array()
+        .map_or(false, |v| v.iter().any(|v| v.as_str() == Some(tag)))
+    {
+        return Err("The profile's Horizon version is not installed".into());
+    }
+    let program = checked_engine(root, tag)?;
+    let dir = version_dir(root, tag)?;
+    if !prepared_at(root, &json!({"selected":tag})) {
+        return Err("Prepare Minecraft files first".into());
+    }
+    let lock: Value = serde_json::from_slice(
+        &std::fs::read(dir.join("research-lock.json"))
+            .map_err(|e| e.to_string())?,
+    )
+    .map_err(|e| e.to_string())?;
+    let game = lock["minecraft"]["version"]
+        .as_str()
+        .filter(|s| safe_component(s))
+        .ok_or("Invalid Minecraft resource version")?;
+    let resources =
+        std::fs::canonicalize(dir.join(".local/horizon-client").join(game))
+            .map_err(|e| e.to_string())?;
+    if !resources.starts_with(&dir) {
+        return Err("Prepared resources are outside the version folder".into());
+    }
+    let base =
+        std::fs::canonicalize(root.join("game")).map_err(|e| e.to_string())?;
+    let home = std::fs::canonicalize(
+        instance["home"]
+            .as_str()
+            .ok_or("Profile folder is missing")?,
+    )
+    .map_err(|e| e.to_string())?;
+    if !home.starts_with(&base) {
+        return Err("Profile folder is outside Minecraft Rust".into());
+    }
+    Ok(OfflinePaths {
+        program,
+        resources,
+        home,
+    })
+}
+fn offline_command(
+    paths: &OfflinePaths,
+    nickname: &str,
+) -> tokio::process::Command {
+    let mut cmd = tokio::process::Command::new(&paths.program);
+    cmd.arg("--resources")
+        .arg(&paths.resources)
+        .arg("--name")
+        .arg(nickname)
+        .current_dir(&paths.home)
+        .env("HORIZON_HOME", &paths.home)
+        .env_remove("HORIZON_SESSION_FILE")
+        .env_remove("HORIZON_PLAYER_NAME");
+    cmd
 }
 fn allowed_download_url(u: &url::Url) -> bool {
     u.scheme() == "https"
@@ -665,6 +862,114 @@ mod tests {
         assert!(prepared_at(dir.path(), &v));
         assert!(!prepared_at(dir.path(), &json!({"selected":"../test"})));
     }
+
+    fn offline_fixture() -> (tempfile::TempDir, Value, Value) {
+        let dir = tempfile::tempdir().unwrap();
+        let version = dir.path().join("launcher/versions/test");
+        std::fs::create_dir_all(version.join(".local/horizon-client/26.3"))
+            .unwrap();
+        std::fs::create_dir_all(dir.path().join("game/instances/my-rust"))
+            .unwrap();
+        std::fs::write(version.join(".installed"), b"").unwrap();
+        std::fs::write(
+            version.join("horizon-client.exe"),
+            b"MZ fixture engine",
+        )
+        .unwrap();
+        std::fs::write(
+            version.join("research-lock.json"),
+            br#"{"minecraft":{"version":"26.3"}}"#,
+        )
+        .unwrap();
+        std::fs::write(
+            version.join(".local/horizon-client/26.3/horizon-resources.json"),
+            b"{}",
+        )
+        .unwrap();
+        stamp_installed_engine(dir.path(), "test").unwrap();
+        let instances = json!([{"id":"horizon", "kind":"default", "java":null,"home":dir.path().join("game")}, {"id":"my-rust","kind":"own","java":null,"home":dir.path().join("game/instances/my-rust")}]);
+        (
+            dir,
+            instances,
+            json!({"selected":"test","installed":["test"]}),
+        )
+    }
+    #[test]
+    fn offline_command_does_not_need_an_account_or_session() {
+        let (dir, instances, versions) = offline_fixture();
+        let paths = offline_paths(dir.path(), &instances, &versions, "my-rust")
+            .unwrap();
+        let cmd = offline_command(&paths, "U3_Player");
+        let command = cmd.as_std();
+        let args: Vec<_> = command
+            .get_args()
+            .map(|s| s.to_string_lossy().to_string())
+            .collect();
+        assert_eq!(
+            args,
+            vec![
+                "--resources".to_string(),
+                paths.resources.to_string_lossy().to_string(),
+                "--name".to_string(),
+                "U3_Player".to_string()
+            ]
+        );
+        assert_eq!(command.get_current_dir(), Some(paths.home.as_path()));
+        assert!(command
+            .get_envs()
+            .any(|(k, v)| k == "HORIZON_SESSION_FILE" && v.is_none()));
+        assert!(paths.home.ends_with("my-rust"));
+        assert!(!dir.path().join("launcher/accounts.json").exists());
+    }
+    #[test]
+    fn offline_engine_checks_integrity_and_preparation() {
+        let (dir, instances, versions) = offline_fixture();
+        let version = dir.path().join("launcher/versions/test");
+        std::fs::write(
+            version.join("horizon-client.exe"),
+            b"MZ modified engine",
+        )
+        .unwrap();
+        assert!(offline_paths(dir.path(), &instances, &versions, "horizon")
+            .is_err());
+        stamp_installed_engine(dir.path(), "test").unwrap();
+        std::fs::remove_file(
+            version.join(".local/horizon-client/26.3/horizon-resources.json"),
+        )
+        .unwrap();
+        assert!(offline_paths(dir.path(), &instances, &versions, "horizon")
+            .is_err());
+    }
+    #[test]
+    fn offline_profiles_cannot_escape_game_root_or_pick_arbitrary_engines() {
+        let (dir, mut instances, versions) = offline_fixture();
+        instances[0]["home"] = json!(dir.path());
+        assert!(offline_paths(dir.path(), &instances, &versions, "horizon")
+            .is_err());
+        assert!(offline_paths(
+            dir.path(),
+            &instances,
+            &json!({"selected":"../test","installed":["../test"]}),
+            "my-rust"
+        )
+        .is_err());
+        instances[1]["java"] = json!({});
+        assert!(offline_paths(dir.path(), &instances, &versions, "my-rust")
+            .is_err());
+    }
+    #[cfg(unix)]
+    #[test]
+    fn offline_rejects_symlinks_outside_version_root() {
+        let (dir, instances, versions) = offline_fixture();
+        let version = dir.path().join("launcher/versions/test");
+        let other = dir.path().join("outside.exe");
+        std::fs::write(&other, b"MZ fixture engine").unwrap();
+        std::fs::remove_file(version.join("horizon-client.exe")).unwrap();
+        std::os::unix::fs::symlink(other, version.join("horizon-client.exe"))
+            .unwrap();
+        assert!(offline_paths(dir.path(), &instances, &versions, "horizon")
+            .is_err());
+    }
     // Windows CI checks the actual pinned release, not a native API mock.
     #[cfg(windows)]
     #[tokio::test]
@@ -703,5 +1008,37 @@ mod tests {
         )
         .await
         .is_err());
+
+        // Install a real signed Horizon build, then exercise its native offline CLI without
+        // Microsoft accounts, game resources or a graphics context. --help exits before rendering.
+        cli(dir.path(), &["install", "latest"], false)
+            .await
+            .unwrap();
+        let versions =
+            query(dir.path(), &["--json", "versions", "--installed"])
+                .await
+                .unwrap();
+        let tag = versions["selected"].as_str().unwrap();
+        stamp_installed_engine(dir.path(), tag).unwrap();
+        let program = checked_engine(dir.path(), tag).unwrap();
+        let home = dir.path().join("game");
+        std::fs::create_dir_all(&home).unwrap();
+        let paths = OfflinePaths {
+            program,
+            resources: dir.path().join("unprepared-resources"),
+            home,
+        };
+        let mut cmd = offline_command(&paths, "U3_NoAccount");
+        cmd.arg("--help");
+        let help = String::from_utf8_lossy(
+            &run_command(cmd, true, false, false).await.unwrap(),
+        )
+        .to_string();
+        assert!(help.contains("--resources"));
+        assert!(help.contains("--name"));
+        let accounts = query(dir.path(), &["--json", "account", "list"])
+            .await
+            .unwrap();
+        assert_eq!(accounts["owner"], false);
     }
 }

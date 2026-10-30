@@ -37,6 +37,7 @@ mockIPC(async (cmd, args) => {
       supported: true,
       runtime: false,
       prepared: false,
+      offline_ready: false,
       release: 'launcher@0.2.28',
       running: false,
       stage: 'idle',
@@ -63,6 +64,7 @@ mockIPC(async (cmd, args) => {
       s.error = null
       if (r.action === 'install') {
         s.runtime = true
+        s.offline_ready = true
         s.versions = { installed: ['nightly-2026-10-30'], selected: 'nightly-2026-10-30' }
         s.instances = [{ id: 'horizon', name: 'Horizon', java: null }]
         s.accounts.sign_in_configured = true

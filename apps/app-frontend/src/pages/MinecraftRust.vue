@@ -3,6 +3,7 @@ import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import { invoke } from '@tauri-apps/api/tauri'
 import { open as choose } from '@tauri-apps/api/dialog'
 import { open as openLink } from '@tauri-apps/api/shell'
+import { canLaunch } from '@/minecraft-rust/launch.js'
 import { updateRustSession } from '@/minecraft-rust/state.js'
 import { language } from '@/i18n/index.js'
 import MinecraftRustIcon from '@/components/brand/MinecraftRustIcon.vue'
@@ -11,6 +12,7 @@ const state = ref({
   supported: true,
   runtime: false,
   prepared: false,
+  offline_ready: false,
   running: false,
   stage: 'idle',
   accounts: {},
@@ -34,13 +36,14 @@ const busy = computed(() => sending.value || state.value.running || loading.valu
 const accounts = computed(() => state.value.accounts?.accounts ?? [])
 const profiles = computed(() => (state.value.instances ?? []).filter((p) => !p.java))
 const installed = computed(() => state.value.versions?.installed?.length > 0)
-const canPlay = computed(
-  () =>
-    !busy.value &&
-    state.value.prepared &&
-    !!profile.value &&
-    state.value.accounts?.owner &&
-    (mode.value === 'offline' ? /^[A-Za-z0-9_]{3,16}$/.test(nickname.value) : !!account.value),
+const canPlay = computed(() =>
+  canLaunch(state.value, {
+    mode: mode.value,
+    profile: profile.value,
+    nickname: nickname.value,
+    account: account.value,
+    busy: busy.value,
+  }),
 )
 const progress = computed(() =>
   state.value.total
@@ -300,6 +303,14 @@ onBeforeUnmount(() => {
                     : t('Установить Horizon', 'Install Horizon')
                 }}
               </button>
+              <p v-if="state.runtime && installed && !state.offline_ready" class="rust-small">
+                {{
+                  t(
+                    'Для офлайн-запуска нажми «Обновить игру» один раз. Затем при необходимости повтори подготовку файлов.',
+                    'To enable offline launch, update the game once. Prepare its files again if needed.',
+                  )
+                }}
+              </p>
             </div>
           </li>
           <li>
@@ -309,8 +320,8 @@ onBeforeUnmount(() => {
               <p>
                 {{
                   t(
-                    'Нужна законно полученная Minecraft Java 26.3. Выбери установленную игру или загрузи файлы после входа Microsoft. Java для подготовки подберёт Horizon.',
-                    'Requires a legally obtained Minecraft Java 26.3. Choose an installed game or download its files after Microsoft sign-in. Horizon handles Java for preparation.',
+                    'Для офлайн-игры выбери папку с файлами Minecraft Java 26.3. Вход Microsoft не нужен. Если файлов нет, их можно скачать после входа в аккаунт с лицензией.',
+                    'For offline play, choose a folder containing Minecraft Java 26.3. No Microsoft sign-in is needed. Downloading missing game files requires a licensed account.',
                   )
                 }}
               </p>
@@ -387,8 +398,8 @@ onBeforeUnmount(() => {
           <p class="rust-small">
             {{
               t(
-                'Одиночная игра, LAN и офлайн-серверы. Horizon требует добавленный аккаунт с лицензией и для этого режима.',
-                'Single player, LAN and offline-mode servers. Horizon requires an added licensed account for this mode too.',
+                'Одиночная игра, LAN и офлайн-серверы. Аккаунт Microsoft и проверка лицензии для запуска не нужны.',
+                'Single player, LAN and offline-mode servers. No Microsoft account or ownership check is required to launch.',
               )
             }}
           </p></template
@@ -411,6 +422,7 @@ onBeforeUnmount(() => {
           </p></template
         >
         <button
+          v-if="mode === 'online' || !state.prepared"
           class="btn rust-signin"
           :disabled="busy || !state.runtime || state.accounts?.sign_in_configured === false"
           @click="action('sign_in')"
@@ -418,13 +430,13 @@ onBeforeUnmount(() => {
           {{ t('Добавить аккаунт Microsoft', 'Add Microsoft account') }}
         </button>
         <p
-          v-if="state.runtime && state.accounts?.sign_in_configured === false"
+          v-if="mode === 'online' && state.runtime && state.accounts?.sign_in_configured === false"
           class="rust-small rust-error-text"
         >
           {{
             t(
-              'В этой сборке Horizon не настроен вход Microsoft. Запуск недоступен.',
-              'Microsoft sign-in is not configured in this Horizon build. Play is unavailable.',
+              'В этой сборке Horizon не настроен вход Microsoft. Используй офлайн-режим.',
+              'Microsoft sign-in is not configured in this Horizon build. Offline play is still available.',
             )
           }}
         </p>
@@ -437,8 +449,12 @@ onBeforeUnmount(() => {
     <footer class="rust-footer">
       <span>{{
         t(
-          'Аккаунты Horizon добавляются отдельно. Пароли не вводятся в U3drinth.',
-          'Add Horizon accounts separately. Passwords are never entered in U3drinth.',
+          mode === 'offline'
+            ? 'Офлайн-запуск не входит в Microsoft. Для серверов с проверкой аккаунта нужен режим «С лицензией».'
+            : 'Аккаунты Horizon добавляются отдельно. Пароли не вводятся в U3drinth.',
+          mode === 'offline'
+            ? 'Offline play does not sign in to Microsoft. Use Licensed mode for servers that verify accounts.'
+            : 'Add Horizon accounts separately. Passwords are never entered in U3drinth.',
         )
       }}</span
       ><button class="btn" :disabled="busy || !state.supported" @click="action('refresh')">

@@ -70,7 +70,9 @@ jobs:
           sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev libappindicator3-dev librsvg2-dev patchelf libselinux1
 
       - name: Install frontend dependencies
-        run: pnpm --filter "@modrinth/app..." install --frozen-lockfile
+        run: |
+          pnpm install --frozen-lockfile --ignore-scripts
+          pnpm rebuild esbuild
 
       - name: Test launcher compatibility
         run: cargo test -p theseus --lib --locked

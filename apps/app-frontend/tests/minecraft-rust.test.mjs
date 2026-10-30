@@ -47,3 +47,24 @@ test('installation and preparation are not shown as a running game', () => {
   updateRustSession({ running: false, action: 'play_offline', stage: 'done' })
   assert.equal(rustSession.value.running, false)
 })
+
+import { installRequest, modInstalled } from '../src/minecraft-rust/mods.js'
+test('native install requires explicit consent and a supported entry', () => {
+  const mod = { id: 'u3_edit', checksum: 'a'.repeat(64), available: true }
+  const catalog = {
+    trust_token: 'b'.repeat(64),
+    files: { 'u3_edit.hnmod': mod.checksum },
+    ready: false,
+  }
+  assert.equal(installRequest(mod, catalog, 'horizon', false), null)
+  assert.equal(installRequest({ ...mod, available: false }, catalog, 'horizon', true), null)
+  assert.equal(installRequest(mod, {}, 'horizon', true), null)
+  assert.equal(installRequest(mod, catalog, '', true).profile, 'horizon')
+  assert.equal(installRequest(mod, catalog, 'own', true).trust_native_code, true)
+  assert.equal(modInstalled(mod, catalog), false)
+  assert.equal(modInstalled(mod, { ...catalog, ready: true }), true)
+  assert.equal(
+    modInstalled({ ...mod, checksum: 'c'.repeat(64) }, { ...catalog, ready: true }),
+    false,
+  )
+})

@@ -49,6 +49,60 @@ mockIPC(async (cmd, args) => {
       instances: [],
       versions: {},
     }
+    if (tool === 'catalog') {
+      if (window.__rustCatalogFail) throw 'Catalog test failure'
+      return {
+        own: [
+          {
+            id: 'u3_edit',
+            name: 'U3 Edit',
+            authors: ['U3'],
+            version: '0.1.0',
+            checksum: 'a'.repeat(64),
+            available: true,
+            native: true,
+          },
+        ],
+        community: [
+          {
+            id: 'zoom',
+            name: 'Zoom',
+            authors: ['Horizon'],
+            version: '2.0.0',
+            checksum: 'b'.repeat(64),
+            summary: 'Hold a key to zoom in. Adjustable magnification.',
+            available: true,
+            native: true,
+            source: 'https://github.com/horizon-rust/horizon-mods',
+          },
+          {
+            id: 'coords_hud',
+            name: 'Coordinates HUD',
+            authors: ['Horizon'],
+            version: '2.0.0',
+            checksum: 'c'.repeat(64),
+            summary: 'Coordinates and direction on your screen.',
+            available: true,
+            native: true,
+          },
+          {
+            id: 'blockscope',
+            name: 'Blockscope',
+            authors: ['Domanffe'],
+            version: '0.2.0',
+            checksum: 'd'.repeat(64),
+            summary: 'The block under your crosshair.',
+            available: false,
+            native: false,
+          },
+        ],
+        trust_token: 'e'.repeat(64),
+        target: args.profile === 'horizon' ? 'u3-mods' : args.profile,
+        target_name: args.profile === 'horizon' ? 'U3 Mods' : 'My profile',
+        files: window.__rustModInstalled ? { 'u3_edit.hnmod': 'a'.repeat(64) } : {},
+        ready: !!window.__rustModInstalled,
+      }
+    }
     if (tool === 'cancel_sign_in') {
       window.__rustState.running = false
       window.__rustState.auth_code = null
@@ -68,6 +122,19 @@ mockIPC(async (cmd, args) => {
         s.versions = { installed: ['nightly-2026-10-30'], selected: 'nightly-2026-10-30' }
         s.instances = [{ id: 'horizon', name: 'Horizon', java: null }]
         s.accounts.sign_in_configured = true
+      }
+      if (r.action === 'mod_install') {
+        if (!r.trust_native_code) throw 'Native consent required'
+        window.__rustModInstalled = true
+        s.runtime = true
+        s.prepared = true
+        s.result_profile = 'u3-mods'
+        s.instances = [
+          { id: 'horizon', name: 'Horizon', java: null },
+          { id: 'u3-mods', name: 'U3 Mods', kind: 'own', java: null },
+        ]
+        s.running = false
+        s.stage = 'done'
       }
       if (r.action === 'sign_in') {
         s.running = true

@@ -15,6 +15,11 @@ use std::{
 };
 use tokio::io::{AsyncRead, AsyncReadExt, AsyncWriteExt};
 
+#[cfg(test)]
+#[path = "minecraft_rust/u3_edit/runtime.rs"]
+mod editor_tests;
+pub mod mods;
+
 static CANCEL_SIGN_IN: AtomicBool = AtomicBool::new(false);
 pub fn cancel_sign_in() -> Result<()> {
     let s = status()?;
@@ -51,6 +56,7 @@ pub struct Snapshot {
     pub accounts: Value,
     pub instances: Value,
     pub versions: Value,
+    pub result_profile: Option<String>,
 }
 impl Default for Snapshot {
     fn default() -> Self {
@@ -72,6 +78,7 @@ impl Default for Snapshot {
             accounts: json!({}),
             instances: json!([]),
             versions: json!({}),
+            result_profile: None,
         }
     }
 }
@@ -87,6 +94,14 @@ pub struct Request {
     pub account: String,
     #[serde(default)]
     pub minecraft: String,
+    #[serde(default)]
+    pub project: String,
+    #[serde(default)]
+    pub checksum: String,
+    #[serde(default)]
+    pub trust_token: String,
+    #[serde(default)]
+    pub trust_native_code: bool,
 }
 fn state() -> &'static Mutex<Snapshot> {
     static S: OnceLock<Mutex<Snapshot>> = OnceLock::new();
@@ -122,8 +137,12 @@ fn validate(r: &Request) -> Result<()> {
             | "create"
             | "play_online"
             | "play_offline"
+            | "mod_install"
     ) {
         return Err("Unsupported Minecraft Rust action".into());
+    }
+    if r.action == "mod_install" {
+        mods::validate_request(r)?;
     }
     if r.action == "create"
         && (r.name.trim().is_empty()
@@ -169,6 +188,7 @@ pub fn start(request: Request) -> Result<Snapshot> {
     s.stage = request.action.clone();
     s.error = None;
     s.logs.clear();
+    s.result_profile = None;
     s.auth_url = None;
     s.auth_code = None;
     s.completed = 0;
@@ -301,8 +321,13 @@ async fn cli(root: &Path, args: &[&str], capture: bool) -> Result<Vec<u8>> {
         "HORIZON_MSA_CLIENT_ID",
         "HORIZON_MSA_MICROSOFT_ENDPOINT",
         "HORIZON_LAUNCHER_PAGE",
+        "HORIZON_MOD_INDEX",
+        "HORIZON_MOD_RATINGS",
     ] {
         cmd.env_remove(key);
+    }
+    if args.first() == Some(&"native-build") {
+        cmd.env("CARGO_BUILD_JOBS", "2");
     }
     let auth = args == ["account", "sign-in"];
     let play = args.first() == Some(&"play");
@@ -349,7 +374,7 @@ async fn run_command(
         result.await
     } else {
         tokio::select! {
-            result = tokio::time::timeout(Duration::from_secs(if auth { 1200 } else { 3600 }), result) => {
+            result = tokio::time::timeout(Duration::from_secs(if auth { 1200 } else { 7200 }), result) => {
                 result.map_err(|_| "Horizon operation timed out. Check its log before retrying".to_string())?
             }
             _ = async {
@@ -444,7 +469,9 @@ async fn run(r: Request) -> Result<()> {
     tokio::fs::create_dir_all(root.join("game"))
         .await
         .map_err(|e| e.to_string())?;
-    if r.action == "install" {
+    if r.action == "mod_install" {
+        mods::install(&root, &r).await?;
+    } else if r.action == "install" {
         install_runtime_and_game(&root, "latest").await?;
     } else if matches!(r.action.as_str(), "play_online" | "play_offline") {
         // No path comes from the UI. Horizon searches this launcher's configured cache,
@@ -610,6 +637,14 @@ async fn play_automatically(
     let mut versions =
         query(root, &["--json", "versions", "--installed"]).await?;
     let tag = launch_version(&instances, &versions, &id)?;
+    if tag.as_ref().is_some_and(|t| {
+        t.starts_with("native-") && checked_engine(root, t).is_err()
+    }) {
+        return Err(
+            "Native build is missing or changed. Reinstall a mod to rebuild it"
+                .into(),
+        );
+    }
     if needs_game_install(root, &versions, tag.as_deref()) {
         install_runtime_and_game(root, tag.as_deref().unwrap_or("latest"))
             .await?;
@@ -621,6 +656,7 @@ async fn play_automatically(
     refresh(root).await?;
     prepare_automatically(root, source, &tag).await?;
     refresh(root).await?;
+    mods::check_build(root, &instances, &id)?;
     if r.action == "play_online" {
         change(|s| {
             s.stage = "playing".into();
@@ -899,6 +935,10 @@ mod tests {
             profile: String::new(),
             account: String::new(),
             minecraft: String::new(),
+            project: String::new(),
+            checksum: String::new(),
+            trust_token: String::new(),
+            trust_native_code: false,
         }
     }
     #[test]

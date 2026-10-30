@@ -1,0 +1,33 @@
+[mod]
+id = "u3_edit"
+version = "0.1.0"
+priority = 100
+[compatibility]
+horizon_revision = "3132240f21141518391d7d34d41a4f7b916c3c5a"
+[[module]]
+id = "runtime"
+file = "crates/horizon-client/src/game.rs"
+name = "u3_edit"
+source = "runtime.rs"
+[[injection]]
+id = "command"
+kind = "HEAD"
+target = "horizon_client::game::native_hooks::Game<'_>::native_command"
+helper = "command.rs"
+bindings = [
+ {name="game", ty="&mut crate::game::Game<'_>", value="&mut *self"},
+ {name="command", ty="&str", value="command"},
+ {name="ran", ty="&mut bool", value="&mut *ran"}
+]
+[[injection]]
+id = "frame"
+kind = "HEAD"
+target = "horizon_client::game::native_hooks::Game<'_>::native_frame"
+helper = "frame.rs"
+bindings = [{name="game", ty="&mut crate::game::Game<'_>", value="&mut *self"}]
+[[injection]]
+id = "list"
+kind = "HEAD"
+target = "horizon_client::game::native_hooks::Game<'_>::native_mods"
+helper = "list.rs"
+bindings = [{name="mods", ty="&mut Vec<crate::game::native_hooks::NativeMod>", value="&mut *mods"}]

@@ -5,6 +5,7 @@ import { open as openLink } from '@tauri-apps/api/shell'
 import { canLaunch } from '@/minecraft-rust/launch.js'
 import { updateRustSession } from '@/minecraft-rust/state.js'
 import { language } from '@/i18n/index.js'
+import MinecraftRustMods from '@/components/minecraft-rust/MinecraftRustMods.vue'
 import MinecraftRustIcon from '@/components/brand/MinecraftRustIcon.vue'
 const t = (ru, en) => (language.value === 'ru' ? ru : en)
 const state = ref({
@@ -50,6 +51,8 @@ const progress = computed(() =>
     : null,
 )
 const labels = computed(() => ({
+  mod_install: t('Установка мода', 'Installing mod'),
+  build_native: t('Сборка игры с модами', 'Building game with mods'),
   refresh: t('Проверка', 'Checking'),
   install: t('Установка', 'Installing'),
   download_runtime: t('Загрузка Horizon', 'Downloading Horizon'),
@@ -113,10 +116,12 @@ function downloadConfirmed() {
   return action('prepare_download')
 }
 function adopt(next) {
+  const installedProfile = next.result_profile && next.result_profile !== state.value.result_profile
   state.value = next
   updateRustSession(next)
   if (!profiles.value.some((p) => p.id === profile.value))
     profile.value = profiles.value[0]?.id ?? ''
+  if (installedProfile) profile.value = next.result_profile
   if (!accounts.value.some((a) => a.uuid === account.value))
     account.value = accounts.value.find((a) => a.selected)?.uuid ?? accounts.value[0]?.uuid ?? ''
 }
@@ -305,6 +310,13 @@ onBeforeUnmount(() => {
         }}
       </p>
     </section>
+    <MinecraftRustMods
+      :profile="profile"
+      :busy="busy"
+      :supported="state.supported"
+      :revision="`${state.stage}:${state.result_profile ?? ''}`"
+      @install="action('mod_install', $event)"
+    />
     <details class="rust-card rust-settings">
       <summary>{{ t('Настройки запуска', 'Launch settings') }}</summary>
       <div class="rust-grid rust-settings-body">

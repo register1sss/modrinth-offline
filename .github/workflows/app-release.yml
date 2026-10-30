@@ -95,3 +95,36 @@ jobs:
         with:
           name: ${{ matrix.platform }}
           path: "${{ join(fromJSON(steps.build_os.outputs.artifactPaths), '\n') }}"
+  horizon-editor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: sudo apt-get update && sudo apt-get install -y libasound2-dev libudev-dev pkg-config
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            native-tools
+            horizon-stage/target
+          key: horizon-editor-3132240-0d6b103-${{ hashFiles('packages/app-lib/src/minecraft_rust/u3_edit/**') }}
+          restore-keys: horizon-editor-3132240-0d6b103-
+      - name: Test original editor operations
+        run: |
+          rustc --edition 2024 --test packages/app-lib/src/minecraft_rust/u3_edit/runtime.rs -o editor-tests
+          ./editor-tests
+      - name: Check editor against pinned Horizon
+        run: |
+          git clone --filter=blob:none https://github.com/horizon-rust/horizon.git horizon-source
+          git -C horizon-source checkout 3132240f21141518391d7d34d41a4f7b916c3c5a
+          if [ ! -x native-tools/bin/horizon-mixins ]; then
+            cargo install --locked --git https://github.com/horizon-rust/horizon-mixins --rev 0d6b103c70633d8fd9443d8d0acd3aadaacedb06 --root native-tools horizon-mixins-cli
+          fi
+          # The transformer rejects symlinks; this upstream link is documentation only.
+          if [ -L horizon-source/CLAUDE.md ]; then cp --remove-destination "$(readlink -f horizon-source/CLAUDE.md)" horizon-source/CLAUDE.md; fi
+          mkdir -p editor-mods/u3_edit
+          cp packages/app-lib/src/minecraft_rust/u3_edit/{runtime.rs,command.rs,frame.rs,list.rs,horizon-mixin.toml} editor-mods/u3_edit/
+          native-tools/bin/horizon-mixins apply --workspace horizon-source --mods editor-mods --out horizon-stage
+          cd horizon-stage
+          cargo check --locked -p horizon-client --bin horizon-client

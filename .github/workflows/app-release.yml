@@ -87,6 +87,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           projectPath: ./apps/app
+          tauriScript: pnpm exec tauri
           args: --bundles nsis
 
       - name: upload ${{ matrix.platform }}

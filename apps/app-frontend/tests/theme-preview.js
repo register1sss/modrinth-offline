@@ -103,6 +103,8 @@ mockIPC(async (cmd, args) => {
           },
           {
             id: 'u3_fixes',
+            automatic: true,
+            installed: !!window.__rustFixInstalled,
             name: 'U3 Fixes',
             authors: ['U3'],
             version: '0.1.0',
@@ -204,6 +206,11 @@ mockIPC(async (cmd, args) => {
       if (r.action === 'create') s.instances.push({ id: 'test-profile', name: r.name, java: null })
       if (r.action.startsWith('prepare_')) s.prepared = true
       if (r.action.startsWith('play_')) {
+        if (!window.__rustFixInstalled) {
+          window.__rustFixInstalled = true
+          window.__rustFixBuilds = (window.__rustFixBuilds ?? 0) + 1
+        }
+        s.result_profile = r.profile || 'horizon'
         s.runtime = true
         s.prepared = true
         s.offline_ready = true

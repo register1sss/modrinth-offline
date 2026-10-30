@@ -4,7 +4,12 @@ import { invoke } from '@tauri-apps/api/tauri'
 import { open } from '@tauri-apps/api/shell'
 import { language } from '@/i18n/index.js'
 import { installRequest, modInstalled, modSummary } from '@/minecraft-rust/mods.js'
-const props = defineProps({ profile: String, busy: Boolean, supported: Boolean, revision: String })
+const props = defineProps({
+  profile: { type: String, default: '' },
+  busy: Boolean,
+  supported: Boolean,
+  revision: { type: String, default: '' },
+})
 const emit = defineEmits(['install'])
 const t = (ru, en) => (language.value === 'ru' ? ru : en)
 const catalog = ref(null),
@@ -124,7 +129,7 @@ async function source(entry) {
       >
     </p>
     <p v-if="loading" role="status">{{ t('Загрузка списка...', 'Loading mods...') }}</p>
-    <p v-if="error" class="mods-error" role="alert">
+    <div v-if="error" class="mods-error" role="alert">
       {{
         t(
           'Не удалось загрузить каталог. Попробуй ещё раз.',
@@ -135,7 +140,7 @@ async function source(entry) {
         <summary>{{ t('Подробности', 'Details') }}</summary>
         {{ error }}
       </details>
-    </p>
+    </div>
     <template v-if="catalog">
       <div v-for="(group, i) in groups" :key="i" class="mod-group">
         <div class="mods-heading">
@@ -194,16 +199,23 @@ async function source(entry) {
               <button
                 class="btn btn-primary"
                 :disabled="
-                  busy || loading || !supported || !entry.available || modInstalled(entry, catalog)
+                  entry.automatic ||
+                  busy ||
+                  loading ||
+                  !supported ||
+                  !entry.available ||
+                  modInstalled(entry, catalog)
                 "
                 @click="chosen = entry"
               >
                 {{
                   modInstalled(entry, catalog)
                     ? t('Установлен', 'Installed')
-                    : catalog.files?.[`${entry.id}.hnmod`] === entry.checksum
-                      ? t('Собрать заново', 'Rebuild')
-                      : t('Установить', 'Install')
+                    : entry.automatic
+                      ? t('Автоматически при запуске', 'Automatic on Play')
+                      : catalog.files?.[`${entry.id}.hnmod`] === entry.checksum
+                        ? t('Собрать заново', 'Rebuild')
+                        : t('Установить', 'Install')
                 }}</button
               ><button v-if="entry.source" class="btn" @click="source(entry)">
                 {{ t('Исходники', 'Source') }}

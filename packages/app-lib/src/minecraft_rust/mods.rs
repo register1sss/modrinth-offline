@@ -334,13 +334,18 @@ async fn make_catalog(
     root: &Path,
     profile: &str,
     idx: &Value,
+    exact_profile: bool,
 ) -> Result<Value> {
     let instances = if verified(root).await.is_ok() {
         query(root, &["--json", "instance", "list"]).await?
     } else {
         json!([])
     };
-    let target = target(&instances, profile);
+    let target = if exact_profile {
+        selected_instance(&instances, profile)?
+    } else {
+        target(&instances, profile)
+    };
     let files = if target.is_empty() {
         BTreeMap::new()
     } else {
@@ -348,7 +353,18 @@ async fn make_catalog(
     };
     let bytes = embedded()?;
     let own = json!({"id":"u3_edit","name":"U3 Edit","authors":["U3"],"source":"https://github.com/register1sss/modrinth-offline/tree/main/packages/app-lib/src/minecraft_rust/u3_edit","summary":"Выделение, заливка, замена блоков и стены. До 32768 блоков. Без отмены изменений.","version":"0.1.0","checksum":digest(&bytes),"available":true,"native":true});
-    let fixes = json!({"id":"u3_fixes","name":"U3 Fixes","authors":["U3"],"source":"https://github.com/register1sss/modrinth-offline/tree/main/packages/app-lib/src/minecraft_rust/u3_fixes","summary":"Client trident state fixes: resume server motion and fall after supporting blocks disappear. Not a fix for every issue in the video. Requires rebuilding Horizon.","version":"0.1.0","checksum":digest(&own_bundle("u3_fixes")?),"available":true,"native":true});
+    let mut fixes = json!({"id":"u3_fixes","name":"U3 Fixes","authors":["U3"],"source":"https://github.com/register1sss/modrinth-offline/tree/main/packages/app-lib/src/minecraft_rust/u3_fixes","summary":"Client trident state fixes: resume server motion and fall after supporting blocks disappear. Installed and enabled automatically on Play. First launch may build Horizon. Not a fix for every issue in the video.","version":"0.1.0","checksum":digest(&own_bundle("u3_fixes")?),"available":true,"native":true,"automatic":true});
+    let selected = if profile.is_empty() {
+        "horizon"
+    } else {
+        profile
+    };
+    fixes["installed"] = json!(automatic_installed(
+        root,
+        &instances,
+        selected,
+        fixes["checksum"].as_str().unwrap_or("")
+    ));
     Ok(
         json!({"own":[own,fixes],"community":entries(idx),"target":target,"target_name":if profile.is_empty() || profile == "horizon" { "U3 Mods".to_owned() } else { instances.as_array().into_iter().flatten().find(|p| p["id"] == profile).and_then(|p| p["name"].as_str()).unwrap_or(profile).to_owned() },"trust_token":token(profile,&files),"files":files,"ready":ready(root,&instances,&target,&files)}),
     )
@@ -360,12 +376,26 @@ pub async fn catalog(profile: &str) -> Result<Value> {
     }
     let root = home().await?;
     let idx = index(&root).await?;
-    make_catalog(&root, profile, &idx).await
+    make_catalog(&root, profile, &idx, false).await
 }
 pub(super) async fn install(root: &Path, r: &Request) -> Result<()> {
+    install_checked(root, r, None).await
+}
+async fn install_checked(
+    root: &Path,
+    r: &Request,
+    automatic_settings: Option<&str>,
+) -> Result<()> {
+    let automatic = automatic_settings.is_some();
+    if automatic && r.project != "u3_fixes" {
+        return Err(
+            "Only the embedded U3 Fixes patch can be installed automatically"
+                .into(),
+        );
+    }
     validate_request(r)?;
     let idx = index(root).await?;
-    let cat = make_catalog(root, &r.profile, &idx).await?;
+    let cat = make_catalog(root, &r.profile, &idx, automatic).await?;
     let entry = cat["own"]
         .as_array()
         .into_iter()
@@ -386,7 +416,11 @@ pub(super) async fn install(root: &Path, r: &Request) -> Result<()> {
         install_runtime_and_game(root, "latest").await?;
     }
     let mut instances = query(root, &["--json", "instance", "list"]).await?;
-    let mut target_id = target(&instances, &r.profile);
+    let mut target_id = if automatic {
+        selected_instance(&instances, &r.profile)?
+    } else {
+        target(&instances, &r.profile)
+    };
     if target_id.is_empty() {
         cli(root, &["instance", "create", "--", "U3 Mods"], false).await?;
         instances = query(root, &["--json", "instance", "list"]).await?;
@@ -434,6 +468,11 @@ pub(super) async fn install(root: &Path, r: &Request) -> Result<()> {
         .clone();
     prepare_automatically(root, &source, &base).await?;
     change(|s| s.stage = "mod_install".into());
+    if automatic_settings.is_some_and(|expected| {
+        settings_hash(&home).ok().as_deref() != Some(expected)
+    }) {
+        return Err("Mod settings changed during automatic patch preparation. Review the mods before retrying".into());
+    }
     // Receipt invalidation prevents a stale engine from masquerading as this mod set after failure.
     atomic(&home.join("u3-mods-pending"), b"build required")?;
     let first_party = matches!(r.project.as_str(), "u3_edit" | "u3_fixes");
@@ -443,7 +482,10 @@ pub(super) async fn install(root: &Path, r: &Request) -> Result<()> {
         let file_name = format!("{}.hnmod", r.project);
         let dir = home.join("horizon-native-mods");
         std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
-        if let Some(old) = before.get(&file_name) {
+        if let Some(old) = before
+            .get(&file_name)
+            .filter(|old| !(automatic && *old == &r.checksum))
+        {
             let receipt = read_json(&home.join(&receipt_name))?;
             if receipt["checksum"] != *old {
                 return Err("First-party mod file was changed outside the launcher. Back it up and remove it before reinstalling".into());
@@ -530,7 +572,11 @@ pub(super) async fn install(root: &Path, r: &Request) -> Result<()> {
     }
     instances = query(root, &["--json", "instance", "list"]).await?;
     versions = query(root, &["--json", "versions", "--installed"]).await?;
-    let tag = launch_version(&instances, &versions, &target_id)?
+    // The manager stages default-home builds on its Native mods instance.
+    // Use that exact result, verify it below, then pin the ORIGINAL home to it.
+    // Never switch the player into an empty world/profile as a side effect.
+    let result_id = build_result_profile(&target_id, automatic);
+    let tag = launch_version(&instances, &versions, result_id)?
         .filter(|t| t.starts_with("native-"))
         .ok_or("Horizon did not select the native build")?;
     let dir = version_dir(root, &tag)?;
@@ -568,10 +614,108 @@ pub(super) async fn install(root: &Path, r: &Request) -> Result<()> {
             .to_string()
             .as_bytes(),
     )?;
+    if automatic && target_id == "horizon" {
+        cli(
+            root,
+            &["instance", "version", "--", &target_id, &tag],
+            false,
+        )
+        .await?;
+        let selected = query(root, &["--json", "instance", "list"]).await?;
+        if launch_version(&selected, &versions, &target_id)?.as_deref()
+            != Some(tag.as_str())
+        {
+            return Err(
+                "Could not select the fixed engine for the original profile"
+                    .into(),
+            );
+        }
+    }
     std::fs::remove_file(home.join("u3-mods-pending"))
         .map_err(|e| e.to_string())?;
     change(|s| s.result_profile = Some(target_id));
     Ok(())
+}
+fn automatic_installed(
+    root: &Path,
+    instances: &Value,
+    profile: &str,
+    checksum: &str,
+) -> bool {
+    let Ok(home) = profile_home(root, instances, profile) else {
+        return false;
+    };
+    let Ok(files) = bundles(&home) else {
+        return false;
+    };
+    files.get("u3_fixes.hnmod").map(String::as_str) == Some(checksum)
+        && check_build(root, instances, profile).is_ok()
+        && enabled_inputs(&home, &files).ok().is_some_and(|m| {
+            m.get("u3_fixes").map(String::as_str) == Some("0.1.0")
+        })
+}
+fn build_result_profile(target: &str, automatic: bool) -> &str {
+    if automatic && target == "horizon" {
+        "native-mods"
+    } else {
+        target
+    }
+}
+// Automatic trust is narrowly scoped to this app's embedded patch. Existing
+// third-party code must already have a valid, user-approved build receipt.
+fn auto_install_needed(
+    files: &BTreeMap<String, String>,
+    expected: &str,
+    ready: bool,
+    enabled: bool,
+    own_receipt_matches: bool,
+) -> Result<bool> {
+    if files.get("u3_fixes.hnmod").map(String::as_str) == Some(expected)
+        && ready
+        && enabled
+    {
+        return Ok(false);
+    }
+    if files.is_empty()
+        || ready
+        || (files.len() == 1
+            && files.contains_key("u3_fixes.hnmod")
+            && own_receipt_matches)
+    {
+        return Ok(true);
+    }
+    Err("Other native mod files changed or their build is unfinished. Review and rebuild them explicitly before automatic U3 Fixes installation".into())
+}
+pub(super) async fn ensure_fixes(root: &Path, profile: &str) -> Result<()> {
+    let instances = query(root, &["--json", "instance", "list"]).await?;
+    selected_instance(&instances, profile)?;
+    let home = profile_home(root, &instances, profile)?;
+    let files = bundles(&home)?;
+    let checksum = digest(&own_bundle("u3_fixes")?);
+    let initial_settings = settings_hash(&home)?;
+    let ready =
+        !files.is_empty() && check_build(root, &instances, profile).is_ok();
+    let enabled = enabled_inputs(&home, &files).ok().is_some_and(|m| {
+        m.get("u3_fixes").map(String::as_str) == Some("0.1.0")
+    });
+    let exact_embedded = files.get("u3_fixes.hnmod") == Some(&checksum);
+    let own_receipt = exact_embedded
+        || read_json(&home.join("u3-fixes-installed.json"))
+            .ok()
+            .is_some_and(|r| {
+                files
+                    .get("u3_fixes.hnmod")
+                    .is_some_and(|hash| r["checksum"] == *hash)
+            });
+    if !auto_install_needed(&files, &checksum, ready, enabled, own_receipt)? {
+        return Ok(());
+    }
+    change(|s| s.stage = "install_fixes".into());
+    let request: Request = serde_json::from_value(json!({
+        "action":"mod_install", "profile":profile, "project":"u3_fixes",
+        "checksum":checksum, "trust_token":token(profile, &files), "trust_native_code":true
+    })).map_err(|e| e.to_string())?;
+    install_checked(root, &request, Some(&initial_settings)).await
 }
 pub(super) fn check_build(
     root: &Path,
@@ -641,6 +785,103 @@ mod tests {
             "Internal-state patch must not claim stable-hook compatibility"
         );
         assert!(own_bundle("unknown").is_err());
+    }
+    #[test]
+    fn automatic_status_checks_the_real_selected_home_and_enabled_patch() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path();
+        let home = root.join("game");
+        let other = home.join("instances/u3-mods");
+        std::fs::create_dir_all(home.join("horizon-native-mods")).unwrap();
+        std::fs::create_dir_all(&other).unwrap();
+        let version = root.join("launcher/versions/native-test");
+        std::fs::create_dir_all(&version).unwrap();
+        std::fs::write(version.join(".installed"), b"").unwrap();
+        std::fs::write(version.join("horizon-client.exe"), b"MZ test fixture")
+            .unwrap();
+        stamp_installed_engine(root, "native-test").unwrap();
+        let bytes = own_bundle("u3_fixes").unwrap();
+        let checksum = digest(&bytes);
+        std::fs::write(home.join("horizon-native-mods/u3_fixes.hnmod"), bytes)
+            .unwrap();
+        std::fs::write(home.join("horizon-mods.txt"), b"mod.u3_fixes:true\n")
+            .unwrap();
+        let files = bundles(&home).unwrap();
+        let receipt =
+            json!({"files":files,"settings":settings_hash(&home).unwrap()});
+        std::fs::write(
+            version.join("u3-native-receipt.json"),
+            receipt.to_string(),
+        )
+        .unwrap();
+        let instances = json!([
+            {"id":"horizon","kind":"default","java":null,"home":home,"version":"native-test"},
+            {"id":"u3-mods","kind":"own","java":null,"home":other,"version":"native-test"}
+        ]);
+        assert!(automatic_installed(root, &instances, "horizon", &checksum));
+        assert!(!automatic_installed(root, &instances, "u3-mods", &checksum));
+        std::fs::write(home.join("horizon-mods.txt"), b"mod.u3_fixes:false\n")
+            .unwrap();
+        assert!(!automatic_installed(root, &instances, "horizon", &checksum));
+    }
+    #[test]
+    fn automatic_patch_is_idempotent_and_reenables_if_disabled() {
+        let files = BTreeMap::from([("u3_fixes.hnmod".into(), "a".repeat(64))]);
+        assert!(!auto_install_needed(
+            &files,
+            &"a".repeat(64),
+            true,
+            true,
+            true
+        )
+        .unwrap());
+        assert!(auto_install_needed(
+            &files,
+            &"a".repeat(64),
+            true,
+            false,
+            true
+        )
+        .unwrap());
+        assert!(
+            auto_install_needed(&files, &"b".repeat(64), true, true, true)
+                .unwrap()
+        );
+    }
+    #[test]
+    fn automatic_patch_does_not_grant_trust_to_foreign_code() {
+        let mut files =
+            BTreeMap::from([("unknown.hnmod".into(), "a".repeat(64))]);
+        assert!(
+            auto_install_needed(&files, "hash", false, false, false).is_err()
+        );
+        files.insert("u3_fixes.hnmod".into(), "b".repeat(64));
+        assert!(
+            auto_install_needed(&files, "hash", false, false, true).is_err()
+        );
+        assert!(auto_install_needed(&files, "hash", true, false, true).unwrap());
+    }
+    #[test]
+    fn automatic_patch_can_retry_its_own_failed_build_only() {
+        assert!(auto_install_needed(
+            &BTreeMap::new(),
+            "hash",
+            false,
+            false,
+            false
+        )
+        .unwrap());
+        let files = BTreeMap::from([("u3_fixes.hnmod".into(), "a".repeat(64))]);
+        assert!(
+            auto_install_needed(&files, "hash", false, true, false).is_err()
+        );
+        assert!(auto_install_needed(&files, "hash", false, true, true).unwrap());
+    }
+    #[test]
+    fn automatic_default_build_uses_manager_result_without_changing_home() {
+        assert_eq!(build_result_profile("horizon", true), "native-mods");
+        assert_eq!(build_result_profile("my-worlds", true), "my-worlds");
+        assert_eq!(build_result_profile("horizon", false), "horizon");
     }
     #[test]
     fn consent_binds_all_files_and_profile() {

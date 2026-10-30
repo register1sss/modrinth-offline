@@ -670,6 +670,11 @@ async fn play_automatically(
     refresh(root).await?;
     prepare_automatically(root, source, &tag).await?;
     refresh(root).await?;
+    mods::ensure_fixes(root, &id).await?;
+    // Native build can change the selected engine, not the selected game's home.
+    // Reload BOTH lists before constructing the offline command or online launch.
+    let instances = query(root, &["--json", "instance", "list"]).await?;
+    let versions = query(root, &["--json", "versions", "--installed"]).await?;
     mods::check_build(root, &instances, &id)?;
     if r.action == "play_online" {
         change(|s| {
@@ -1099,6 +1104,26 @@ mod tests {
             .any(|(k, v)| k == "HORIZON_SESSION_FILE" && v.is_none()));
         assert!(paths.home.ends_with("my-rust"));
         assert!(!dir.path().join("launcher/accounts.json").exists());
+    }
+    #[test]
+    fn refreshed_native_version_keeps_original_home_for_offline_play() {
+        let (dir, mut instances, _) = offline_fixture();
+        std::fs::rename(
+            dir.path().join("launcher/versions/test"),
+            dir.path().join("launcher/versions/native-fixed"),
+        )
+        .unwrap();
+        instances[0]["version"] = json!("native-fixed");
+        let versions =
+            json!({"selected":"test","installed":["test","native-fixed"]});
+        let paths = offline_paths(dir.path(), &instances, &versions, "horizon")
+            .unwrap();
+        assert!(paths.program.ends_with("native-fixed/horizon-client.exe"));
+        assert_eq!(
+            paths.home,
+            std::fs::canonicalize(dir.path().join("game")).unwrap()
+        );
+        assert!(!paths.home.ends_with("native-mods"));
     }
     #[test]
     fn offline_engine_checks_integrity_and_preparation() {

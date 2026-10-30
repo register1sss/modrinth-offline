@@ -1,6 +1,6 @@
 // Native code consent is bound to both the selected download and every existing native bundle.
 export function installRequest(entry, catalog, profile, consent) {
-  if (!consent || !entry?.available || !catalog?.trust_token) return null
+  if (entry?.automatic || !consent || !entry?.available || !catalog?.trust_token) return null
   return {
     project: entry.id,
     checksum: entry.checksum,
@@ -10,12 +10,13 @@ export function installRequest(entry, catalog, profile, consent) {
   }
 }
 export function modInstalled(entry, catalog) {
+  if (entry?.automatic) return entry.installed === true
   return catalog?.ready && catalog.files?.[`${entry.id}.hnmod`] === entry.checksum
 }
 
 const summaries = {
   u3_fixes:
-    'Исправление зависающих трезубцев: возобновление движения от сервера и падение после удаления опорного блока. Не исправляет все баги из видео. Требует пересборки Horizon.',
+    'Исправление зависающих трезубцев: возобновление движения от сервера и падение после удаления опорного блока. Устанавливается автоматически при нажатии «Играть». При первом запуске потребуется сборка. Не исправляет все баги из видео.',
   biomecompass: 'Компас для поиска биомов.',
   blockscope: 'Информация о блоке под прицелом.',
   carryblock: 'Перенос сундуков с предметами и небольших мобов.',

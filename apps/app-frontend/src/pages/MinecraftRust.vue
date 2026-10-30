@@ -74,6 +74,7 @@ const labels = computed(() => ({
   pack_toggle: t('Переключение ресурс-пака', 'Toggling resource pack'),
   pack_repair: t('Защита интерфейса', 'Protecting interface'),
   mod_install: t('Установка мода', 'Installing mod'),
+  install_fixes: t('Установка исправлений Horizon', 'Installing Horizon fixes'),
   build_native: t('Сборка игры с модами', 'Building game with mods'),
   refresh: t('Проверка', 'Checking'),
   install: t('Установка', 'Installing'),
@@ -304,8 +305,8 @@ onBeforeUnmount(() => {
       <p>
         {{
           t(
-            'Нажми «Играть». Лаунчер сам установит Horizon, найдёт Minecraft и подготовит игру. При первом запуске нужен интернет.',
-            'Press Play. The launcher will install Horizon, find Minecraft and prepare the game. Internet is required the first time.',
+            'Нажми «Играть». Лаунчер сам установит Horizon, найдёт Minecraft и подготовит игру. U3 Fixes включится автоматически. При первой подготовке нужны интернет и 20-30 минут на сборку.',
+            'Press Play. The launcher will install Horizon, find Minecraft and prepare the game. U3 Fixes is enabled automatically. Initial preparation requires internet and a 20-30 minute build.',
           )
         }}
       </p>

@@ -83,3 +83,19 @@ test('U3 Fixes keeps explicit native consent and checksum-bound installed status
   assert.equal(modInstalled(mod, catalog), false)
   assert.equal(modInstalled(mod, { ...catalog, files: { 'u3_fixes.hnmod': mod.checksum } }), true)
 })
+
+test('automatic patch status belongs to the current profile, not the U3 Mods editor target', () => {
+  const entry = { id: 'u3_fixes', automatic: true, installed: true, checksum: 'a'.repeat(64) }
+  assert.equal(modInstalled(entry, { files: {}, ready: false }), true)
+  assert.equal(
+    installRequest({ ...entry, available: true }, { trust_token: 'hash' }, 'horizon', true),
+    null,
+  )
+  assert.equal(
+    modInstalled(
+      { ...entry, installed: false },
+      { files: { 'u3_fixes.hnmod': entry.checksum }, ready: true },
+    ),
+    false,
+  )
+})

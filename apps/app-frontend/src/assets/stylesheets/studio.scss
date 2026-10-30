@@ -1,0 +1,159 @@
+/* Studio UI: opaque content, subtle lighting, no blur behind every card. */
+:root {
+  --u3-outline: var(--color-button-bg);
+  --u3-surface: var(--color-raised-bg);
+  --u3-glass: var(--color-raised-bg);
+  --u3-highlight: var(--color-brand-highlight);
+  --u3-shadow: #0000001c;
+  --u3-ease: cubic-bezier(0.2, 0.85, 0.25, 1.25);
+}
+.u3-studio {
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  font-variant-numeric: tabular-nums;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 22px;
+}
+.u3-studio > .nav-container {
+  border-right: 1px solid var(--u3-outline);
+  background: var(--u3-glass);
+  box-shadow: 8px 0 32px var(--u3-shadow);
+}
+.u3-studio .appbar-row {
+  border-bottom: 1px solid var(--u3-outline);
+  background: var(--u3-glass);
+}
+.u3-studio.has-depth > .nav-container,
+.u3-studio.has-depth .appbar-row {
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+.u3-studio .view > .router-view {
+  border-radius: 0;
+}
+.u3-studio > .nav-container .collapsed-button {
+  border-radius: 16px;
+  position: relative;
+  transition:
+    background 0.18s ease,
+    color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+.u3-studio > .nav-container .pages-list .router-link-active {
+  background: var(--color-brand-highlight);
+  color: var(--color-brand);
+  box-shadow:
+    inset 0 0 0 1px var(--u3-outline),
+    0 4px 12px var(--u3-shadow);
+}
+.u3-studio > .nav-container .pages-list .router-link-active::before {
+  content: '';
+  width: 3px;
+  height: 18px;
+  border-radius: 3px;
+  position: absolute;
+  left: -8px;
+  top: calc(50% - 9px);
+  background: var(--color-brand);
+}
+.u3-studio .router-view .card,
+.u3-studio .router-view .effects-panel,
+.u3-studio .router-view .base-themes,
+.u3-studio .router-view .launch-card,
+.u3-studio .router-view .setup-card {
+  border: 1px solid var(--u3-outline);
+  border-radius: 18px;
+  box-shadow:
+    0 6px 24px var(--u3-shadow),
+    inset 0 1px 0 var(--u3-highlight);
+}
+.u3-studio .router-view h1,
+.u3-studio .router-view h2 {
+  letter-spacing: -0.035em;
+}
+.u3-studio .router-view h3 {
+  letter-spacing: -0.018em;
+}
+.u3-studio .btn:not(.titlebar-button) {
+  border-radius: 11px;
+  min-height: 38px;
+}
+.u3-studio .btn-primary {
+  box-shadow:
+    inset 0 1px 0 #ffffff25,
+    0 4px 12px var(--color-brand-shadow);
+}
+.u3-studio .btn-primary:hover {
+  box-shadow:
+    inset 0 1px 0 #ffffff38,
+    0 6px 16px var(--color-brand-shadow);
+}
+.u3-studio input:not([type='checkbox']):not([type='radio']):not([type='range']),
+.u3-studio textarea,
+.u3-studio select:not(.language-switch) {
+  border-radius: 11px;
+  box-shadow: inset 0 0 0 1px var(--u3-outline);
+  transition: box-shadow 0.16s ease;
+}
+.u3-studio input:focus-visible,
+.u3-studio textarea:focus-visible,
+.u3-studio select:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+}
+.u3-studio .language-switch {
+  border-radius: 10px;
+  border-color: var(--u3-outline);
+  background: var(--color-bg);
+}
+.u3-studio .table-row:not(.table-head):hover {
+  background: var(--u3-highlight);
+}
+.u3-studio .router-view details {
+  border-radius: 12px;
+}
+.u3-studio .router-view summary {
+  padding-block: 4px;
+}
+html[data-material='paper'] .u3-studio .router-view .card {
+  box-shadow: 0 3px 10px var(--u3-shadow);
+}
+html[data-material='velvet'] .u3-studio .router-view .card {
+  box-shadow:
+    0 8px 24px var(--u3-shadow),
+    inset 0 1px 0 var(--u3-highlight);
+}
+html[data-material='obsidian'] .u3-studio .router-view .card {
+  box-shadow: inset 0 1px 0 var(--u3-highlight);
+}
+@media (prefers-reduced-motion: no-preference) {
+  html[data-jelly='on'] .u3-studio .router-view .card {
+    transition:
+      box-shadow 0.2s ease,
+      border-color 0.2s ease;
+  }
+  html[data-jelly='on'] .u3-studio .router-view .card:hover {
+    border-color: var(--theme-border, var(--u3-outline));
+  }
+  html[data-jelly='on'] .u3-studio .nav-container .collapsed-button:hover > svg {
+    animation: u3-icon-pop 0.42s ease-out;
+  }
+}
+@keyframes u3-icon-pop {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  45% {
+    transform: scale(1.12, 0.94);
+  }
+  75% {
+    transform: scale(0.98, 1.04);
+  }
+}
+@media (max-width: 520px) {
+  .u3-studio .router-view .card {
+    border-radius: 14px;
+  }
+}

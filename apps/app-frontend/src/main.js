@@ -1,4 +1,5 @@
 import { createApp } from 'vue'
+import { startJellyMotion } from '@/visual/spring.js'
 import { localization } from '@/i18n/index.js'
 import { startHealthMonitor } from '@/instance-health/monitor.js'
 import { startAssistantMonitor } from '@/assistant/monitor.js'
@@ -9,6 +10,7 @@ import { createPinia } from 'pinia'
 import '@modrinth/assets/omorphia.scss'
 import '@/assets/stylesheets/global.scss'
 import '@/assets/stylesheets/themes.scss'
+import '@/assets/stylesheets/studio.scss'
 import FloatingVue from 'floating-vue'
 import 'floating-vue/dist/style.css'
 import { get_opening_command, initialize_state } from '@/helpers/state'
@@ -46,6 +48,8 @@ app.use(VIntlPlugin)
 app.use(localization)
 
 const mountedApp = app.mount('#app')
+const stopJellyMotion = startJellyMotion()
+if (import.meta.hot) import.meta.hot.dispose(stopJellyMotion)
 
 const raw_invoke = async (plugin, fn, args) => {
   if (plugin === '') {

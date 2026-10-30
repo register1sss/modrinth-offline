@@ -59,7 +59,7 @@ import { useInstall } from '@/store/install.js'
 const themeStore = useTheming()
 const motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)')
 const syncMotionPreference = () => {
-  themeStore.reducedMotion = motionPreference.matches
+  themeStore.setReducedMotion(motionPreference.matches)
 }
 syncMotionPreference()
 onMounted(() => motionPreference.addEventListener('change', syncMotionPreference))
@@ -296,7 +296,7 @@ command_listener(async (e) => {
   </div>
   <SplashScreen v-else-if="isLoading" app-loading />
   <OnboardingScreen v-else-if="showOnboarding" :finish="() => (showOnboarding = false)" />
-  <div v-else class="container">
+  <div v-else class="container u3-studio" :class="{ 'has-depth': themeStore.advancedRendering }">
     <ParticleCanvas
       v-if="themeStore.activeTheme.particle && themeStore.effectsEnabled"
       class="app-atmosphere"

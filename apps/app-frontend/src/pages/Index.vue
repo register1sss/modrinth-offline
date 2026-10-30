@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onUnmounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
+import StudioWelcome from '@/components/ui/StudioWelcome.vue'
 import RowDisplay from '@/components/RowDisplay.vue'
 import { list } from '@/helpers/profile.js'
 import { profile_listener } from '@/helpers/events'
@@ -100,6 +101,7 @@ onUnmounted(() => {
 
 <template>
   <div class="page-container">
+    <StudioWelcome :profiles="recentInstances.length" />
     <RowDisplay
       v-if="total > 0"
       :instances="[

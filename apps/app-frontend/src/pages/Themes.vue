@@ -14,8 +14,31 @@ const notice = ref('')
 const saveError = ref(false)
 const activeNumber = computed(() => {
   const index = CUSTOM_THEMES.findIndex((theme) => theme.id === active.value.id)
-  return index < 0 ? tr('БАЗОВАЯ', 'BASE') : `${String(index + 1).padStart(2, '0')} / 13`
+  return index < 0
+    ? tr('БАЗОВАЯ', 'BASE')
+    : `${String(index + 1).padStart(2, '0')} / ${CUSTOM_THEMES.length}`
 })
+const query = ref('')
+const filter = ref('all')
+const filters = computed(() => [
+  { id: 'all', name: tr('Все', 'All') },
+  { id: 'studio', name: tr('Новые · 19', 'New · 19') },
+  { id: 'dark', name: tr('Тёмные', 'Dark') },
+  { id: 'light', name: tr('Светлые', 'Light') },
+])
+const filteredThemes = computed(() =>
+  CUSTOM_THEMES.filter((theme) => {
+    const matches =
+      filter.value === 'all' ||
+      (filter.value === 'studio'
+        ? theme.collection === 'studio'
+        : filter.value === 'light'
+          ? theme.palette.light
+          : !theme.palette.light)
+    const text = [theme.id, theme.name, translate(theme.name)].join(' ').toLocaleLowerCase()
+    return matches && text.includes(query.value.trim().toLocaleLowerCase())
+  }),
+)
 async function selectTheme(theme) {
   if (saving.value || theme.id === active.value.id) return
   saving.value = true
@@ -45,10 +68,21 @@ async function selectTheme(theme) {
   <main class="themes-page">
     <header class="themes-heading">
       <div>
+        <p class="studio-eyebrow">U3 STUDIO / APPEARANCE</p>
         <div class="title-line">
           <h1>{{ $u3t('Темы') }}</h1>
-          <span class="collection-count"> {{ tr('13 тем', '13 themes') }} </span>
+          <span class="collection-count">
+            {{ CUSTOM_THEMES.length + BASE_THEMES.length }} {{ tr('тем', 'themes') }}
+          </span>
         </div>
+        <p class="heading-copy">
+          {{
+            tr(
+              'Цвет, фактура и движение. Создай свою атмосферу.',
+              'Color, texture, and motion. Make it yours.',
+            )
+          }}
+        </p>
       </div>
       <span class="saved-indicator"
         ><CheckIcon aria-hidden="true" /> {{ $u3t('Выбор сохраняется') }}
@@ -113,6 +147,33 @@ async function selectTheme(theme) {
           </button>
         </div>
       </div>
+      <div class="quality-row jelly-settings">
+        <label class="motion-switch">
+          <input
+            type="checkbox"
+            :checked="themeStore.jellyEnabled"
+            @change="themeStore.setJellyEnabled($event.target.checked)"
+          />
+          <span class="switch-track" aria-hidden="true"><span /></span>
+          <span>{{ tr('Желейные анимации', 'Jelly animations') }}</span>
+        </label>
+        <div
+          class="quality-options"
+          role="group"
+          :aria-label="tr('Характер анимаций', 'Motion style')"
+        >
+          <button
+            v-for="level in ['soft', 'spring']"
+            :key="level"
+            type="button"
+            :disabled="!themeStore.jellyEnabled"
+            :aria-pressed="themeStore.jellyLevel === level"
+            @click="themeStore.setJellyLevel(level)"
+          >
+            {{ level === 'soft' ? tr('Мягкие', 'Soft') : tr('Упругие', 'Springy') }}
+          </button>
+        </div>
+      </div>
       <p v-if="themeStore.reducedMotion" class="motion-note" role="status">
         {{
           $u3t(
@@ -121,7 +182,12 @@ async function selectTheme(theme) {
         }}
       </p>
       <p v-else-if="!active.particle" class="motion-note">
-        {{ $u3t('Частицы появятся после выбора одной из 13 новых тем.') }}
+        {{
+          tr(
+            'Выбери авторскую тему, чтобы добавить частицы.',
+            'Choose a custom theme to add particles.',
+          )
+        }}
       </p>
       <p v-else class="motion-note">
         {{ tr('30 кадров/с · пауза в фоне', '30 fps · paused in background') }}
@@ -139,11 +205,38 @@ async function selectTheme(theme) {
     <section class="collection" aria-labelledby="collection-heading">
       <div class="collection-heading">
         <h2 id="collection-heading">{{ tr('Все темы', 'All themes') }}</h2>
-        <span> {{ $u3t('13 палитр · 13 эффектов') }} </span>
+        <span> {{ tr('19 новых атмосфер', '19 new atmospheres') }} </span>
       </div>
+      <div class="collection-toolbar">
+        <div class="filter-options" role="group" :aria-label="tr('Фильтр тем', 'Theme filter')">
+          <button
+            v-for="item in filters"
+            :key="item.id"
+            type="button"
+            :aria-pressed="filter === item.id"
+            @click="filter = item.id"
+          >
+            {{ item.name }}
+          </button>
+        </div>
+        <input
+          v-model="query"
+          type="search"
+          :placeholder="tr('Найти свою тему…', 'Find your theme…')"
+          :aria-label="tr('Поиск тем', 'Search themes')"
+        />
+      </div>
+      <p v-if="!filteredThemes.length" class="empty-themes" role="status">
+        {{
+          tr(
+            'Такой темы пока нет. Попробуй другой запрос.',
+            'No matching themes. Try another search.',
+          )
+        }}
+      </p>
       <div class="theme-grid" :aria-busy="saving">
         <button
-          v-for="(theme, index) in CUSTOM_THEMES"
+          v-for="theme in filteredThemes"
           :key="theme.id"
           type="button"
           class="theme-choice"
@@ -156,7 +249,10 @@ async function selectTheme(theme) {
         >
           <div class="card-preview-wrap">
             <ThemePreview :theme="theme" />
-            <span class="theme-index">{{ String(index + 1).padStart(2, '0') }}</span>
+            <span v-if="theme.collection === 'studio'" class="new-theme-badge">STUDIO / 19</span>
+            <span class="theme-index">{{
+              String(CUSTOM_THEMES.indexOf(theme) + 1).padStart(2, '0')
+            }}</span>
             <span v-if="active.id === theme.id" class="selected-mark"
               ><CheckIcon aria-hidden="true" /><span>{{ tr('Выбрана', 'Selected') }}</span></span
             >
@@ -207,6 +303,80 @@ async function selectTheme(theme) {
 </template>
 
 <style scoped>
+.studio-eyebrow {
+  margin: 0 0 12px;
+  color: var(--color-brand);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  font-weight: 700;
+}
+.collection-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+.filter-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.filter-options button {
+  border: 1px solid transparent;
+  padding: 9px 13px;
+  background: transparent;
+  color: var(--color-secondary);
+  border-radius: 14px;
+  cursor: pointer;
+}
+.filter-options button[aria-pressed='true'] {
+  background: var(--color-brand-highlight);
+  color: var(--color-contrast);
+  border-color: var(--theme-border);
+}
+.collection-toolbar input {
+  min-width: 0;
+  width: 240px;
+  padding: 11px 14px;
+  background: var(--color-raised-bg);
+  color: var(--color-base);
+  border: 1px solid var(--theme-border);
+  border-radius: 18px;
+}
+.collection-toolbar input:focus-visible,
+.filter-options button:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 3px;
+}
+.new-theme-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  font-size: 9px;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  background: var(--color-bg);
+  color: var(--color-base);
+  border: 1px solid var(--theme-border);
+  border-radius: 6px;
+  padding: 5px 7px;
+}
+.card-description {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--color-secondary);
+  margin: 7px 0 12px;
+  min-height: 36px;
+}
+.empty-themes {
+  border: 1px dashed var(--theme-border);
+  border-radius: 16px;
+  padding: 36px 20px;
+  color: var(--color-secondary);
+}
+
 .themes-page {
   max-width: 1248px;
   margin: 0 auto;
@@ -287,8 +457,9 @@ h1 {
   align-items: center;
   padding: 28px;
   border: 1px solid var(--theme-border);
-  border-radius: 12px;
-  background: var(--color-raised-bg);
+  border-radius: 18px;
+  background: radial-gradient(ellipse at top left, var(--color-brand-highlight), transparent 70%),
+    var(--color-raised-bg);
   overflow: hidden;
 }
 .active-theme-copy {
@@ -363,7 +534,7 @@ h1 {
 }
 .effects-panel {
   border: 1px solid var(--theme-border);
-  border-radius: 12px;
+  border-radius: 18px;
   padding: 22px 24px 18px;
   background: var(--color-raised-bg);
   margin: 16px 0 32px;
@@ -410,6 +581,7 @@ h1 {
   margin: 0;
 }
 .switch-track {
+  pointer-events: none;
   width: 44px;
   height: 26px;
   border: 1px solid var(--color-secondary);
@@ -428,6 +600,7 @@ h1 {
   transition: transform 0.16s;
 }
 .motion-switch input:checked + .switch-track {
+  pointer-events: none;
   background: var(--color-brand);
   border-color: var(--color-brand);
 }
@@ -436,6 +609,7 @@ h1 {
   transform: translateX(17px);
 }
 .motion-switch input:focus-visible + .switch-track {
+  pointer-events: none;
   outline: 2px solid var(--color-brand);
   outline-offset: 4px;
 }
@@ -504,7 +678,7 @@ h1 {
   margin: 0;
   min-width: 0;
   border: 1px solid var(--theme-border);
-  border-radius: 10px;
+  border-radius: 14px;
   background: var(--color-raised-bg);
   color: var(--color-base);
   text-align: left;
@@ -628,7 +802,7 @@ h1 {
   padding: 24px;
   background: var(--color-raised-bg);
   border: 1px solid var(--theme-border);
-  border-radius: 12px;
+  border-radius: 18px;
 }
 .base-theme-options {
   display: flex;
@@ -701,6 +875,12 @@ h1 {
   }
 }
 @media (max-width: 600px) {
+  .collection-toolbar input {
+    width: 100%;
+  }
+  .title-line {
+    flex-wrap: wrap;
+  }
   .themes-page {
     padding: 24px 16px;
   }

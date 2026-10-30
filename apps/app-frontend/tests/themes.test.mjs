@@ -24,11 +24,12 @@ const contrast = (a, b) => {
   return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05)
 }
 
-test('exactly 13 new palettes and 13 distinct particle types, plus three legacy themes', () => {
-  assert.equal(CUSTOM_THEMES.length, 13)
+test('32 custom palettes include 19 Studio additions and preserve three legacy themes', () => {
+  assert.equal(CUSTOM_THEMES.length, 32)
+  assert.equal(CUSTOM_THEMES.filter((t) => t.collection === 'studio').length, 19)
   assert.equal(new Set(CUSTOM_THEMES.map((t) => t.particle)).size, 13)
-  assert.equal(new Set(THEME_IDS).size, 16)
-  assert.equal(new Set(CUSTOM_THEMES.map((t) => t.palette.bg)).size, 13)
+  assert.equal(new Set(THEME_IDS).size, 35)
+  assert.equal(new Set(CUSTOM_THEMES.map((t) => t.palette.bg)).size, 32)
   assert.deepEqual(
     BASE_THEMES.map((t) => t.id),
     ['dark', 'light', 'oled'],
@@ -110,4 +111,25 @@ test('all thirteen drawing paths execute independently without leaking canvas st
     signatures.add(JSON.stringify(calls))
   }
   assert.equal(signatures.size, 13)
+})
+
+test('button springs settle exactly, stay bounded, and offer gentler motion', async () => {
+  const { springFrames, motionAllowed } = await import('../src/visual/spring.js')
+  for (const level of ['soft', 'spring']) {
+    const frames = springFrames(level)
+    assert.equal(frames.length, 41)
+    assert.deepEqual(frames.at(-1), { offset: 1, scale: '1 1' })
+    for (const frame of frames) {
+      const values = frame.scale.split(' ').map(Number)
+      assert.ok(values.every((v) => Number.isFinite(v) && v >= 0.95 && v <= 1.05))
+    }
+  }
+  assert.ok(
+    Number(springFrames('soft')[0].scale.split(' ')[0]) <
+      Number(springFrames()[0].scale.split(' ')[0]),
+  )
+  for (const enabled of [true, false])
+    for (const reduced of [true, false])
+      for (const hidden of [true, false])
+        assert.equal(motionAllowed({ enabled, reduced, hidden }), enabled && !reduced && !hidden)
 })

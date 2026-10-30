@@ -353,7 +353,7 @@ h4 {
   max-width: 100%;
   min-height: 44px;
   padding: 10px 12px;
-  border: 1px solid var(--color-secondary);
+  border: 1px solid var(--color-secondary) !important;
   border-radius: 8px;
   background: var(--color-bg);
   color: var(--color-base);

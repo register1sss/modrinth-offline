@@ -132,7 +132,7 @@ fn entries(index: &Value) -> Vec<Value> {
         Some(json!({"id":project,"name":p["name"],"authors":p["authors"],"summary":p["summary"],"source":p["source"],"version":v["version"],"checksum":checksum,"available":available,"native":native,"reason":if available { "" } else { "Эта версия пока не поддерживается" }}))
     }).collect()
 }
-fn profile_home(
+pub(super) fn profile_home(
     root: &Path,
     instances: &Value,
     profile: &str,

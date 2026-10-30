@@ -5,7 +5,8 @@ pub fn init<R: tauri::Runtime>() -> tauri::plugin::TauriPlugin<R> {
             status,
             start,
             cancel_sign_in,
-            catalog
+            catalog,
+            resource_catalog
         ])
         .build()
 }
@@ -26,4 +27,14 @@ fn cancel_sign_in() -> Result<(), String> {
 #[tauri::command]
 async fn catalog(profile: String) -> Result<serde_json::Value, String> {
     rust::mods::catalog(&profile).await
+}
+
+#[tauri::command]
+async fn resource_catalog(
+    profile: String,
+    tab: String,
+    search: String,
+    offset: u32,
+) -> Result<serde_json::Value, String> {
+    rust::resourcepacks::catalog(&profile, &tab, &search, offset).await
 }

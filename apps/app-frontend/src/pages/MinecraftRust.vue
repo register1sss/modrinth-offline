@@ -6,6 +6,7 @@ import { canLaunch } from '@/minecraft-rust/launch.js'
 import { updateRustSession } from '@/minecraft-rust/state.js'
 import { language } from '@/i18n/index.js'
 import MinecraftRustMods from '@/components/minecraft-rust/MinecraftRustMods.vue'
+import MinecraftRustPacks from '@/components/minecraft-rust/MinecraftRustPacks.vue'
 import MinecraftRustIcon from '@/components/brand/MinecraftRustIcon.vue'
 const t = (ru, en) => (language.value === 'ru' ? ru : en)
 const state = ref({
@@ -68,6 +69,10 @@ const progress = computed(() =>
     : null,
 )
 const labels = computed(() => ({
+  pack_install: t('Установка ресурс-пака', 'Installing resource pack'),
+  pack_import: t('Импорт ресурс-паков', 'Importing resource packs'),
+  pack_toggle: t('Переключение ресурс-пака', 'Toggling resource pack'),
+  pack_repair: t('Защита интерфейса', 'Protecting interface'),
   mod_install: t('Установка мода', 'Installing mod'),
   build_native: t('Сборка игры с модами', 'Building game with mods'),
   refresh: t('Проверка', 'Checking'),
@@ -333,6 +338,13 @@ onBeforeUnmount(() => {
       :supported="state.supported"
       :revision="`${state.stage}:${state.result_profile ?? ''}`"
       @install="action('mod_install', $event)"
+    />
+    <MinecraftRustPacks
+      :profile="profile"
+      :busy="busy"
+      :supported="state.supported"
+      :revision="`${state.stage}:${state.result_profile ?? ''}`"
+      @action="({ action: name, ...extra }) => action(name, extra)"
     />
     <details class="rust-card rust-settings">
       <summary>{{ t('Настройки запуска', 'Launch settings') }}</summary>

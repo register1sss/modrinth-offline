@@ -1,0 +1,2345 @@
+[
+  {
+    "id": "9b6e7738350f699cf161",
+    "category": "default",
+    "name": "Trident Fusion 3.1",
+    "sha256": "9b6e7738350f699cf161b8dc038b3fe2012867c8592b4a24cfe13254e20bae3e",
+    "size": 20042,
+    "url": "https://cdn.modrinth.com/data/ojdqgkQK/versions/o6zFCT5c/Trident%20Fusion%203.1.zip",
+    "project": "ojdqgkQK",
+    "version": "3.1",
+    "meta": {
+      "pack": {
+        "min_format": [
+          69,
+          0
+        ],
+        "max_format": [
+          97,
+          1
+        ],
+        "description": "Enhanced Trident\nBy: OrkaMC"
+      }
+    },
+    "optifine": true,
+    "gui": false
+  },
+  {
+    "id": "ea1fc0afee4025544477",
+    "category": "default",
+    "name": "visual_armor_trims_4.2",
+    "sha256": "ea1fc0afee40255444770a926352c0acee95c69c342b850ae1b53927ac73d4dd",
+    "size": 2880456,
+    "url": "https://cdn.modrinth.com/data/tPtjib62/versions/Qt949MJE/visual_armor_trims_4.2.zip",
+    "project": "tPtjib62",
+    "version": "4.2",
+    "meta": {
+      "pack": {
+        "description": "Stylish!\n§2By§6: §aThanos",
+        "min_format": 75,
+        "max_format": 2147483647
+      }
+    },
+    "optifine": false,
+    "gui": false
+  },
+  {
+    "id": "4473fd8d55b03d47fa9c",
+    "category": "default",
+    "name": "Dramatic Skys Demo 1.5.3.36.6",
+    "sha256": "4473fd8d55b03d47fa9cc4db5fe6a81b6c43cc570d6d1cae58b427590a3f15ba",
+    "size": 13912171,
+    "url": "https://cdn.modrinth.com/data/2YyNMled/versions/4MZQy9nc/Dramatic%20Skys%20Demo%201.5.3.36.6.zip",
+    "project": "2YyNMled",
+    "version": "1.5.3.36.6",
+    "meta": {
+      "pack": {
+        "description": "Dramatic Skys Demo/Alpha 1.5.3.36.6 by thebaum64",
+        "pack_format": 15,
+        "min_format": [
+          15,
+          0
+        ],
+        "max_format": [
+          1000,
+          0
+        ],
+        "supported_formats": [
+          15,
+          1000
+        ]
+      }
+    },
+    "optifine": true,
+    "gui": false
+  },
+  {
+    "id": "d310100ca1c681a120f5",
+    "category": "default",
+    "name": "Default-Dark-Mode-1.21.11-2026.4.0",
+    "sha256": "d310100ca1c681a120f58bf458e25b135d1f93a3f5f6ab58fcdd6b3b69006ed5",
+    "size": 753448,
+    "url": "https://cdn.modrinth.com/data/6SLU7tS5/versions/sPDc9hXF/Default-Dark-Mode-1.21.11-2026.4.0.zip",
+    "project": "6SLU7tS5",
+    "version": "2026.4.0-1.21.11",
+    "meta": {
+      "pack": {
+        "pack_format": 63,
+        "supported_formats": {
+          "min_inclusive": 63,
+          "max_inclusive": 75
+        },
+        "min_format": [
+          63,
+          0
+        ],
+        "max_format": [
+          75,
+          0
+        ],
+        "description": "Welcome to the dark side!\n§8by nebulr • 1.21.11 • 2026.4.0"
+      }
+    },
+    "optifine": true,
+    "gui": true
+  },
+  {
+    "id": "cbeeccd774f910ed270d",
+    "category": "default",
+    "name": "Better-Leaves-9.6",
+    "sha256": "cbeeccd774f910ed270dbe9651d789a8f785d055499f846e466d86f9cae91e90",
+    "size": 1977146,
+    "url": "https://cdn.modrinth.com/data/uvpymuxq/versions/w4ReEpuG/Better-Leaves-9.6.zip",
+    "project": "uvpymuxq",
+    "version": "9.6",
+    "meta": {
+      "pack": {
+        "pack_format": 15,
+        "supported_formats": [
+          15,
+          255
+        ],
+        "min_format": 15,
+        "max_format": 255,
+        "description": "§2Version 9.6 §aVanilla Edition\n§e©Motschen 2026 | MIT Licence"
+      }
+    },
+    "optifine": false,
+    "gui": false
+  },
+  {
+    "id": "066c771efeee2bccd3c1",
+    "category": "default",
+    "name": "Amazing Mace 3D",
+    "sha256": "066c771efeee2bccd3c17c6b6f76cec1bc1b3c2f1d2b6e343bea14b496784532",
+    "size": 109082,
+    "url": "https://cdn.modrinth.com/data/8fds9qyj/versions/lrIYRbFr/Amazing%20Mace%203D.zip",
+    "project": "8fds9qyj",
+    "version": "2.0",
+    "meta": {
+      "pack": {
+        "pack_format": 84.0,
+        "supported_formats": [
+          1.0,
+          999.0
+        ],
+        "min_format": 1.0,
+        "max_format": 999.0,
+        "description": [
+          {
+            "text": "Amazing ",
+            "color": "aqua",
+            "bold": true
+          },
+          {
+            "text": "Mace ",
+            "color": "gold",
+            "bold": true
+          },
+          {
+            "text": "3D\n",
+            "color": "green",
+            "bold": true
+          },
+          {
+            "text": "Created by ",
+            "color": "white"
+          },
+          {
+            "text": "SpunkyInsaan",
+            "color": "yellow",
+            "bold": true
+          }
+        ]
+      }
+    },
+    "optifine": false,
+    "gui": false
+  },
+  {
+    "id": "87164555d248f373f80a",
+    "category": "default",
+    "name": "Enchantment Glows v1.12.1",
+    "sha256": "87164555d248f373f80a2889e17cfc4bc12631e5f32400ee5d7ea0cd0d851592",
+    "size": 2126138,
+    "url": "https://cdn.modrinth.com/data/m3tqASqD/versions/uaBnfTpO/Enchantment%20Glows%20v1.12.1.zip",
+    "project": "m3tqASqD",
+    "version": "1.12.1",
+    "meta": {
+      "pack": {
+        "description": "§dGlow for your tools!\n§7By Sinnelar",
+        "pack_format": 34,
+        "supported_formats": [
+          34,
+          99
+        ],
+        "min_format": 34,
+        "max_format": 99
+      },
+      "overlays": {
+        "entries": [
+          {
+            "directory": "26.3_shaders",
+            "formats": [
+              97,
+              99
+            ],
+            "min_format": 97,
+            "max_format": 99
+          },
+          {
+            "directory": "26.2_shaders",
+            "formats": [
+              88,
+              88
+            ],
+            "min_format": 88,
+            "max_format": 88
+          },
+          {
+            "directory": "26.1_shaders",
+            "formats": [
+              84,
+              84
+            ],
+            "min_format": 84,
+            "max_format": 84
+          },
+          {
+            "directory": "26.1_assets",
+            "formats": [
+              84,
+              99
+            ],
+            "min_format": 84,
+            "max_format": 99
+          },
+          {
+            "directory": "1.21.9_shaders",
+            "formats": [
+              69,
+              75
+            ],
+            "min_format": 69,
+            "max_format": 75
+          },
+          {
+            "directory": "1.21.9_assets",
+            "formats": [
+              65,
+              80
+            ],
+            "min_format": 65,
+            "max_format": 80
+          },
+          {
+            "directory": "1.21.6_shaders",
+            "formats": [
+              63,
+              64
+            ],
+            "min_format": 63,
+            "max_format": 64
+          },
+          {
+            "directory": "1.21.2_shaders",
+            "formats": [
+              42,
+              55
+            ],
+            "min_format": 42,
+            "max_format": 55
+          },
+          {
+            "directory": "1.21_shaders",
+            "formats": [
+              34,
+              34
+            ],
+            "min_format": 34,
+            "max_format": 34
+          },
+          {
+            "directory": "cit_items",
+            "formats": [
+              34,
+              45
+            ],
+            "min_format": 34,
+            "max_format": 45
+          }
+        ]
+      }
+    },
+    "optifine": true,
+    "gui": false
+  },
+  {
+    "id": "8e44b29560d2e7d952c0",
+    "category": "default",
+    "name": "FreshAnimations_v1.10.4",
+    "sha256": "8e44b29560d2e7d952c0a4f77f0451e6dcb048f827189bffc712b446be8de7f2",
+    "size": 850941,
+    "url": "https://cdn.modrinth.com/data/50dA9Sha/versions/xN57JJts/FreshAnimations_v1.10.4.zip",
+    "project": "50dA9Sha",
+    "version": "1.10.4",
+    "meta": {
+      "pack": {
+        "description": "§4■ 1.10.4 BETA§8\n■ By FreshLX",
+        "pack_format": 15,
+        "supported_formats": {
+          "min_inclusive": 15,
+          "max_inclusive": 999
+        },
+        "min_format": 15,
+        "max_format": 999
+      },
+      "overlays": {
+        "entries": [
+          {
+            "directory": "20-3",
+            "formats": {
+              "min_inclusive": 22,
+              "max_inclusive": 999
+            },
+            "min_format": 22,
+            "max_format": 999
+          },
+          {
+            "directory": "21-2",
+            "formats": {
+              "min_inclusive": 42,
+              "max_inclusive": 999
+            },
+            "min_format": 42,
+            "max_format": 999
+          },
+          {
+            "directory": "21-5",
+            "formats": {
+              "min_inclusive": 55,
+              "max_inclusive": 999
+            },
+            "min_format": 55,
+            "max_format": 999
+          },
+          {
+            "directory": "21-11",
+            "formats": {
+              "min_inclusive": 75,
+              "max_inclusive": 999
+            },
+            "min_format": 75,
+            "max_format": 999
+          }
+        ]
+      }
+    },
+    "optifine": true,
+    "gui": false
+  },
+  {
+    "id": "e2f254c578d719688fe8",
+    "category": "default",
+    "name": "No-Fog-26.1-26.2",
+    "sha256": "e2f254c578d719688fe83bd718502658055809df6926c901f6b0cfade7504de0",
+    "size": 11753,
+    "url": "https://cdn.modrinth.com/data/nEIVEFEF/versions/26zDltl6/No-Fog-26.1-26.2.zip",
+    "project": "nEIVEFEF",
+    "version": "26.2",
+    "meta": {
+      "pack": {
+        "pack_format": 88,
+        "min_format": 84,
+        "max_format": 88,
+        "description": "No Fog for Minecraft 26.1-26.2"
+      }
+    },
+    "optifine": false,
+    "gui": false
+  },
+  {
+    "id": "4ee4d1928f44d7d3cc8a",
+    "category": "default",
+    "name": "Rethoughted Elytra",
+    "sha256": "4ee4d1928f44d7d3cc8a5c7d0feaa2d4005d22fe75d17d874bed9b1679548910",
+    "size": 7479,
+    "url": "https://cdn.modrinth.com/data/PrcvOIgx/versions/QEq8YXBa/Rethoughted%20Elytra.zip",
+    "project": "PrcvOIgx",
+    "version": "1.1",
+    "meta": {
+      "pack": {
+        "min_format": 69,
+        "max_format": 75,
+        "description": [
+          {
+            "text": "§6v§a1.1"
+          },
+          "\n",
+          {
+            "text": "§6By §aCatFromNet §f"
+          }
+        ]
+      }
+    },
+    "optifine": false,
+    "gui": true
+  },
+  {
+    "id": "26c23daae1ec0c4e71fd",
+    "category": "default",
+    "name": "Simple Grass Flowers v2.0.0",
+    "sha256": "26c23daae1ec0c4e71fdc9bee449d3e088137088d21543804228863d0fa7b2c2",
+    "size": 208597,
+    "url": "https://cdn.modrinth.com/data/ti9KkMHm/versions/Cd4Xa7Sr/Simple%20Grass%20Flowers%20v2.0.0.zip",
+    "project": "ti9KkMHm",
+    "version": "2.0.0",
+    "meta": {
+      "pack": {
+        "description": [
+          {
+            "text": "Grass > Flowery Grass",
+            "color": "#6fe031"
+          },
+          {
+            "text": "\nCreated By: @2DWisp",
+            "color": "dark_aqua"
+          }
+        ],
+        "pack_format": 15,
+        "supported_formats": [
+          15,
+          9999
+        ],
+        "min_format": 15,
+        "max_format": 9999
+      }
+    },
+    "optifine": true,
+    "gui": false
+  },
+  {
+    "id": "da1f0516a9c188da75a5",
+    "category": "default",
+    "name": "[1.6] Enhanced Boss Bars",
+    "sha256": "da1f0516a9c188da75a5acd94ff48f5c69eb718cdd445e34f664e5572043e8af",
+    "size": 123265,
+    "url": "https://cdn.modrinth.com/data/U5SedJ9S/versions/ShyA8a0U/%5B1.6%5D%20Enhanced%20Boss%20Bars.zip",
+    "project": "U5SedJ9S",
+    "version": "1.6",
+    "meta": {
+      "pack": {
+        "description": "§8Better Bars for 26.1-26.3. \n§6By: Naku",
+        "min_format": 84,
+        "max_format": 97.1
+      }
+    },
+    "optifine": false,
+    "gui": true
+  },
+  {
+    "id": "5afa2f2647b22e52205c",
+    "category": "default",
+    "name": "Enchantment Outlines",
+    "sha256": "5afa2f2647b22e52205c50cb0dab4208ef52fdb94565ad86dab55bb76252abac",
+    "size": 2033368,
+    "url": "https://cdn.modrinth.com/data/A32gwfe8/versions/RZESSQH8/Enchantment%20Outlines.zip",
+    "project": "A32gwfe8",
+    "version": "2.0",
+    "meta": {
+      "pack": {
+        "description": "§d§lEnchantment Outlines\n§7V2.0 | By Tixul & Not_thefirst",
+        "pack_format": 15,
+        "supported_formats": [
+          15,
+          128
+        ],
+        "min_format": 15,
+        "max_format": 128
+      },
+      "overlays": {
+        "entries": [
+          {
+            "directory": "1-21-1",
+            "formats": {
+              "min_inclusive": 33,
+              "max_inclusive": 41
+            },
+            "min_format": 33,
+            "max_format": 41
+          },
+          {
+            "directory": "1-21-5",
+            "formats": {
+              "min_inclusive": 46,
+              "max_inclusive": 55
+            },
+            "min_format": 46,
+            "max_format": 55
+          },
+          {
+            "directory": "1-21-6",
+            "formats": {
+              "min_inclusive": 56,
+              "max_inclusive": 65
+            },
+            "min_format": 56,
+            "max_format": 65
+          },
+          {
+            "directory": "1-21-9",
+            "formats": {
+              "min_inclusive": 66,
+              "max_inclusive": 75
+            },
+            "min_format": 66,
+            "max_format": 75
+          },
+          {
+            "directory": "26-1",
+            "formats": {
+              "min_inclusive": 84,
+              "max_inclusive": 128
+            },
+            "min_format": 84,
+            "max_format": 128
+          },
+          {
+            "directory": "26-3",
+            "formats": {
+              "min_inclusive": 97,
+              "max_inclusive": 128
+            },
+            "min_format": 97,
+            "max_format": 128
+          },
+          {
+            "directory": "option-3d-mace",
+            "polytone_condition": "config('enchantment_outlines_config:mace') == '§e3D'",
+            "formats": {
+              "min_inclusive": 0,
+              "max_inclusive": 0
+            },
+            "min_format": 0,
+            "max_format": 0
+          },
+          {
+            "directory": "option-low-shield",
+            "polytone_condition": "config('enchantment_outlines_config:shield') == '§eLow Shield'",
+            "formats": {
+              "min_inclusive": 0,
+              "max_inclusive": 0
+            },
+            "min_format": 0,
+            "max_format": 0
+          },
+          {
+            "directory": "option-tint-red",
+            "polytone_condition": "config('enchantment_outlines_config:tint_color') == '§cRed'",
+            "formats": {
+              "min_inclusive": 0,
+              "max_inclusive": 0
+            },
+            "min_format": 0,
+            "max_format": 0
+          },
+          {
+            "directory": "option-tint-orange",
+            "polytone_condition": "config('enchantment_outlines_config:tint_color') == '§6Orange'",
+            "formats": {
+              "min_inclusive": 0,
+              "max_inclusive": 0
+            },
+            "min_format": 0,
+            "max_format": 0
+          },
+          {
+            "directory": "option-tint-yellow",
+            "polytone_condition": "config('enchantment_outlines_config:tint_color') == '§eYellow'",
+            "formats": {
+              "min_inclusive": 0,
+              "max_inclusive": 0
+            },
+            "min_format": 0,
+            "max_format": 0
+          },
+          {
+            "directory": "option-tint-green",
+            "polytone_condition": "config('enchantment_outlines_config:tint_color') == '§aGreen'",
+            "formats": {
+              "min_inclusive": 0,
+              "max_inclusive": 0
+            },
+            "min_format": 0,
+            "max_format": 0
+          },
+          {
+            "directory": "option-tint-cyan",
+            "polytone_condition": "config('enchantment_outlines_config:tint_color') == '§bCyan'",
+            "formats": {
+              "min_inclusive": 0,
+              "max_inclusive": 0
+            },
+            "min_format": 0,
+            "max_format": 0
+          },
+          {
+            "directory": "option-tint-dark-blue",
+            "polytone_condition": "config('enchantment_outlines_config:tint_color') == '§1Dark Blue'",
+            "formats": {
+              "min_inclusive": 0,
+              "max_inclusive": 0
+            },
+            "min_format": 0,
+            "max_format": 0
+          },
+          {
+            "directory": "option-tint-purple",
+            "polytone_condition": "config('enchantment_outlines_config:tint_color') == '§5Purple'",
+            "formats": {
+              "min_inclusive": 0,
+              "max_inclusive": 0
+            },
+            "min_format": 0,
+            "max_format": 0
+          },
+          {
+            "directory": "option-tint-pink",
+            "polytone_condition": "config('enchantment_outlines_config:tint_color') == '§dPink'",
+            "formats": {
+              "min_inclusive": 0,
+              "max_inclusive": 0
+            },
+            "min_format": 0,
+            "max_format": 0
+          },
+          {
+            "directory": "option-tint-dark-red",
+            "polytone_condition": "config('enchantment_outlines_config:tint_color') == '§4Dark Red'",
+            "formats": {
+              "min_inclusive": 0,
+              "max_inclusive": 0
+            },
+            "min_format": 0,
+            "max_format": 0
+          },
+          {
+            "directory": "option-tint-white",
+            "polytone_condition": "config('enchantment_outlines_config:tint_color') == '§fWhite'",
+            "formats": {
+              "min_inclusive": 0,
+              "max_inclusive": 0
+            },
+            "min_format": 0,
+            "max_format": 0
+          },
+          {
+            "directory": "option-no-axe",
+            "polytone_condition": "config('enchantment_outlines_config:axe') == '§cDisabled'",
+            "formats": {
+              "min_inclusive": 0,
+              "max_inclusive": 0
+            },
+            "min_format": 0,
+            "max_format": 0
+          },
+          {
+            "directory": "option-no-bow",
+            "polytone_condition": "config('enchantment_outlines_config:bow') == '§cDisabled'",
+            "formats": {
+              "min_inclusive": 0,
+              "max_inclusive": 0
+            },
+            "min_format": 0,
+            "max_format": 0
+          },
+          {
+            "directory": "option-no-brush",
+            "polytone_condition": "config('enchantment_outlines_config:brush') == '§cDisabled'",
+            "formats": {
+              "min_inclusive": 0,
+              "max_inclusive": 0
+            },
+            "min_format": 0,
+            "max_format": 0
+          },
+          {
+            "directory": "option-no-carrot_on_a_stick",
+            "polytone_condition": "config('enchantment_outlines_config:carrot_on_a_stick') == '§cDisabled'",
+            "formats": {
+              "min_inclusive": 0,
+              "max_inclusive": 0
+            },
+            "min_format": 0,
+            "max_format": 0
+          },
+          {
+            "directory": "option-no-compass",
+            "polytone_condition": "config('enchantment_outlines_config:compass') == '§cDisabled'",
+            "formats": {
+              "min_inclusive": 0,
+              "max_inclusive": 0
+            },
+            "min_format": 0,
+            "max_format": 0
+          },
+          {
+            "directory": "option-no-crossbow",
+            "polytone_condition": "config('enchantment_outlines_config:crossbow') == '§cDisabled'",
+            "formats": {
+              "min_inclusive": 0,
+              "max_inclusive": 0
+            },
+            "min_format": 0,
+            "max_format": 0
+          },
+          {
+            "directory": "option-no-enchanted_book",
+            "polytone_condition": "config('enchantment_outlines_config:enchanted_book') == '§cDisabled'",
+            "formats": {
+              "min_inclusive": 0,
+              "max_inclusive": 0
+            },
+            "min_format": 0,
+            "max_format": 0
+          },
+          {
+            "directory": "option-no-enchanted_golden_apple",
+            "polytone_condition": "config('enchantment_outlines_config:enchanted_golden_apple') == '§cDisabled'",
+            "formats": {
+              "min_inclusive": 0,
+              "max_inclusive": 0
+            },
+            "min_format": 0,
+            "max_format": 0
+          },
+          {
+            "directory": "option-no-fishing_rod",
+            "polytone_condition": "config('enchantment_outlines_config:fishing_rod') == '§cDisabled'",
+            "formats": {
+              "min_inclusive": 0,
+              "max_inclusive": 0
+            },
+            "min_format": 0,
+            "max_format": 0
+          },
+          {
+            "directory": "option-no-flint_and_steel",
+            "polytone_condition": "config('enchantment_outlines_config:flint_and_steel') == '§cDisabled'",
+            "formats": {
+              "min_inclusive": 0,
+              "max_inclusive": 0
+            },
+            "min_format": 0,
+            "max_format": 0
+          },
+          {
+            "directory": "option-no-hoe",
+            "polytone_condition": "config('enchantment_outlines_config:hoe') == '§cDisabled'",
+            "formats": {
+              "min_inclusive": 0,
+              "max_inclusive": 0
+            },
+            "min_format": 0,
+            "max_format": 0
+          },
+          {
+            "directory": "option-no-nether_star",
+            "polytone_condition": "config('enchantment_outlines_config:nether_star') == '§cDisabled'",
+            "formats": {
+              "min_inclusive": 0,
+              "max_inclusive": 0
+            },
+            "min_format": 0,
+            "max_format": 0
+          },
+          {
+            "directory": "option-no-pickaxe",
+            "polytone_condition": "config('enchantment_outlines_config:pickaxe') == '§cDisabled'",
+            "formats": {
+              "min_inclusive": 0,
+              "max_inclusive": 0
+            },
+            "min_format": 0,
+            "max_format": 0
+          },
+          {
+            "directory": "option-no-shears",
+            "polytone_condition": "config('enchantment_outlines_config:shears') == '§cDisabled'",
+            "formats": {
+              "min_inclusive": 0,
+              "max_inclusive": 0
+            },
+            "min_format": 0,
+            "max_format": 0
+          },
+          {
+            "directory": "option-no-shield",
+            "polytone_condition": "config('enchantment_outlines_config:shield') == '§cDisabled'",
+            "formats": {
+              "min_inclusive": 0,
+              "max_inclusive": 0
+            },
+            "min_format": 0,
+            "max_format": 0
+          },
+          {
+            "directory": "option-no-spear",
+            "polytone_condition": "config('enchantment_outlines_config:spear') == '§cDisabled'",
+            "formats": {
+              "min_inclusive": 0,
+              "max_inclusive": 0
+            },
+            "min_format": 0,
+            "max_format": 0
+          },
+          {
+            "directory": "option-no-sword",
+            "polytone_condition": "config('enchantment_outlines_config:sword') == '§cDisabled'",
+            "formats": {
+              "min_inclusive": 0,
+              "max_inclusive": 0
+            },
+            "min_format": 0,
+            "max_format": 0
+          },
+          {
+            "directory": "option-no-shovel",
+            "polytone_condition": "config('enchantment_outlines_config:shovel') == '§cDisabled'",
+            "formats": {
+              "min_inclusive": 0,
+              "max_inclusive": 0
+            },
+            "min_format": 0,
+            "max_format": 0
+          },
+          {
+            "directory": "option-no-totem_of_undying",
+            "polytone_condition": "config('enchantment_outlines_config:totem_of_undying') == '§cDisabled'",
+            "formats": {
+              "min_inclusive": 0,
+              "max_inclusive": 0
+            },
+            "min_format": 0,
+            "max_format": 0
+          },
+          {
+            "directory": "option-no-trident",
+            "polytone_condition": "config('enchantment_outlines_config:trident') == '§cDisabled'",
+            "formats": {
+              "min_inclusive": 0,
+              "max_inclusive": 0
+            },
+            "min_format": 0,
+            "max_format": 0
+          },
+          {
+            "directory": "option-no-warped_fungus_on_a_stick",
+            "polytone_condition": "config('enchantment_outlines_config:warped_fungus_on_a_stick') == '§cDisabled'",
+            "formats": {
+              "min_inclusive": 0,
+              "max_inclusive": 0
+            },
+            "min_format": 0,
+            "max_format": 0
+          }
+        ]
+      },
+      "polytone": {
+        "title": {
+          "text": "",
+          "extra": [
+            {
+              "text": "Enchantment Outlines",
+              "color": "light_purple",
+              "bold": true
+            },
+            {
+              "text": " | v2.0",
+              "color": "light_purple"
+            },
+            {
+              "text": "\nBy Tixul & not_thefirst",
+              "color": "white"
+            }
+          ]
+        },
+        "content": {
+          "text": "",
+          "extra": [
+            {
+              "text": "Ko-fi",
+              "color": "#3C8ECE",
+              "underlined": true,
+              "click_event": {
+                "action": "open_url",
+                "url": "https://ko-fi.com/tixul"
+              },
+              "hover_event": {
+                "action": "show_text",
+                "value": "Support me!"
+              }
+            },
+            {
+              "text": "\nSupport me with a once-off donation!"
+            },
+            {
+              "text": "\n\nDiscord",
+              "color": "#3C8ECE",
+              "underlined": true,
+              "click_event": {
+                "action": "open_url",
+                "url": "https://discord.gg/TWfQPwGmH3"
+              },
+              "hover_event": {
+                "action": "show_text",
+                "value": "Get support!"
+              }
+            },
+            {
+              "text": "\nReport bugs, submit suggestions & get help!"
+            }
+          ]
+        }
+      }
+    },
+    "optifine": false,
+    "gui": false
+  },
+  {
+    "id": "4eac39d9efe5bc739012",
+    "category": "default",
+    "name": "Fast Better Grass",
+    "sha256": "4eac39d9efe5bc73901265dc53e831f8b7cd9c0afa2f912aca57eaf5aa7a0f8d",
+    "size": 10907,
+    "url": "https://cdn.modrinth.com/data/dspVZXKP/versions/Alviiov6/Fast%20Better%20Grass.zip",
+    "project": "dspVZXKP",
+    "version": "26.3",
+    "meta": {
+      "pack": {
+        "description": {
+          "translate": "fo.resourcePack.fastbettergrass",
+          "fallback": "OptiFine's Better Grass (fast)§r\n§4Must be the first to work"
+        },
+        "min_format": 97,
+        "max_format": 999
+      }
+    },
+    "optifine": false,
+    "gui": false
+  },
+  {
+    "id": "623ef37ea6821f3d02e6",
+    "category": "default",
+    "name": "NewGlowingOres-[Border]",
+    "sha256": "623ef37ea6821f3d02e68631fcca20ac18fe95647af580a279604a9314203f0b",
+    "size": 344937,
+    "url": "https://cdn.modrinth.com/data/oL18adaQ/versions/BG46xXmQ/NewGlowingOres-%C2%A76%5BBorder%5D%C2%A7r.zip",
+    "project": "oL18adaQ",
+    "version": "2.0-1.21-border",
+    "meta": {
+      "pack": {
+        "pack_format": 34,
+        "supported_formats": {
+          "min_inclusive": 8,
+          "max_inclusive": 69
+        },
+        "description": "§6v2.0-1.21+ §r| by GridExpert"
+      }
+    },
+    "optifine": true,
+    "gui": false
+  },
+  {
+    "id": "94d0bd8ed5e2f18c5285",
+    "category": "default",
+    "name": "Os' Colorful Grasses (Tall)",
+    "sha256": "94d0bd8ed5e2f18c528598557e23b38f63931df965ffc7bc0c33a76a6632cae0",
+    "size": 214646,
+    "url": "https://cdn.modrinth.com/data/O2zhH8n8/versions/PQqK5ppM/Os%27%20Colorful%20Grasses%20%28Tall%29.zip",
+    "project": "O2zhH8n8",
+    "version": "Tall-26.3",
+    "meta": {
+      "pack": {
+        "name": "Os' Colorful Grasses (Tall)",
+        "version": "26.3",
+        "source": "https://modrinth.com/resourcepack/os-colorful-grasses",
+        "pack_format": 15,
+        "supported_formats": {
+          "min_inclusive": 15,
+          "max_inclusive": 1024
+        },
+        "min_format": 15,
+        "max_format": 1024,
+        "description": [
+          {
+            "text": "Tall and Fluffy!",
+            "color": "#92bfee"
+          },
+          {
+            "text": "\n✧ ᴏꜱʟʏᴘꜱɪꜱ ✧",
+            "color": "#cca3ff"
+          }
+        ]
+      }
+    },
+    "optifine": false,
+    "gui": false
+  },
+  {
+    "id": "a7635488e71911d6c96e",
+    "category": "default",
+    "name": "ProgrammerArtFix-26.3.1",
+    "sha256": "a7635488e71911d6c96e7442a8c37895bf9374d9897b5cc24543a773e5d95302",
+    "size": 946794,
+    "url": "https://cdn.modrinth.com/data/d1nRD7RG/versions/gWVGI28H/ProgrammerArtFix-26.3.1.zip",
+    "project": "d1nRD7RG",
+    "version": "26.3.1",
+    "meta": {
+      "pack": {
+        "min_format": 77,
+        "max_format": 99,
+        "description": "A patch for Programmer Art"
+      }
+    },
+    "optifine": true,
+    "gui": true
+  },
+  {
+    "id": "26f889d47d239d0c8b77",
+    "category": "default",
+    "name": "Fresh Weapons & Tools",
+    "sha256": "26f889d47d239d0c8b770ab3e49a7823ec2022b1d0ca42e46fce96899a906618",
+    "size": 33872,
+    "url": "https://cdn.modrinth.com/data/sNfe5Lxl/versions/dBZoguyi/%C2%A73Fresh%20%C2%A7bWeapons%20%26%20Tools.zip",
+    "project": "sNfe5Lxl",
+    "version": "2.1.6",
+    "meta": {
+      "pack": {
+        "pack_format": 15,
+        "supported_formats": [
+          15,
+          97
+        ],
+        "min_format": 15,
+        "max_format": 97,
+        "description": [
+          {
+            "text": "■ Enhanced Equipment\n■",
+            "color": "#808080"
+          },
+          {
+            "text": " v2.1.6 ",
+            "color": "gray"
+          },
+          {
+            "text": "by BlueHDGaming",
+            "color": "#808080"
+          }
+        ]
+      }
+    },
+    "optifine": false,
+    "gui": false
+  },
+  {
+    "id": "391b6546431106723ef0",
+    "category": "default",
+    "name": "Vanilla Experience+",
+    "sha256": "391b6546431106723ef091e68755046c2b3aaca85d30e14265724a995f922507",
+    "size": 2271703,
+    "url": "https://cdn.modrinth.com/data/8bf2GogI/versions/UBuTOpY1/%C2%A76%C2%A7lVanilla%20Experience%2B%C2%A70.zip",
+    "project": "8bf2GogI",
+    "version": "v2.0",
+    "meta": {
+      "pack": {
+        "min_format": 75,
+        "max_format": 97,
+        "description": "§eImproves, refines, and fixes \n§fFor 1.21.11-26.3 §8By Kryqu"
+      },
+      "overlays": {
+        "entries": [
+          {
+            "directory": "1.21.11-26.2",
+            "min_format": 75,
+            "max_format": 88
+          },
+          {
+            "directory": "1.21.11-26.1.2",
+            "min_format": 75,
+            "max_format": 84
+          },
+          {
+            "directory": "1.21.11",
+            "min_format": 75,
+            "max_format": 75
+          }
+        ]
+      }
+    },
+    "optifine": true,
+    "gui": true
+  },
+  {
+    "id": "3e26f37ede8f26972a95",
+    "category": "default",
+    "name": "Vocal Villagers 1.4",
+    "sha256": "3e26f37ede8f26972a95fcf4dd947174fe6be46df2cde70176504a8329e5d20b",
+    "size": 1148298,
+    "url": "https://cdn.modrinth.com/data/SEt2q8cl/versions/B0ExDjpO/%C2%A7a%C2%A7lVocal%20Villagers%20%C2%A7r%C2%A771.4.zip",
+    "project": "SEt2q8cl",
+    "version": "1.4",
+    "meta": {
+      "pack": {
+        "pack_format": 84,
+        "description": "43 extra villager sounds!\n                 §f §7- by §aOweh",
+        "supported_formats": [
+          3,
+          107
+        ],
+        "min_format": 3,
+        "max_format": 107
+      }
+    },
+    "optifine": false,
+    "gui": true
+  },
+  {
+    "id": "ab43b33fd22b33ea0953",
+    "category": "default",
+    "name": "Better Fresher 3D Books v1.5.1",
+    "sha256": "ab43b33fd22b33ea09535ce9d003fd17e37634fba483f9b51fcffb8e56bf447b",
+    "size": 732893,
+    "url": "https://cdn.modrinth.com/data/PuwwhnS7/versions/PxP0VCwq/%C2%A7aBetter%20Fresher%203D%20Books%20v1.5.1.zip",
+    "project": "PuwwhnS7",
+    "version": "1.5.1",
+    "meta": {
+      "pack": {
+        "description": "§7Enchanting in a new dimension! §fby Bray & Cyber §av1.5.1",
+        "pack_format": 84,
+        "supported_formats": {
+          "min_inclusive": 55,
+          "max_inclusive": 999
+        },
+        "min_format": 55,
+        "max_format": 999
+      },
+      "overlays": {
+        "entries": [
+          {
+            "directory": "26.1",
+            "min_format": 76,
+            "max_format": 84,
+            "formats": {
+              "min_inclusive": 76,
+              "max_inclusive": 84
+            }
+          },
+          {
+            "directory": "1.21.9",
+            "min_format": 69,
+            "max_format": 75,
+            "formats": {
+              "min_inclusive": 69,
+              "max_inclusive": 75
+            }
+          },
+          {
+            "directory": "1.21.6",
+            "min_format": 56,
+            "max_format": 68,
+            "formats": {
+              "min_inclusive": 56,
+              "max_inclusive": 68
+            }
+          },
+          {
+            "directory": "1.21.5",
+            "min_format": 47,
+            "max_format": 55,
+            "formats": {
+              "min_inclusive": 47,
+              "max_inclusive": 55
+            }
+          }
+        ]
+      }
+    },
+    "optifine": true,
+    "gui": false
+  },
+  {
+    "id": "83f73f1f018cffe553c5",
+    "category": "default",
+    "name": "animated-items 1.21.x-26.3 - v1.6.3",
+    "sha256": "83f73f1f018cffe553c5f0fe7e785c7f00df84ea32dbeba37c873a9939fd91ed",
+    "size": 1783851,
+    "url": "https://cdn.modrinth.com/data/uBBepXuH/versions/OwMX7WV9/animated-items%201.21.x-26.3%20-%20v1.6.3.zip",
+    "project": "uBBepXuH",
+    "version": "1.6.3",
+    "meta": {
+      "pack": {
+        "pack_format": 97.1,
+        "min_format": 34,
+        "max_format": 97.1,
+        "supported_formats": {
+          "min_inclusive": 34,
+          "max_inclusive": 97.1
+        },
+        "description": "§b- Animated Items -§r\n§7v1.6.3§r • by Palette"
+      }
+    },
+    "optifine": true,
+    "gui": false
+  },
+  {
+    "id": "dd1e277cf4f3051535ca",
+    "category": "default",
+    "name": "Better Lanterns v1.3.2 - 26.1",
+    "sha256": "dd1e277cf4f3051535cacce39f8ebd3409fe149105e34b9a563b25588d0793aa",
+    "size": 72588,
+    "url": "https://cdn.modrinth.com/data/PGGrfcvL/versions/wfM00H4G/Better%20Lanterns%20v1.3.2%20-%2026.1.zip",
+    "project": "PGGrfcvL",
+    "version": "1.3.2-mc26.1",
+    "meta": {
+      "pack": {
+        "min_format": 84,
+        "max_format": 84,
+        "description": "§73D Lanterns & Chains\n§7By §3Nico4play §7| §926.1    §7v1.3.2"
+      }
+    },
+    "optifine": false,
+    "gui": false
+  },
+  {
+    "id": "d67740dffd0f9d332f57",
+    "category": "default",
+    "name": "Blue Netherite[1.2.1]",
+    "sha256": "d67740dffd0f9d332f57adb0aceb9ae343c6d63a6c8f85f122237f2eb920aaf4",
+    "size": 11914,
+    "url": "https://cdn.modrinth.com/data/OL1EGja1/versions/X2wHMxlj/Blue%20Netherite%5B1.2.1%5D.zip",
+    "project": "OL1EGja1",
+    "version": "1.2.1",
+    "meta": {
+      "pack": {
+        "pack_format": 42,
+        "description": "§3Blue Netherite \n         §8[1.21.2+]",
+        "supported_formats": [
+          42,
+          320
+        ],
+        "max_format": 320,
+        "min_format": 42
+      },
+      "credits": {
+        "ThatCuteOne": "I made the pack",
+        "Ewan Howell": "Got emissve textures template from"
+      }
+    },
+    "optifine": false,
+    "gui": false
+  },
+  {
+    "id": "d63df002bd227c00ee11",
+    "category": "default",
+    "name": "crops-3d(2)",
+    "sha256": "d63df002bd227c00ee11b8b5f64b751b152b3e0f883a135c2496564703bf67c5",
+    "size": 483678,
+    "url": "https://cdn.modrinth.com/data/PgpTtNoI/versions/iKYRZwnm/crops-3d%282%29.zip",
+    "project": "PgpTtNoI",
+    "version": "3",
+    "meta": {
+      "pack": {
+        "pack_format": 55,
+        "description": "Grow your bossoms"
+      }
+    },
+    "optifine": false,
+    "gui": false
+  },
+  {
+    "id": "76deb1da9dba48e4d397",
+    "category": "default",
+    "name": "Dark Smooth GUI 26.1.x blue-3D94FF-5EA6FF-0049A3-00316E",
+    "sha256": "76deb1da9dba48e4d397da43ee843053050318321d59124c3e330a5c5afa50c9",
+    "size": 2148310,
+    "url": "https://cdn.modrinth.com/data/3BPM3cU5/versions/x4qfUjqP/Dark%20Smooth%20GUI%2026.1.x%20blue-3D94FF-5EA6FF-0049A3-00316E.zip",
+    "project": "3BPM3cU5",
+    "version": "0.14.1+26.1.x-blue",
+    "meta": {
+      "pack": {
+        "description": [
+          {
+            "color": "gold",
+            "text": "Dark Smooth GUI"
+          },
+          {
+            "color": "dark_red",
+            "text": " [by Aeldit]"
+          },
+          {
+            "color": "dark_aqua",
+            "text": "\nv0.14.1+26.1.x"
+          }
+        ],
+        "max_format": 84,
+        "min_format": 84,
+        "pack_format": 84
+      }
+    },
+    "optifine": true,
+    "gui": true
+  },
+  {
+    "id": "d8fc06b80bf8000cda06",
+    "category": "default",
+    "name": "Dimanic Beds v2",
+    "sha256": "d8fc06b80bf8000cda065330d40fc9f1a3a29b4f90d0aa47a175f5d6ec001626",
+    "size": 71254,
+    "url": "https://cdn.modrinth.com/data/HtIrK6OV/versions/A1jRGYHY/Dimanic%20Beds%20v2.zip",
+    "project": "HtIrK6OV",
+    "version": "v2",
+    "meta": {
+      "pack": {
+        "pack_format": 34,
+        "supported_formats": {
+          "min_inclusive": 34,
+          "max_inclusive": 70
+        },
+        "description": "idk, just beds and flowuh"
+      }
+    },
+    "optifine": false,
+    "gui": false
+  },
+  {
+    "id": "77baaeb8469acf33c6f8",
+    "category": "default",
+    "name": "Enhanced Audio r7",
+    "sha256": "77baaeb8469acf33c6f852aa70336d09cda781322dd32cb599eb6089ab4f323c",
+    "size": 18977120,
+    "url": "https://cdn.modrinth.com/data/UinPYBF7/versions/6qVu8iKs/Enhanced%20Audio%20r7.zip",
+    "project": "UinPYBF7",
+    "version": "r7",
+    "meta": {
+      "pack": {
+        "description": "§bEnhanced Audio §8| §aRelease 7",
+        "pack_format": 15,
+        "supported_formats": {
+          "min_inclusive": 15,
+          "max_inclusive": 999
+        },
+        "min_format": 15,
+        "max_format": 999
+      },
+      "overlays": {
+        "entries": [
+          {
+            "directory": "20-3",
+            "formats": {
+              "min_inclusive": 22,
+              "max_inclusive": 999
+            },
+            "min_format": 22,
+            "max_format": 999
+          },
+          {
+            "directory": "21-2",
+            "formats": {
+              "min_inclusive": 42,
+              "max_inclusive": 999
+            },
+            "min_format": 42,
+            "max_format": 999
+          },
+          {
+            "directory": "21-5",
+            "formats": {
+              "min_inclusive": 55,
+              "max_inclusive": 999
+            },
+            "min_format": 55,
+            "max_format": 999
+          }
+        ]
+      }
+    },
+    "optifine": false,
+    "gui": false
+  },
+  {
+    "id": "5bcacdb6e74125f2ec7d",
+    "category": "default",
+    "name": "FA+Classic_Horses-v1.6.1",
+    "sha256": "5bcacdb6e74125f2ec7d78848a3b411912a0a73484e767134e33a23a67ea57fa",
+    "size": 199597,
+    "url": "https://cdn.modrinth.com/data/rrRWRbvm/versions/MrN2yz06/FA%2BClassic_Horses-v1.6.1.zip",
+    "project": "rrRWRbvm",
+    "version": "1.6.1",
+    "meta": {
+      "pack": {
+        "description": "§a■ 1.6.1 : Classic Horses Edit§8\n■ By FreshLX",
+        "min_format": 84,
+        "max_format": 999
+      }
+    },
+    "optifine": true,
+    "gui": false
+  },
+  {
+    "id": "9ee3ae5b2fe5cd980e40",
+    "category": "default",
+    "name": "FA+Player-v1.1",
+    "sha256": "9ee3ae5b2fe5cd980e4041429dc66d88243f5f2420e2814e5361c746ad937f33",
+    "size": 110203,
+    "url": "https://cdn.modrinth.com/data/TAIMVZCL/versions/Wj7NeGjP/FA%2BPlayer-v1.1.zip",
+    "project": "TAIMVZCL",
+    "version": "1.1.0",
+    "meta": {
+      "pack": {
+        "description": "§a■ 1.1 : Player Add-on§8\n■ By FreshLX",
+        "pack_format": 15,
+        "supported_formats": {
+          "min_inclusive": 15,
+          "max_inclusive": 999
+        },
+        "min_format": 15,
+        "max_format": 999
+      },
+      "overlays": {
+        "entries": [
+          {
+            "directory": "21-2",
+            "formats": {
+              "min_inclusive": 42,
+              "max_inclusive": 999
+            },
+            "min_format": 42,
+            "max_format": 999
+          },
+          {
+            "directory": "21-5",
+            "formats": {
+              "min_inclusive": 55,
+              "max_inclusive": 999
+            },
+            "min_format": 55,
+            "max_format": 999
+          }
+        ]
+      }
+    },
+    "optifine": false,
+    "gui": false
+  },
+  {
+    "id": "cf9f17a2977e171b33cb",
+    "category": "default",
+    "name": "FreshAnimations_v1.10.5",
+    "sha256": "cf9f17a2977e171b33cb0b598bc4357dd0383e09c10d5f768ff17c12d0a028ee",
+    "size": 645816,
+    "url": "https://cdn.modrinth.com/data/50dA9Sha/versions/RGIzA5em/FreshAnimations_v1.10.5.zip",
+    "project": "50dA9Sha",
+    "version": "1.10.5",
+    "meta": {
+      "pack": {
+        "description": "§4■ 1.10.5 BETA§8\n■ By FreshLX",
+        "min_format": 84,
+        "max_format": 999
+      }
+    },
+    "optifine": true,
+    "gui": false
+  },
+  {
+    "id": "a8bf188d8f85721d5615",
+    "category": "default",
+    "name": "Glowing 3D Armor",
+    "sha256": "a8bf188d8f85721d56154d0bd747c087123f88a342bc7a02e73ffc13ab530594",
+    "size": 738192,
+    "url": "https://cdn.modrinth.com/data/WkLr6o3M/versions/WbHrIUvT/Glowing%203D%20Armor.zip",
+    "project": "WkLr6o3M",
+    "version": "1.2",
+    "meta": {
+      "pack": {
+        "description": "§b§l3D Armor With Outlines!\n§r§7V1.2 | by Tixul",
+        "min_format": 65,
+        "max_format": 99
+      },
+      "overlays": {
+        "entries": [
+          {
+            "directory": "1-21-11",
+            "min_format": 67,
+            "max_format": 75
+          },
+          {
+            "directory": "26-1",
+            "min_format": 76,
+            "max_format": 87
+          },
+          {
+            "directory": "26-2",
+            "min_format": 87,
+            "max_format": 96
+          },
+          {
+            "directory": "26-3",
+            "min_format": 97,
+            "max_format": 128
+          }
+        ]
+      }
+    },
+    "optifine": true,
+    "gui": false
+  },
+  {
+    "id": "dd4f41ae1cf60460cefd",
+    "category": "default",
+    "name": "Glowing 3D Totem",
+    "sha256": "dd4f41ae1cf60460cefd73be25389b533afc571ec2c7996fb7f1fca42395c697",
+    "size": 139189,
+    "url": "https://cdn.modrinth.com/data/LGnScTVE/versions/wecQLOUJ/Glowing%203D%20Totem.zip",
+    "project": "LGnScTVE",
+    "version": "1.3.2",
+    "meta": {
+      "pack": {
+        "pack_format": 56,
+        "supported_formats": [
+          46,
+          99
+        ],
+        "min_format": 46,
+        "max_format": 99,
+        "description": "§e§l3D Model for Your Totem\n§r§7V1.3.2 | by Tixul"
+      },
+      "overlays": {
+        "entries": [
+          {
+            "directory": "1.21.5",
+            "formats": {
+              "min_inclusive": 46,
+              "max_inclusive": 55
+            },
+            "min_format": 46,
+            "max_format": 55
+          },
+          {
+            "directory": "1.21.6",
+            "formats": {
+              "min_inclusive": 56,
+              "max_inclusive": 65
+            },
+            "min_format": 56,
+            "max_format": 65
+          },
+          {
+            "directory": "1.21.9",
+            "formats": {
+              "min_inclusive": 65,
+              "max_inclusive": 75
+            },
+            "min_format": 65,
+            "max_format": 75
+          },
+          {
+            "directory": "26.1",
+            "formats": {
+              "min_inclusive": 76,
+              "max_inclusive": 96
+            },
+            "min_format": 76,
+            "max_format": 96
+          },
+          {
+            "directory": "26.3",
+            "formats": {
+              "min_inclusive": 97,
+              "max_inclusive": 128
+            },
+            "min_format": 97,
+            "max_format": 128
+          }
+        ]
+      }
+    },
+    "optifine": false,
+    "gui": false
+  },
+  {
+    "id": "3f82eeab406a48fe18dd",
+    "category": "default",
+    "name": "Glowing Ores - Borderful Edition (8.0.1v) (1)",
+    "sha256": "3f82eeab406a48fe18ddb61fb6961ead83eb93f38b15762aacecd18812e5a664",
+    "size": 3939253,
+    "url": "https://cdn.modrinth.com/data/26bFJKVz/versions/3SYXdd58/Glowing%20Ores%20-%20Borderful%20Edition%20%288.0.1v%29.zip",
+    "project": "26bFJKVz",
+    "version": "8.0.1",
+    "meta": {
+      "pack": {
+        "description": "§bEnhancedVisuals §9Glowing Ores! Borderful Edition §78.0.1v",
+        "min_format": 65,
+        "max_format": 88
+      }
+    },
+    "optifine": true,
+    "gui": false
+  },
+  {
+    "id": "2b611e5a470538d2bfb3",
+    "category": "default",
+    "name": "HyperPunchy-v2.5+ (1)",
+    "sha256": "2b611e5a470538d2bfb3d161868f2a1a528ad20cdaf6cb817dc70af0c2fdc83d",
+    "size": 1193703,
+    "url": "https://cdn.modrinth.com/data/NVBMhec4/versions/nJiwz3lJ/HyperPunchy-v2.5%2B.zip",
+    "project": "NVBMhec4",
+    "version": "2.5",
+    "meta": {
+      "pack": {
+        "pack_format": 15,
+        "supported_formats": {
+          "min_inclusive": 15,
+          "max_inclusive": 999
+        },
+        "min_format": 15,
+        "max_format": 999,
+        "description": "§6■ Animation Pack - v2.4+ \n§f■ By Hamz"
+      }
+    },
+    "optifine": false,
+    "gui": false
+  },
+  {
+    "id": "a3c4cf58ed15e3abb8e6",
+    "category": "default",
+    "name": "Icons v.1.14 (1)",
+    "sha256": "a3c4cf58ed15e3abb8e607de23a018edc6cce0600970d0908ebf8498a3445e0c",
+    "size": 9414964,
+    "url": "https://cdn.modrinth.com/data/O7z3QKAG/versions/5mLQJaIu/Icons%20v.1.14.zip",
+    "project": "O7z3QKAG",
+    "version": "1.14",
+    "meta": {
+      "pack": {
+        "pack_format": 15,
+        "min_format": 15,
+        "max_format": 200,
+        "supported_formats": [
+          15,
+          200
+        ],
+        "description": [
+          {
+            "text": " 1.20 - 26.3"
+          },
+          "\n",
+          {
+            "text": " §7By §rWeNAN Studios",
+            "color": "#BE5AD1"
+          }
+        ]
+      },
+      "overlays": {
+        "entries": [
+          {
+            "directory": "1.20.2",
+            "formats": [
+              18,
+              200
+            ],
+            "min_format": 18,
+            "max_format": 200
+          },
+          {
+            "directory": "26.2",
+            "formats": [
+              88,
+              200
+            ],
+            "min_format": [
+              88,
+              0
+            ],
+            "max_format": [
+              200,
+              0
+            ]
+          }
+        ]
+      }
+    },
+    "optifine": false,
+    "gui": true
+  },
+  {
+    "id": "ecf435029820168d8df9",
+    "category": "default",
+    "name": "RAYs_3D_Ladders_v2.4 (1)",
+    "sha256": "ecf435029820168d8df9f4eb8d3f63e35263be8ce06c4c1e69ded52cc6cf52ca",
+    "size": 1936943,
+    "url": "https://cdn.modrinth.com/data/Uupo7yGf/versions/lfVriRcD/RAYs_3D_Ladders_v2.4.zip",
+    "project": "Uupo7yGf",
+    "version": "2.4",
+    "meta": {
+      "pack": {
+        "supported_formats": {
+          "min_inclusive": 1,
+          "max_inclusive": 999
+        },
+        "pack_format": 97.1,
+        "description": "§9◆ §fVersion §b2.4§r§r\n§9◆ §fMade by§r xR§k4§rYM§k0§rND",
+        "min_format": 1,
+        "max_format": 999
+      }
+    },
+    "optifine": false,
+    "gui": false
+  },
+  {
+    "id": "5dbe0481997e52b8bde5",
+    "category": "default",
+    "name": "Weskerson's 3D Items (1)",
+    "sha256": "5dbe0481997e52b8bde5fcd9faca0c0e271ab704c7f35495c269859ff4d50da6",
+    "size": 2608018,
+    "url": "https://cdn.modrinth.com/data/pUsTu0Hi/versions/Y7lmVtnz/Weskerson%27s%203D%20Items.zip",
+    "project": "pUsTu0Hi",
+    "version": "2.5.5",
+    "meta": {
+      "pack": {
+        "description": "By Weskerson",
+        "pack_format": 46,
+        "supported_formats": [
+          46,
+          128
+        ],
+        "min_format": 46,
+        "max_format": 128
+      },
+      "overlays": {
+        "entries": [
+          {
+            "directory": "1.21.5",
+            "formats": {
+              "min_inclusive": 46,
+              "max_inclusive": 55
+            },
+            "min_format": 46,
+            "max_format": 55
+          },
+          {
+            "directory": "1.21.6",
+            "formats": {
+              "min_inclusive": 56,
+              "max_inclusive": 65
+            },
+            "min_format": 56,
+            "max_format": 65
+          },
+          {
+            "directory": "1.21.9",
+            "formats": {
+              "min_inclusive": 65,
+              "max_inclusive": 83
+            },
+            "min_format": 65,
+            "max_format": 83
+          },
+          {
+            "directory": "26.1",
+            "formats": {
+              "min_inclusive": 84,
+              "max_inclusive": 87
+            },
+            "min_format": 84,
+            "max_format": 87
+          },
+          {
+            "directory": "26.3",
+            "formats": {
+              "min_inclusive": 88,
+              "max_inclusive": 128
+            },
+            "min_format": 88,
+            "max_format": 128
+          }
+        ]
+      }
+    },
+    "optifine": false,
+    "gui": false
+  },
+  {
+    "id": "33eafd222264e092b565",
+    "category": "pvp",
+    "name": "U3packPvP",
+    "sha256": "33eafd222264e092b565fac48bb8efdf5ba7f6039a99a29687abb8087bbce3b0",
+    "size": 1121443,
+    "url": null,
+    "project": null,
+    "version": "",
+    "meta": {
+      "pack": {
+        "min_format": 75,
+        "max_format": 999,
+        "description": [
+          {
+            "text": "🤍 ",
+            "color": "gold",
+            "bold": true
+          },
+          {
+            "text": "Абсолютно бесплатно🤍",
+            "color": "#ffcc33",
+            "bold": true
+          },
+          {
+            "text": " ★\n",
+            "color": "gold",
+            "bold": true
+          },
+          {
+            "text": "16x",
+            "color": "gray"
+          },
+          {
+            "text": " base • ",
+            "color": "dark_gray"
+          },
+          {
+            "text": "Mini Items",
+            "color": "aqua"
+          },
+          {
+            "text": " • ",
+            "color": "dark_gray"
+          },
+          {
+            "text": "Transparent Shield",
+            "color": "light_purple"
+          },
+          {
+            "text": " • ",
+            "color": "dark_gray"
+          },
+          {
+            "text": "Small Totem",
+            "color": "green"
+          },
+          {
+            "text": " • ",
+            "color": "dark_gray"
+          },
+          {
+            "text": "Low Fire",
+            "color": "gold"
+          },
+          {
+            "text": " • ",
+            "color": "dark_gray"
+          },
+          {
+            "text": "Enchant Icons",
+            "color": "yellow"
+          },
+          {
+            "text": " • ",
+            "color": "dark_gray"
+          },
+          {
+            "text": "Majestic Sounds",
+            "color": "blue"
+          }
+        ]
+      }
+    },
+    "optifine": false,
+    "gui": true
+  },
+  {
+    "id": "aff7570317795ebec0ff",
+    "category": "pvp",
+    "name": "PigPack",
+    "sha256": "aff7570317795ebec0ff4a76140326570b2201d2bf6a85f98f5243602029429c",
+    "size": 32732076,
+    "url": null,
+    "project": null,
+    "version": "",
+    "meta": {
+      "pack": {
+        "description": "§4Pigs got aura",
+        "pack_format": 75,
+        "min_format": 75,
+        "max_format": 86
+      }
+    },
+    "optifine": true,
+    "gui": true
+  },
+  {
+    "id": "9b02bf0dfdc129091a5f",
+    "category": "pvp",
+    "name": "small_totem_pop",
+    "sha256": "9b02bf0dfdc129091a5f63407761bcf841aad71adaf4ae0f5d219f7a83ef991e",
+    "size": 87351,
+    "url": "https://cdn.modrinth.com/data/YSKIEHWP/versions/AUGbouxz/small_totem_pop.zip",
+    "project": "YSKIEHWP",
+    "version": "1.0.0",
+    "meta": {
+      "pack": {
+        "description": "Makes the totem animation smaller, so you can see better!",
+        "pack_format": 7
+      }
+    },
+    "optifine": false,
+    "gui": false
+  },
+  {
+    "id": "a6a02ded5a6e349f0e28",
+    "category": "pvp",
+    "name": "Transparent Shield - Mini",
+    "sha256": "a6a02ded5a6e349f0e28c2dc927f39edb33d722fd24efcc8a095676c42efe6cc",
+    "size": 33242,
+    "url": null,
+    "project": null,
+    "version": "",
+    "meta": {
+      "pack": {
+        "pack_format": 46,
+        "supported_formats": [
+          1,
+          100
+        ],
+        "min_format": [
+          1,
+          0
+        ],
+        "max_format": [
+          100,
+          0
+        ],
+        "description": "Transparent Shield — Mini (50% in first person)\nOriginal: caisem | modified hand scale"
+      }
+    },
+    "optifine": false,
+    "gui": false
+  },
+  {
+    "id": "a136d9101a4748558587",
+    "category": "pvp",
+    "name": "Faithful 64x - December 2025 Release",
+    "sha256": "a136d9101a4748558587980dace3cd7447b758fb72c4684d15fb805d0a812dac",
+    "size": 16053919,
+    "url": "https://cdn.modrinth.com/data/r4GILswZ/versions/vyty9ijM/Faithful%2064x%20-%20December%202025%20Release.zip",
+    "project": "r4GILswZ",
+    "version": "Release-12",
+    "meta": {
+      "pack": {
+        "description": "The go-to 64x texture pack for Minecraft. By HARYA_ and many others.",
+        "min_format": 68,
+        "max_format": 75
+      }
+    },
+    "optifine": true,
+    "gui": true
+  },
+  {
+    "id": "25fc89fedc6d47fe2480",
+    "category": "pvp",
+    "name": "LowOnFire v26.2",
+    "sha256": "25fc89fedc6d47fe2480a60910c65c8fd8b50121aaab919933e47cc6ba730a67",
+    "size": 42760,
+    "url": "https://cdn.modrinth.com/data/RRxvWKNC/versions/yQdcUfnr/LowOnFire%20v26.2%C2%A78.zip",
+    "project": "RRxvWKNC",
+    "version": "26.3",
+    "meta": {
+      "pack": {
+        "pack_format": 15,
+        "min_format": 15,
+        "max_format": 200,
+        "supported_formats": {
+          "min_inclusive": 15,
+          "max_inclusive": 200
+        },
+        "description": [
+          {
+            "text": " H",
+            "color": "#e05400"
+          },
+          {
+            "text": "a",
+            "color": "#e35b00"
+          },
+          {
+            "text": "n",
+            "color": "#e66200"
+          },
+          {
+            "text": "d",
+            "color": "#ec6f00"
+          },
+          {
+            "text": "l",
+            "color": "#f07a00"
+          },
+          {
+            "text": "e",
+            "color": "#f79300"
+          },
+          {
+            "text": " ",
+            "color": "#ffa600"
+          },
+          {
+            "text": "t",
+            "color": "#ffb900"
+          },
+          {
+            "text": "h",
+            "color": "#ffc500"
+          },
+          {
+            "text": "e",
+            "color": "#ffd70f"
+          },
+          {
+            "text": " ",
+            "color": "#ffe038"
+          },
+          {
+            "text": "h",
+            "color": "#fff04f"
+          },
+          {
+            "text": "e",
+            "color": "#fff66a"
+          },
+          {
+            "text": "a",
+            "color": "#fff66a"
+          },
+          {
+            "text": "t!",
+            "color": "#fff66a"
+          },
+          "\n",
+          {
+            "text": " §7by"
+          },
+          {
+            "text": " Haikis",
+            "color": "#f4d345"
+          },
+          {
+            "text": " §f󸼦"
+          }
+        ]
+      }
+    },
+    "optifine": false,
+    "gui": true
+  },
+  {
+    "id": "adb3bda304ab5147ded2",
+    "category": "pvp",
+    "name": "Primitive PvP v2.0",
+    "sha256": "adb3bda304ab5147ded27d43eaba3746df05f3bd299ce7ea3de260c7d5c4db92",
+    "size": 111608,
+    "url": "https://cdn.modrinth.com/data/YRO0cVDa/versions/yzhBTYy5/%C2%A76%C2%A7lPrimitive%20%C2%A7e%C2%A7lPvP%20%C2%A78v2.0.zip",
+    "project": "YRO0cVDa",
+    "version": "2.0",
+    "meta": {
+      "pack": {
+        "description": [
+          "",
+          {
+            "text": "Made by ",
+            "color": "white"
+          },
+          {
+            "text": "Speedy1909_",
+            "color": "red"
+          },
+          "\n",
+          {
+            "text": "On ",
+            "color": "white"
+          },
+          {
+            "text": "Modrnith",
+            "color": "#1ad96a"
+          },
+          {
+            "text": " ",
+            "color": "white"
+          },
+          {
+            "text": "and ",
+            "color": "white"
+          },
+          {
+            "text": "Tik",
+            "color": "#1ef1ee"
+          },
+          {
+            "text": "Tok",
+            "color": "#f72c58"
+          }
+        ],
+        "pack_format": 16,
+        "min_format": [
+          15,
+          0
+        ],
+        "max_format": [
+          1000,
+          0
+        ],
+        "supported_formats": [
+          15,
+          1000
+        ]
+      }
+    },
+    "optifine": false,
+    "gui": false
+  },
+  {
+    "id": "453bb22bd73b791ec4e1",
+    "category": "pvp",
+    "name": "Helpful PvP Pack",
+    "sha256": "453bb22bd73b791ec4e11765931639509ce2717ed643097a2587b9fa09750336",
+    "size": 715091,
+    "url": "https://cdn.modrinth.com/data/bRDfTLsT/versions/Aat6i1fx/%C2%A76Helpful%20PvP%20Pack.zip",
+    "project": "bRDfTLsT",
+    "version": "3.3",
+    "meta": {
+      "pack": {
+        "min_format": 70,
+        "max_format": 999,
+        "description": "By WilxMC"
+      }
+    },
+    "optifine": false,
+    "gui": true
+  },
+  {
+    "id": "c31c329be147c874461a",
+    "category": "pvp",
+    "name": "Simply 32x V1.3.4",
+    "sha256": "c31c329be147c874461af8e166342b98c920ceb18020acf6551ba6bf8a899838",
+    "size": 10335678,
+    "url": "https://cdn.modrinth.com/data/WUoZg8HH/versions/gFGHGMQ1/%C2%A7l%C2%A7bSimply%2032x%20V1.3.4.zip",
+    "project": "WUoZg8HH",
+    "version": "1.3.4",
+    "meta": {
+      "pack": {
+        "pack_format": 63,
+        "supported_formats": [
+          63,
+          64
+        ],
+        "min_format": 63,
+        "max_format": 99,
+        "description": "§5PVP Pack\n§fProduced by Cryicx"
+      },
+      "overlays": {
+        "entries": [
+          {
+            "directory": "format_18",
+            "formats": [
+              18,
+              18
+            ],
+            "min_format": 18,
+            "max_format": 18
+          },
+          {
+            "directory": "format_42-99",
+            "formats": [
+              42,
+              99
+            ],
+            "min_format": 42,
+            "max_format": 99
+          },
+          {
+            "directory": "format_46-99",
+            "formats": [
+              46,
+              99
+            ],
+            "min_format": 46,
+            "max_format": 99
+          },
+          {
+            "directory": "format_63-99",
+            "formats": [
+              63,
+              99
+            ],
+            "min_format": 63,
+            "max_format": 99
+          },
+          {
+            "directory": "format_75-99",
+            "formats": [
+              75,
+              99
+            ],
+            "min_format": 75,
+            "max_format": 99
+          },
+          {
+            "directory": "format_76-99",
+            "formats": [
+              76,
+              99
+            ],
+            "min_format": 76,
+            "max_format": 99
+          },
+          {
+            "directory": "format_85-99",
+            "formats": [
+              85,
+              99
+            ],
+            "min_format": 85,
+            "max_format": 99
+          }
+        ]
+      }
+    },
+    "optifine": true,
+    "gui": true
+  },
+  {
+    "id": "681a3fe9996d4ac2f60b",
+    "category": "pvp",
+    "name": "Crystal Vanilla Tweaks 26.3 1.3",
+    "sha256": "681a3fe9996d4ac2f60b7eb6e25a040af4403c3a9ad925015991160cbc89415b",
+    "size": 990438,
+    "url": "https://cdn.modrinth.com/data/sn2HxtR3/versions/8QBpHAxy/Crystal%20Vanilla%20Tweaks%2026.3%201.3.zip",
+    "project": "sn2HxtR3",
+    "version": "1.3",
+    "meta": {
+      "pack": {
+        "min_format": 97.1,
+        "max_format": 97.1,
+        "description": "Crystal Vanilla Tweaks"
+      }
+    },
+    "optifine": true,
+    "gui": true
+  },
+  {
+    "id": "b012296bf1d3ead895a6",
+    "category": "pvp",
+    "name": "Dripped 26.3",
+    "sha256": "b012296bf1d3ead895a6b39cbbf290ab3f246893e68e24b24af7f48dc756cc32",
+    "size": 380880,
+    "url": "https://cdn.modrinth.com/data/r1IbSpu7/versions/ItSxlPK0/Dripped%2026.3.zip",
+    "project": "r1IbSpu7",
+    "version": "26.3",
+    "meta": {
+      "pack": {
+        "min_format": 97.1,
+        "max_format": 97.1,
+        "description": "Get Dripped out for PVP"
+      }
+    },
+    "optifine": false,
+    "gui": true
+  },
+  {
+    "id": "44e0cafe274bc7d76eb4",
+    "category": "pvp",
+    "name": "PvP Utils 1.2.2",
+    "sha256": "44e0cafe274bc7d76eb4a7b7002e507d122c374bea4d7c7baa96fc6e56236e53",
+    "size": 415032,
+    "url": "https://cdn.modrinth.com/data/U95n28SF/versions/AjntKsW7/PvP%20Utils%201.2.2.zip",
+    "project": "U95n28SF",
+    "version": "1.2.2",
+    "meta": {
+      "pack": {
+        "description": {
+          "text": "§3🔥 §7Adds many QoL Changes"
+        },
+        "pack_format": 48,
+        "supported_formats": {
+          "max_inclusive": 74,
+          "min_inclusive": 48
+        }
+      }
+    },
+    "optifine": false,
+    "gui": true
+  },
+  {
+    "id": "a67f152722ba3c916e7e",
+    "category": "pvp",
+    "name": "shorterswords",
+    "sha256": "a67f152722ba3c916e7e97d87c368ab0252ff03009f96f234ef34e78646394d0",
+    "size": 5236,
+    "url": "https://cdn.modrinth.com/data/BpaObV8j/versions/TSnvYpcx/shorterswords.zip",
+    "project": "BpaObV8j",
+    "version": "1.0.5",
+    "meta": {
+      "pack": {
+        "description": "§e§k-§r §5§lPvP §d§lSwords §r§e§k-§r",
+        "min_format": [
+          69,
+          0
+        ],
+        "max_format": [
+          88,
+          0
+        ]
+      }
+    },
+    "optifine": false,
+    "gui": false
+  },
+  {
+    "id": "1d441b5ffd95eb900a77",
+    "category": "pvp",
+    "name": "White Crystal PVP V3",
+    "sha256": "1d441b5ffd95eb900a77c271d42bce10bfbca35eca8fbc7e0920e35451f8273c",
+    "size": 380030,
+    "url": "https://cdn.modrinth.com/data/eEFgAnQ5/versions/ETIT9k18/White%20Crystal%20PVP%20V3.zip",
+    "project": "eEFgAnQ5",
+    "version": "1.4",
+    "meta": {
+      "pack": {
+        "pack_format": 46,
+        "description": "White cPvP Texturepack made by §2Kaesitius",
+        "supported_formats": {
+          "min_inclusive": 30,
+          "max_inclusive": 999
+        }
+      }
+    },
+    "optifine": false,
+    "gui": true
+  }
+]

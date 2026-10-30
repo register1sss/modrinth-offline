@@ -49,6 +49,45 @@ mockIPC(async (cmd, args) => {
       instances: [],
       versions: {},
     }
+    if (tool === 'resource_catalog') {
+      if (window.__rustPackFail) throw 'Resource catalog test failure'
+      const all =
+        args.tab === 'modrinth'
+          ? Array.from({ length: 20 }, (_, i) => ({
+              id: `mr:pack${args.offset + i}`,
+              project: `pack${args.offset + i}`,
+              name: `Modrinth pack ${args.offset + i}`,
+              summary: 'Minecraft 26.3 resource pack',
+              available: true,
+            }))
+          : [
+              {
+                id: 'safe',
+                name: args.tab === 'pvp' ? 'PvP test pack' : 'Regular test pack',
+                available: true,
+                gui: true,
+                project: 'abcd1234',
+              },
+              { id: 'old', name: 'Old incompatible pack', available: false },
+              { id: 'local', name: 'Local pack', local: true, available: true, optifine: true },
+            ]
+      return {
+        entries: all.filter((p) => p.name.toLowerCase().includes(args.search.toLowerCase())),
+        total: 45,
+        limit: 20,
+        offset: args.offset,
+        installed: window.__rustPackInstalled
+          ? [
+              {
+                file: 'u3-safe-test.zip',
+                name: 'PvP test pack',
+                enabled: true,
+                description: 'Test protected pack',
+              },
+            ]
+          : [],
+      }
+    }
     if (tool === 'catalog') {
       if (window.__rustCatalogFail) throw 'Catalog test failure'
       return {
@@ -122,6 +161,12 @@ mockIPC(async (cmd, args) => {
         s.versions = { installed: ['nightly-2026-10-30'], selected: 'nightly-2026-10-30' }
         s.instances = [{ id: 'horizon', name: 'Horizon', java: null }]
         s.accounts.sign_in_configured = true
+      }
+      if (r.action.startsWith('pack_')) {
+        window.__rustPackInstalled = true
+        s.running = false
+        s.stage = 'done'
+        s.result_profile = r.profile
       }
       if (r.action === 'mod_install') {
         if (!r.trust_native_code) throw 'Native consent required'

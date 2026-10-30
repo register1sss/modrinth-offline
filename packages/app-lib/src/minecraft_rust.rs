@@ -19,6 +19,7 @@ use tokio::io::{AsyncRead, AsyncReadExt, AsyncWriteExt};
 #[path = "minecraft_rust/u3_edit/runtime.rs"]
 mod editor_tests;
 pub mod mods;
+pub mod resourcepacks;
 
 static CANCEL_SIGN_IN: AtomicBool = AtomicBool::new(false);
 pub fn cancel_sign_in() -> Result<()> {
@@ -102,6 +103,10 @@ pub struct Request {
     pub trust_token: String,
     #[serde(default)]
     pub trust_native_code: bool,
+    #[serde(default)]
+    pub pack_file: String,
+    #[serde(default = "resourcepacks::protect_default")]
+    pub protect_gui: bool,
 }
 fn state() -> &'static Mutex<Snapshot> {
     static S: OnceLock<Mutex<Snapshot>> = OnceLock::new();
@@ -138,8 +143,15 @@ fn validate(r: &Request) -> Result<()> {
             | "play_online"
             | "play_offline"
             | "mod_install"
+            | "pack_install"
+            | "pack_import"
+            | "pack_toggle"
+            | "pack_repair"
     ) {
         return Err("Unsupported Minecraft Rust action".into());
+    }
+    if r.action.starts_with("pack_") {
+        resourcepacks::validate_request(r)?;
     }
     if r.action == "mod_install" {
         mods::validate_request(r)?;
@@ -469,7 +481,9 @@ async fn run(r: Request) -> Result<()> {
     tokio::fs::create_dir_all(root.join("game"))
         .await
         .map_err(|e| e.to_string())?;
-    if r.action == "mod_install" {
+    if r.action.starts_with("pack_") {
+        resourcepacks::run(&root, &r).await?;
+    } else if r.action == "mod_install" {
         mods::install(&root, &r).await?;
     } else if r.action == "install" {
         install_runtime_and_game(&root, "latest").await?;
@@ -939,6 +953,8 @@ mod tests {
             checksum: String::new(),
             trust_token: String::new(),
             trust_native_code: false,
+            pack_file: String::new(),
+            protect_gui: true,
         }
     }
     #[test]

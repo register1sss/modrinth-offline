@@ -23,7 +23,7 @@ const state = ref({
 const loading = ref(true),
   sending = ref(false),
   error = ref(''),
-  profile = ref('horizon'),
+  profile = ref(savedProfile()),
   account = ref(''),
   nickname = ref('U3_Player'),
   name = ref(''),
@@ -32,6 +32,23 @@ const loading = ref(true),
 let poll,
   disposed = false,
   polling = false
+// Keep the automatically selected modded profile after restarting the launcher.
+function savedProfile() {
+  try {
+    const id = localStorage.getItem('u3:rust-profile')
+    return id && /^[a-zA-Z0-9._@-]{1,100}$/.test(id) ? id : 'horizon'
+  } catch {
+    return 'horizon'
+  }
+}
+watch(profile, (value) => {
+  if (!value) return
+  try {
+    localStorage.setItem('u3:rust-profile', value)
+  } catch {
+    /* Storage may be unavailable. */
+  }
+})
 const busy = computed(() => sending.value || state.value.running || loading.value)
 const accounts = computed(() => state.value.accounts?.accounts ?? [])
 const profiles = computed(() => (state.value.instances ?? []).filter((p) => !p.java))

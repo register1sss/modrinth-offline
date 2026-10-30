@@ -194,6 +194,7 @@ async function findLauncherDir() {
           "
         />
       </div>
+      <RouterLink to="/themes" class="btn">Темы — 13 новых палитр и эффекты частиц</RouterLink>
       <div class="adjacent-input">
         <label for="advanced-rendering">
           <span class="label__title">Advanced rendering</span>

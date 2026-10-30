@@ -179,6 +179,19 @@ pub enum Theme {
     Dark,
     Light,
     Oled,
+    Aurora,
+    Neon,
+    Ember,
+    Sakura,
+    Ocean,
+    Orbit,
+    Forest,
+    Frost,
+    Dune,
+    Amethyst,
+    Eclipse,
+    Noir,
+    Lagoon,
 }
 
 impl Theme {
@@ -187,6 +200,19 @@ impl Theme {
             Theme::Dark => "dark",
             Theme::Light => "light",
             Theme::Oled => "oled",
+            Theme::Aurora => "aurora",
+            Theme::Neon => "neon",
+            Theme::Ember => "ember",
+            Theme::Sakura => "sakura",
+            Theme::Ocean => "ocean",
+            Theme::Orbit => "orbit",
+            Theme::Forest => "forest",
+            Theme::Frost => "frost",
+            Theme::Dune => "dune",
+            Theme::Amethyst => "amethyst",
+            Theme::Eclipse => "eclipse",
+            Theme::Noir => "noir",
+            Theme::Lagoon => "lagoon",
         }
     }
 
@@ -195,6 +221,19 @@ impl Theme {
             "dark" => Theme::Dark,
             "light" => Theme::Light,
             "oled" => Theme::Oled,
+            "aurora" => Theme::Aurora,
+            "neon" => Theme::Neon,
+            "ember" => Theme::Ember,
+            "sakura" => Theme::Sakura,
+            "ocean" => Theme::Ocean,
+            "orbit" => Theme::Orbit,
+            "forest" => Theme::Forest,
+            "frost" => Theme::Frost,
+            "dune" => Theme::Dune,
+            "amethyst" => Theme::Amethyst,
+            "eclipse" => Theme::Eclipse,
+            "noir" => Theme::Noir,
+            "lagoon" => Theme::Lagoon,
             _ => Theme::Dark,
         }
     }
@@ -239,5 +278,28 @@ impl DefaultPage {
             "library" => Self::Library,
             _ => Self::Home,
         }
+    }
+}
+
+#[cfg(test)]
+mod theme_tests {
+    use super::Theme;
+    #[test]
+    fn all_themes_roundtrip_native_settings_and_serde() {
+        for id in [
+            "dark", "light", "oled", "aurora", "neon", "ember", "sakura",
+            "ocean", "orbit", "forest", "frost", "dune", "amethyst", "eclipse",
+            "noir", "lagoon",
+        ] {
+            let theme = Theme::from_string(id);
+            assert_eq!(theme.as_str(), id);
+            let serialized = serde_json::to_string(&theme).unwrap();
+            let decoded: Theme = serde_json::from_str(&serialized).unwrap();
+            assert_eq!(decoded.as_str(), id);
+        }
+    }
+    #[test]
+    fn unknown_theme_falls_back_to_dark() {
+        assert_eq!(Theme::from_string("unknown-future-theme").as_str(), "dark");
     }
 }

@@ -1,0 +1,10 @@
+// Ambient decoration stays behind content, never above dialogs, text or controls.
+html[data-custom-theme] body {
+  background: radial-gradient(ellipse at 90% 5%, var(--theme-glow), transparent 55%),
+    radial-gradient(ellipse at 10% 90%, var(--theme-glow-secondary), transparent 50%),
+    var(--color-bg);
+}
+html[data-custom-theme] ::selection {
+  background: var(--color-brand-highlight);
+  color: var(--color-contrast);
+}

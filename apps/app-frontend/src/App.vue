@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, onMounted } from 'vue'
+import { computed, ref, onMounted, onBeforeUnmount } from 'vue'
 import { RouterView, RouterLink, useRouter, useRoute } from 'vue-router'
 import {
   HomeIcon,
@@ -7,11 +7,13 @@ import {
   LibraryIcon,
   PlusIcon,
   SettingsIcon,
+  PaintBrushIcon,
   FileIcon,
   XIcon,
 } from '@modrinth/assets'
 import { Button, Notifications, Card } from '@modrinth/ui'
 import { useLoading, useTheming } from '@/store/state'
+import ParticleCanvas from '@/components/themes/ParticleCanvas.vue'
 import AccountsCard from '@/components/ui/AccountsCard.vue'
 import InstanceCreationModal from '@/components/ui/InstanceCreationModal.vue'
 import { get } from '@/helpers/settings'
@@ -46,6 +48,13 @@ import InstallConfirmModal from '@/components/ui/install_flow/InstallConfirmModa
 import { useInstall } from '@/store/install.js'
 
 const themeStore = useTheming()
+const motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)')
+const syncMotionPreference = () => {
+  themeStore.reducedMotion = motionPreference.matches
+}
+syncMotionPreference()
+onMounted(() => motionPreference.addEventListener('change', syncMotionPreference))
+onBeforeUnmount(() => motionPreference.removeEventListener('change', syncMotionPreference))
 const urlModal = ref(null)
 const isLoading = ref(true)
 
@@ -264,6 +273,14 @@ command_listener(async (e) => {
   <SplashScreen v-else-if="isLoading" app-loading />
   <OnboardingScreen v-else-if="showOnboarding" :finish="() => (showOnboarding = false)" />
   <div v-else class="container">
+    <ParticleCanvas
+      v-if="themeStore.activeTheme.particle && themeStore.effectsEnabled"
+      class="app-atmosphere"
+      :theme="themeStore.activeTheme"
+      :quality="themeStore.effectsQuality"
+      :reduced-motion="themeStore.reducedMotion"
+      subdued
+    />
     <div class="nav-container">
       <div class="nav-section">
         <suspense>
@@ -285,6 +302,14 @@ command_listener(async (e) => {
           </RouterLink>
           <RouterLink v-tooltip="'Library'" to="/library" class="btn icon-only collapsed-button">
             <LibraryIcon />
+          </RouterLink>
+          <RouterLink
+            v-tooltip="'Темы'"
+            to="/themes"
+            aria-label="Темы"
+            class="btn icon-only collapsed-button"
+          >
+            <PaintBrushIcon />
           </RouterLink>
           <Suspense>
             <InstanceCreationModal ref="installationModal" />
@@ -411,7 +436,16 @@ command_listener(async (e) => {
   }
 }
 
+.app-atmosphere {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: -1;
+}
+
 .container {
+  isolation: isolate;
   --appbar-height: 3.25rem;
   --sidebar-width: 4.5rem;
 
@@ -422,7 +456,7 @@ command_listener(async (e) => {
 
   .view {
     width: calc(100% - var(--sidebar-width));
-    background-color: var(--color-raised-bg);
+    background-color: var(--app-view-bg, var(--color-raised-bg));
 
     .appbar {
       display: flex;
@@ -443,7 +477,7 @@ command_listener(async (e) => {
       height: calc(100% - 3.125rem);
       overflow: auto;
       overflow-x: hidden;
-      background-color: var(--color-bg);
+      background-color: var(--app-router-bg, var(--color-bg));
       border-top-left-radius: var(--radius-xl);
     }
   }

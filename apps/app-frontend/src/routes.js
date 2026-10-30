@@ -34,6 +34,12 @@ export default new createRouter({
       },
     },
     {
+      path: '/themes',
+      name: 'Themes',
+      component: Pages.Themes,
+      meta: { breadcrumb: [{ name: 'Темы' }] },
+    },
+    {
       path: '/settings',
       name: 'Settings',
       component: Pages.Settings,
@@ -139,7 +145,7 @@ export default new createRouter({
   linkExactActiveClass: 'router-link-exact-active',
   scrollBehavior() {
     // Sometimes Vue's scroll behavior is not working as expected, so we need to manually scroll to top (especially on Linux)
-    document.querySelector('.router-view').scrollTop = 0
+    document.querySelector('.router-view')?.scrollTo(0, 0)
     return {
       el: '.router-view',
       top: 0,

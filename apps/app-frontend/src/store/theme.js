@@ -1,23 +1,77 @@
 import { defineStore } from 'pinia'
+import { getTheme, THEME_IDS, themeVariables, EFFECT_LEVELS } from '@/themes/catalog.js'
+
+const EFFECTS_KEY = 'modrinth-offline:atmosphere:v1'
+function loadEffects() {
+  try {
+    const data = JSON.parse(localStorage.getItem(EFFECTS_KEY) ?? '{}')
+    return {
+      effectsEnabled: typeof data.enabled === 'boolean' ? data.enabled : true,
+      effectsQuality: EFFECT_LEVELS.some((level) => level.id === data.quality)
+        ? data.quality
+        : 'balanced',
+    }
+  } catch {
+    return { effectsEnabled: true, effectsQuality: 'balanced' }
+  }
+}
+const managedProperties = Object.keys(themeVariables(getTheme('aurora')))
 
 export const useTheming = defineStore('themeStore', {
   state: () => ({
-    themeOptions: ['dark', 'light', 'oled'],
+    themeOptions: [...THEME_IDS],
     advancedRendering: true,
     selectedTheme: 'dark',
+    reducedMotion: false,
+    effectsStorageError: false,
+    ...loadEffects(),
   }),
+  getters: {
+    activeTheme: (state) => getTheme(state.selectedTheme),
+  },
   actions: {
     setThemeState(newTheme) {
-      if (this.themeOptions.includes(newTheme)) this.selectedTheme = newTheme
-      else console.warn('Selected theme is not present. Check themeOptions.')
-
+      if (!this.themeOptions.includes(newTheme)) return false
+      this.selectedTheme = newTheme
       this.setThemeClass()
+      return true
     },
     setThemeClass() {
-      for (const theme of this.themeOptions) {
-        document.getElementsByTagName('html')[0].classList.remove(`${theme}-mode`)
+      const root = document.documentElement
+      for (const id of this.themeOptions) root.classList.remove(`${id}-mode`)
+      for (const property of managedProperties) root.style.removeProperty(property)
+      const theme = this.activeTheme
+      const base = theme.id === 'oled' ? 'oled' : theme.palette.light ? 'light' : 'dark'
+      root.classList.add(`${base}-mode`)
+      root.style.colorScheme = theme.palette.light ? 'light' : 'dark'
+      if (theme.particle) {
+        root.dataset.customTheme = theme.id
+        for (const [name, value] of Object.entries(themeVariables(theme)))
+          root.style.setProperty(name, value)
+      } else {
+        delete root.dataset.customTheme
       }
-      document.getElementsByTagName('html')[0].classList.add(`${this.selectedTheme}-mode`)
+    },
+    saveEffects() {
+      try {
+        localStorage.setItem(
+          EFFECTS_KEY,
+          JSON.stringify({ enabled: this.effectsEnabled, quality: this.effectsQuality }),
+        )
+        this.effectsStorageError = false
+      } catch {
+        // Effects still apply for this session; the UI explains that persistence failed.
+        this.effectsStorageError = true
+      }
+    },
+    setEffectsEnabled(enabled) {
+      this.effectsEnabled = Boolean(enabled)
+      this.saveEffects()
+    },
+    setEffectsQuality(quality) {
+      if (!EFFECT_LEVELS.some((level) => level.id === quality)) return
+      this.effectsQuality = quality
+      this.saveEffects()
     },
   },
 })

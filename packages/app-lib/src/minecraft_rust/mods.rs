@@ -78,6 +78,41 @@ fn embedded() -> Result<Vec<u8>> {
     }
     Ok(z.finish().map_err(|e| e.to_string())?.into_inner())
 }
+fn own_bundle(project: &str) -> Result<Vec<u8>> {
+    if project == "u3_edit" {
+        return embedded();
+    }
+    if project != "u3_fixes" {
+        return Err("Unknown first-party bundle".into());
+    }
+    let mut z = zip::ZipWriter::new(Cursor::new(Vec::new()));
+    let opt = zip::write::FileOptions::default()
+        .compression_method(zip::CompressionMethod::Stored);
+    for (name, content) in [
+        (
+            "horizon-native.json",
+            include_str!("u3_fixes/horizon-native.json"),
+        ),
+        (
+            "mixins/u3_fixes/horizon-mixin.toml",
+            include_str!("u3_fixes/horizon-mixin.toml"),
+        ),
+        (
+            "mixins/u3_fixes/runtime.rs",
+            include_str!("u3_fixes/runtime.rs"),
+        ),
+        (
+            "mixins/u3_fixes/motion.rs",
+            include_str!("u3_fixes/motion.rs"),
+        ),
+        ("mixins/u3_fixes/tick.rs", include_str!("u3_fixes/tick.rs")),
+        ("mixins/u3_fixes/list.rs", include_str!("u3_fixes/list.rs")),
+    ] {
+        z.start_file(name, opt).map_err(|e| e.to_string())?;
+        z.write_all(content.as_bytes()).map_err(|e| e.to_string())?;
+    }
+    Ok(z.finish().map_err(|e| e.to_string())?.into_inner())
+}
 async fn index(root: &Path) -> Result<Value> {
     let client = reqwest::Client::builder()
         .timeout(Duration::from_secs(30))
@@ -121,7 +156,7 @@ fn revoked(index: &Value, project: &str, checksum: &str) -> bool {
 fn entries(index: &Value) -> Vec<Value> {
     index["projects"].as_array().into_iter().flatten().filter_map(|p| {
         let project = p["id"].as_str()?;
-        if !id(project) || project == "u3_edit" { return None; }
+        if !id(project) || matches!(project, "u3_edit" | "u3_fixes") { return None; }
         let v = p["versions"].as_array()?.first()?;
         let checksum = v["file"]["sha256"].as_str()?;
         if !hash(checksum) { return None; }
@@ -313,8 +348,9 @@ async fn make_catalog(
     };
     let bytes = embedded()?;
     let own = json!({"id":"u3_edit","name":"U3 Edit","authors":["U3"],"source":"https://github.com/register1sss/modrinth-offline/tree/main/packages/app-lib/src/minecraft_rust/u3_edit","summary":"Выделение, заливка, замена блоков и стены. До 32768 блоков. Без отмены изменений.","version":"0.1.0","checksum":digest(&bytes),"available":true,"native":true});
+    let fixes = json!({"id":"u3_fixes","name":"U3 Fixes","authors":["U3"],"source":"https://github.com/register1sss/modrinth-offline/tree/main/packages/app-lib/src/minecraft_rust/u3_fixes","summary":"Client trident state fixes: resume server motion and fall after supporting blocks disappear. Not a fix for every issue in the video. Requires rebuilding Horizon.","version":"0.1.0","checksum":digest(&own_bundle("u3_fixes")?),"available":true,"native":true});
     Ok(
-        json!({"own":[own],"community":entries(idx),"target":target,"target_name":if profile.is_empty() || profile == "horizon" { "U3 Mods".to_owned() } else { instances.as_array().into_iter().flatten().find(|p| p["id"] == profile).and_then(|p| p["name"].as_str()).unwrap_or(profile).to_owned() },"trust_token":token(profile,&files),"files":files,"ready":ready(root,&instances,&target,&files)}),
+        json!({"own":[own,fixes],"community":entries(idx),"target":target,"target_name":if profile.is_empty() || profile == "horizon" { "U3 Mods".to_owned() } else { instances.as_array().into_iter().flatten().find(|p| p["id"] == profile).and_then(|p| p["name"].as_str()).unwrap_or(profile).to_owned() },"trust_token":token(profile,&files),"files":files,"ready":ready(root,&instances,&target,&files)}),
     )
 }
 pub async fn catalog(profile: &str) -> Result<Value> {
@@ -400,18 +436,22 @@ pub(super) async fn install(root: &Path, r: &Request) -> Result<()> {
     change(|s| s.stage = "mod_install".into());
     // Receipt invalidation prevents a stale engine from masquerading as this mod set after failure.
     atomic(&home.join("u3-mods-pending"), b"build required")?;
-    if r.project == "u3_edit" {
+    let first_party = matches!(r.project.as_str(), "u3_edit" | "u3_fixes");
+    if first_party {
+        let receipt_name =
+            format!("{}-installed.json", r.project.replace('_', "-"));
+        let file_name = format!("{}.hnmod", r.project);
         let dir = home.join("horizon-native-mods");
         std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
-        if let Some(old) = before.get("u3_edit.hnmod") {
-            let receipt = read_json(&home.join("u3-edit-installed.json"))?;
+        if let Some(old) = before.get(&file_name) {
+            let receipt = read_json(&home.join(&receipt_name))?;
             if receipt["checksum"] != *old {
-                return Err("U3 Edit file was changed outside the launcher. Back it up and remove it before reinstalling".into());
+                return Err("First-party mod file was changed outside the launcher. Back it up and remove it before reinstalling".into());
             }
         }
-        atomic(&dir.join("u3_edit.hnmod"), &embedded()?)?;
+        atomic(&dir.join(&file_name), &own_bundle(&r.project)?)?;
         atomic(
-            &home.join("u3-edit-installed.json"),
+            &home.join(&receipt_name),
             json!({"checksum":r.checksum}).to_string().as_bytes(),
         )?;
     } else {
@@ -440,7 +480,9 @@ pub(super) async fn install(root: &Path, r: &Request) -> Result<()> {
     if after != expected {
         return Err("Additional native code appeared. Review the catalog before building".into());
     }
-    if r.project == "u3_edit" {
+    if first_party {
+        let setting = format!("mod.{}", r.project);
+        let enabled = format!("{setting}:true");
         let path = home.join("horizon-mods.txt");
         let text = match std::fs::read_to_string(&path) {
             Ok(t) if t.len() <= LIMIT as usize => t,
@@ -449,9 +491,12 @@ pub(super) async fn install(root: &Path, r: &Request) -> Result<()> {
         };
         let mut lines: Vec<&str> = text
             .lines()
-            .filter(|l| !l.starts_with("mod.u3_edit:"))
+            .filter(|l| {
+                l.split_once(':')
+                    .map_or(true, |(key, _)| key.trim() != setting)
+            })
             .collect();
-        lines.push("mod.u3_edit:true");
+        lines.push(&enabled);
         atomic(&path, format!("{}\n", lines.join("\n")).as_bytes())?;
     } else {
         cli(
@@ -572,6 +617,30 @@ mod tests {
             serde_json::from_str::<Value>(&manifest).unwrap()["id"],
             "u3_edit"
         );
+    }
+    #[test]
+    fn fixes_bundle_is_deterministic_and_exact_revision_pinned() {
+        let bytes = own_bundle("u3_fixes").unwrap();
+        assert_eq!(bytes, own_bundle("u3_fixes").unwrap());
+        let mut z = zip::ZipArchive::new(Cursor::new(bytes)).unwrap();
+        assert_eq!(z.len(), 6);
+        let mut text = String::new();
+        std::io::Read::read_to_string(
+            &mut z.by_name("horizon-native.json").unwrap(),
+            &mut text,
+        )
+        .unwrap();
+        let manifest: Value = serde_json::from_str(&text).unwrap();
+        assert_eq!(manifest["id"], "u3_fixes");
+        assert_eq!(
+            manifest["horizon"],
+            "3132240f21141518391d7d34d41a4f7b916c3c5a"
+        );
+        assert!(
+            manifest.get("hooks").is_none(),
+            "Internal-state patch must not claim stable-hook compatibility"
+        );
+        assert!(own_bundle("unknown").is_err());
     }
     #[test]
     fn consent_binds_all_files_and_profile() {

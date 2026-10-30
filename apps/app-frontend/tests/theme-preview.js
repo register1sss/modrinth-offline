@@ -101,6 +101,16 @@ mockIPC(async (cmd, args) => {
             available: true,
             native: true,
           },
+          {
+            id: 'u3_fixes',
+            name: 'U3 Fixes',
+            authors: ['U3'],
+            version: '0.1.0',
+            checksum: 'f'.repeat(64),
+            summary: 'Client trident state fixes. Not all video issues are fixed.',
+            available: true,
+            native: true,
+          },
         ],
         community: [
           {
@@ -138,8 +148,11 @@ mockIPC(async (cmd, args) => {
         trust_token: 'e'.repeat(64),
         target: args.profile === 'horizon' ? 'u3-mods' : args.profile,
         target_name: args.profile === 'horizon' ? 'U3 Mods' : 'My profile',
-        files: window.__rustModInstalled ? { 'u3_edit.hnmod': 'a'.repeat(64) } : {},
-        ready: !!window.__rustModInstalled,
+        files: {
+          ...(window.__rustModInstalled ? { 'u3_edit.hnmod': 'a'.repeat(64) } : {}),
+          ...(window.__rustFixInstalled ? { 'u3_fixes.hnmod': 'f'.repeat(64) } : {}),
+        },
+        ready: !!(window.__rustModInstalled || window.__rustFixInstalled),
       }
     }
     if (tool === 'cancel_sign_in') {
@@ -170,7 +183,8 @@ mockIPC(async (cmd, args) => {
       }
       if (r.action === 'mod_install') {
         if (!r.trust_native_code) throw 'Native consent required'
-        window.__rustModInstalled = true
+        if (r.project === 'u3_fixes') window.__rustFixInstalled = true
+        else window.__rustModInstalled = true
         s.runtime = true
         s.prepared = true
         s.result_profile = 'u3-mods'

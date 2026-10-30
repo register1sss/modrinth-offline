@@ -68,3 +68,18 @@ test('native install requires explicit consent and a supported entry', () => {
     false,
   )
 })
+
+test('U3 Fixes keeps explicit native consent and checksum-bound installed status', () => {
+  const mod = { id: 'u3_fixes', checksum: 'f'.repeat(64), available: true }
+  const catalog = {
+    trust_token: 'e'.repeat(64),
+    files: { 'u3_edit.hnmod': 'a'.repeat(64) },
+    ready: true,
+  }
+  assert.equal(installRequest(mod, catalog, 'own', false), null)
+  const request = installRequest(mod, catalog, 'own', true)
+  assert.equal(request.project, 'u3_fixes')
+  assert.equal(request.checksum, mod.checksum)
+  assert.equal(modInstalled(mod, catalog), false)
+  assert.equal(modInstalled(mod, { ...catalog, files: { 'u3_fixes.hnmod': mod.checksum } }), true)
+})

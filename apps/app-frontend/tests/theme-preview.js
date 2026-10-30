@@ -78,6 +78,11 @@ mockIPC(async (cmd, args) => {
       if (r.action === 'create') s.instances.push({ id: 'test-profile', name: r.name, java: null })
       if (r.action.startsWith('prepare_')) s.prepared = true
       if (r.action.startsWith('play_')) {
+        s.runtime = true
+        s.prepared = true
+        s.offline_ready = true
+        s.instances = [{ id: 'horizon', name: 'Horizon', kind: 'default', java: null }]
+        s.versions = { installed: ['nightly-2026-10-30'], selected: 'nightly-2026-10-30' }
         s.running = true
         s.stage = 'playing'
       }

@@ -1,7 +1,6 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import { invoke } from '@tauri-apps/api/tauri'
-import { open as choose } from '@tauri-apps/api/dialog'
 import { open as openLink } from '@tauri-apps/api/shell'
 import { canLaunch } from '@/minecraft-rust/launch.js'
 import { updateRustSession } from '@/minecraft-rust/state.js'
@@ -56,6 +55,7 @@ const labels = computed(() => ({
   download_runtime: t('Загрузка Horizon', 'Downloading Horizon'),
   download_game: t('Загрузка игры', 'Downloading game'),
   prepare_local: t('Подготовка файлов', 'Preparing files'),
+  prepare_auto: t('Поиск и подготовка Minecraft', 'Finding and preparing Minecraft'),
   prepare_download: t('Загрузка и подготовка Minecraft', 'Downloading and preparing Minecraft'),
   sign_in: t('Вход Microsoft', 'Microsoft sign-in'),
   create: t('Создание профиля', 'Creating profile'),
@@ -66,6 +66,15 @@ const labels = computed(() => ({
   error: t('Ошибка', 'Error'),
   idle: t('Не установлено', 'Not installed'),
 }))
+const displayError = computed(() => {
+  const message = error.value || state.value.error || ''
+  return message.startsWith('Automatic Minecraft preparation failed')
+    ? t(
+        'Не удалось подготовить Minecraft автоматически. Проверь интернет. Если Minecraft Java 26.3 ещё не установлен, запусти его один раз в обычном лаунчере и снова нажми «Играть». Подробности в журнале.',
+        'Minecraft could not be prepared automatically. Check your connection. If Minecraft Java 26.3 is not installed, run it once in your regular launcher, then press Play again. Details are in the log.',
+      )
+    : message
+})
 const confirmPanel = ref()
 let previousFocus
 watch(confirm, async (value) => {
@@ -135,23 +144,9 @@ async function action(action, extra = {}) {
     sending.value = false
   }
 }
-async function localPrepare() {
-  const folder = await choose({
-    directory: true,
-    multiple: false,
-    title: t(
-      'Папка Minecraft с установленной игрой',
-      'Minecraft folder containing the installed game',
-    ),
-  }).catch((e) => {
-    error.value = String(e)
-    return null
-  })
-  if (typeof folder === 'string') await action('prepare_local', { minecraft: folder })
-}
 function play() {
   return action(mode.value === 'offline' ? 'play_offline' : 'play_online', {
-    profile: profile.value,
+    profile: profile.value || 'horizon',
     name: nickname.value,
     account: account.value,
   })
@@ -205,11 +200,13 @@ onBeforeUnmount(() => {
       <span class="rust-status" role="status">{{
         state.running
           ? labels[state.stage] ?? state.stage
-          : state.prepared
-            ? t('Готов к запуску', 'Ready to play')
-            : state.runtime
-              ? t('Нужна подготовка', 'Preparation needed')
-              : t('Не установлен', 'Not installed')
+          : error || state.error
+            ? labels.error
+            : state.prepared
+              ? t('Готов к запуску', 'Ready to play')
+              : state.runtime
+                ? t('Нужна подготовка', 'Preparation needed')
+                : t('Не установлен', 'Not installed')
       }}</span>
     </header>
     <p class="rust-intro">
@@ -229,7 +226,7 @@ onBeforeUnmount(() => {
       }}
     </div>
     <div v-if="error || state.error" class="rust-message rust-error" role="alert">
-      {{ error || state.error }}
+      {{ displayError }}
     </div>
     <section v-if="state.running" class="rust-card rust-operation" aria-live="polite">
       <div>
@@ -275,177 +272,141 @@ onBeforeUnmount(() => {
     >
       {{ t('Отменить вход', 'Cancel sign-in') }}
     </button>
-    <div class="rust-grid">
-      <section class="rust-card rust-setup">
-        <h2>{{ t('Установка', 'Installation') }}</h2>
-        <ol class="rust-steps">
-          <li>
-            <span class="step-number">1</span>
-            <div>
-              <h3>Horizon</h3>
-              <p>
-                {{
-                  state.runtime
-                    ? t(
-                        'Компонент установлен. Можно загрузить свежую сборку игры.',
-                        'Runtime installed. You can download the latest game build.',
-                      )
-                    : t(
-                        'Загрузи официальный компонент и игру. Нужен интернет.',
-                        'Download the official runtime and game. Internet required.',
-                      )
-                }}
-              </p>
-              <button class="btn" :disabled="busy || !state.supported" @click="action('install')">
-                {{
-                  state.runtime
-                    ? t('Обновить игру', 'Update game')
-                    : t('Установить Horizon', 'Install Horizon')
-                }}
-              </button>
-              <p v-if="state.runtime && installed && !state.offline_ready" class="rust-small">
-                {{
-                  t(
-                    'Для офлайн-запуска нажми «Обновить игру» один раз. Затем при необходимости повтори подготовку файлов.',
-                    'To enable offline launch, update the game once. Prepare its files again if needed.',
-                  )
-                }}
-              </p>
-            </div>
-          </li>
-          <li>
-            <span class="step-number">2</span>
-            <div>
-              <h3>{{ t('Файлы Minecraft', 'Minecraft files') }}</h3>
-              <p>
-                {{
-                  t(
-                    'Для офлайн-игры выбери папку с файлами Minecraft Java 26.3. Вход Microsoft не нужен. Если файлов нет, их можно скачать после входа в аккаунт с лицензией.',
-                    'For offline play, choose a folder containing Minecraft Java 26.3. No Microsoft sign-in is needed. Downloading missing game files requires a licensed account.',
-                  )
-                }}
-              </p>
-              <div class="rust-buttons">
-                <button class="btn" :disabled="busy || !installed" @click="localPrepare">
-                  {{ t('Выбрать папку', 'Choose folder') }}</button
-                ><button
-                  class="btn"
-                  :disabled="busy || !installed || !state.accounts?.owner"
-                  @click="confirm = true"
-                >
-                  {{ t('Скачать и подготовить', 'Download and prepare') }}
-                </button>
-              </div>
-              <span v-if="state.prepared" class="rust-ok">{{
-                t('Файлы подготовлены', 'Files prepared')
-              }}</span>
-            </div>
-          </li>
-        </ol>
-        <p class="rust-small">
-          {{
-            t(
-              'Fabric, Forge и NeoForge здесь не работают. Нужен совместимый с Horizon контент.',
-              'Fabric, Forge and NeoForge mods do not run here. Use Horizon-compatible content.',
-            )
-          }}
-        </p>
-      </section>
-      <section class="rust-card rust-launch">
-        <h2>{{ t('Запуск', 'Play') }}</h2>
-        <label for="rust-profile">{{ t('Профиль Horizon', 'Horizon profile') }}</label>
-        <select id="rust-profile" v-model="profile" :disabled="busy || !profiles.length">
-          <option v-if="!profiles.length" value="">
-            {{ t('Сначала установи Horizon', 'Install Horizon first') }}
-          </option>
-          <option v-for="p in profiles" :key="p.id" :value="p.id">{{ p.name }}</option>
-        </select>
-        <form class="rust-create" @submit.prevent="createProfile">
-          <label class="sr-only" for="rust-name">{{
-            t('Название нового профиля', 'New profile name')
-          }}</label
-          ><input
-            id="rust-name"
-            v-model="name"
-            maxlength="48"
-            :disabled="busy || !state.runtime"
-            :placeholder="t('Новый профиль', 'New profile')"
-          /><button class="btn" :disabled="busy || !state.runtime || !name.trim()">
-            {{ t('Создать', 'Create') }}
-          </button>
-        </form>
-        <fieldset class="rust-mode">
-          <legend>{{ t('Режим', 'Mode') }}</legend>
-          <label
-            ><input v-model="mode" type="radio" value="offline" :disabled="busy" />{{
-              t('Офлайн', 'Offline')
-            }}</label
-          ><label
-            ><input v-model="mode" type="radio" value="online" :disabled="busy" />{{
-              t('С лицензией', 'Licensed')
-            }}</label
-          >
-        </fieldset>
-        <template v-if="mode === 'offline'"
-          ><label for="rust-nickname">{{ t('Ник', 'Player name') }}</label
-          ><input
-            id="rust-nickname"
-            v-model="nickname"
-            maxlength="16"
-            :disabled="busy"
-            autocomplete="off"
-          />
-          <p class="rust-small">
-            {{
-              t(
-                'Одиночная игра, LAN и офлайн-серверы. Аккаунт Microsoft и проверка лицензии для запуска не нужны.',
-                'Single player, LAN and offline-mode servers. No Microsoft account or ownership check is required to launch.',
-              )
-            }}
-          </p></template
-        >
-        <template v-else
-          ><label for="rust-account">{{ t('Аккаунт Microsoft', 'Microsoft account') }}</label
-          ><select id="rust-account" v-model="account" :disabled="busy || !accounts.length">
-            <option v-if="!accounts.length" value="">
-              {{ t('Добавь аккаунт', 'Add an account') }}
+    <section class="rust-card rust-launch rust-quick-play">
+      <h2>{{ t('Играть в Minecraft Rust', 'Play Minecraft Rust') }}</h2>
+      <p>
+        {{
+          t(
+            'Нажми «Играть». Лаунчер сам установит Horizon, найдёт Minecraft и подготовит игру. При первом запуске нужен интернет.',
+            'Press Play. The launcher will install Horizon, find Minecraft and prepare the game. Internet is required the first time.',
+          )
+        }}
+      </p>
+      <template v-if="mode === 'offline'">
+        <label for="rust-nickname">{{ t('Ник', 'Player name') }}</label>
+        <input
+          id="rust-nickname"
+          v-model="nickname"
+          maxlength="16"
+          :disabled="busy"
+          autocomplete="off"
+        />
+      </template>
+      <p v-else class="rust-small">{{ t('Режим с лицензией', 'Licensed mode') }}</p>
+      <button class="btn btn-primary rust-play" :disabled="!canPlay" @click="play">
+        {{ t('Играть', 'Play') }}
+      </button>
+      <p class="rust-small">
+        {{
+          t(
+            'Папки выбирать не нужно. Уже подготовленная игра запускается без повторной установки.',
+            'No folder selection. A prepared game starts without reinstalling.',
+          )
+        }}
+      </p>
+    </section>
+    <details class="rust-card rust-settings">
+      <summary>{{ t('Настройки запуска', 'Launch settings') }}</summary>
+      <div class="rust-grid rust-settings-body">
+        <section class="rust-launch">
+          <h2>{{ t('Профиль и режим', 'Profile and mode') }}</h2>
+          <label for="rust-profile">{{ t('Профиль Horizon', 'Horizon profile') }}</label>
+          <select id="rust-profile" v-model="profile" :disabled="busy || !profiles.length">
+            <option v-if="!profiles.length" value="">
+              {{ t('Будет создан автоматически', 'Created automatically') }}
             </option>
-            <option v-for="a in accounts" :key="a.uuid" :value="a.uuid">{{ a.name }}</option>
+            <option v-for="p in profiles" :key="p.id" :value="p.id">{{ p.name }}</option>
           </select>
+          <form class="rust-create" @submit.prevent="createProfile">
+            <label class="sr-only" for="rust-name">{{
+              t('Название нового профиля', 'New profile name')
+            }}</label>
+            <input
+              id="rust-name"
+              v-model="name"
+              maxlength="48"
+              :disabled="busy || !state.runtime"
+              :placeholder="t('Новый профиль', 'New profile')"
+            />
+            <button class="btn" :disabled="busy || !state.runtime || !name.trim()">
+              {{ t('Создать', 'Create') }}
+            </button>
+          </form>
+          <fieldset class="rust-mode">
+            <legend>{{ t('Режим', 'Mode') }}</legend>
+            <label
+              ><input v-model="mode" type="radio" value="offline" :disabled="busy" />{{
+                t('Офлайн', 'Offline')
+              }}</label
+            >
+            <label
+              ><input v-model="mode" type="radio" value="online" :disabled="busy" />{{
+                t('С лицензией', 'Licensed')
+              }}</label
+            >
+          </fieldset>
+          <template v-if="mode === 'online'">
+            <label for="rust-account">{{ t('Аккаунт Microsoft', 'Microsoft account') }}</label>
+            <select id="rust-account" v-model="account" :disabled="busy || !accounts.length">
+              <option v-if="!accounts.length" value="">
+                {{ t('Добавь аккаунт', 'Add an account') }}
+              </option>
+              <option v-for="a in accounts" :key="a.uuid" :value="a.uuid">{{ a.name }}</option>
+            </select>
+          </template>
           <p class="rust-small">
             {{
               t(
-                'Проверка лицензии и доступ к серверам выполняются Horizon.',
-                'Horizon handles ownership checks and server authentication.',
+                'Офлайн - одиночная игра, LAN и офлайн-серверы. Для серверов с проверкой аккаунта нужен режим с лицензией.',
+                'Offline supports single player, LAN and offline-mode servers. Verified servers require Licensed mode.',
               )
             }}
-          </p></template
-        >
-        <button
-          v-if="mode === 'online' || !state.prepared"
-          class="btn rust-signin"
-          :disabled="busy || !state.runtime || state.accounts?.sign_in_configured === false"
-          @click="action('sign_in')"
-        >
-          {{ t('Добавить аккаунт Microsoft', 'Add Microsoft account') }}
-        </button>
-        <p
-          v-if="mode === 'online' && state.runtime && state.accounts?.sign_in_configured === false"
-          class="rust-small rust-error-text"
-        >
-          {{
-            t(
-              'В этой сборке Horizon не настроен вход Microsoft. Используй офлайн-режим.',
-              'Microsoft sign-in is not configured in this Horizon build. Offline play is still available.',
-            )
-          }}
-        </p>
-        <button class="btn btn-primary rust-play" :disabled="!canPlay" @click="play">
-          {{ t('Играть', 'Play') }}
-        </button>
-        <p v-if="installed" class="rust-small rust-version">{{ state.versions.selected }}</p>
-      </section>
-    </div>
+          </p>
+        </section>
+        <section>
+          <h2>{{ t('Обслуживание', 'Maintenance') }}</h2>
+          <p>
+            {{
+              t(
+                'Файлы ищутся в U3drinth и стандартных папках других лаунчеров. Если нужной версии нет, установи Minecraft Java 26.3 в обычном лаунчере или загрузи здесь через аккаунт с лицензией.',
+                'Files are found in U3drinth and other launchers’ standard folders. If the required version is missing, install Minecraft Java 26.3 in your regular launcher or download it here with a licensed account.',
+              )
+            }}
+          </p>
+          <div class="rust-buttons">
+            <button class="btn" :disabled="busy || !state.supported" @click="action('install')">
+              {{ t('Переустановить Horizon', 'Reinstall Horizon') }}
+            </button>
+            <button
+              class="btn"
+              :disabled="busy || !installed || !state.accounts?.owner"
+              @click="confirm = true"
+            >
+              {{ t('Скачать Minecraft', 'Download Minecraft') }}
+            </button>
+          </div>
+          <button
+            class="btn rust-signin"
+            :disabled="busy || !state.runtime || state.accounts?.sign_in_configured === false"
+            @click="action('sign_in')"
+          >
+            {{ t('Добавить аккаунт Microsoft', 'Add Microsoft account') }}
+          </button>
+          <p
+            v-if="state.runtime && state.accounts?.sign_in_configured === false"
+            class="rust-small"
+          >
+            {{
+              t(
+                'В этой сборке Horizon вход Microsoft недоступен. Можно играть офлайн с установленными файлами Minecraft.',
+                'Microsoft sign-in is unavailable in this Horizon build. Offline play can use installed Minecraft files.',
+              )
+            }}
+          </p>
+          <p v-if="installed" class="rust-small rust-version">{{ state.versions.selected }}</p>
+        </section>
+      </div>
+    </details>
     <footer class="rust-footer">
       <span>{{
         t(
@@ -563,38 +524,35 @@ p {
   gap: 16px;
   align-items: start;
 }
+.rust-quick-play {
+  max-width: 720px;
+}
+.rust-settings {
+  margin-top: 16px;
+}
+.rust-settings > summary {
+  cursor: pointer;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+.rust-settings > summary::before {
+  content: '+';
+}
+.rust-settings[open] > summary::before {
+  content: '-';
+}
+.rust-settings-body {
+  margin-top: 24px;
+}
 .rust-card {
   background: var(--color-raised-bg);
   border: 1px solid var(--color-divider);
   padding: 24px;
   border-radius: 12px;
   min-width: 0;
-}
-.rust-steps {
-  padding: 0;
-  margin: 0;
-  list-style: none;
-}
-.rust-steps li {
-  display: flex;
-  gap: 16px;
-  padding-bottom: 24px;
-}
-.rust-steps li + li {
-  padding-top: 24px;
-  border-top: 1px solid var(--color-divider);
-}
-.step-number {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 28px;
-  height: 28px;
-  flex: 0 0 28px;
-  border-radius: 8px;
-  background: var(--color-button-bg);
-  color: var(--color-base);
-  font-weight: 700;
 }
 .rust-small {
   font-size: 14px;
@@ -668,6 +626,7 @@ input[type='radio'] {
   flex-wrap: wrap;
 }
 .rust-play {
+  justify-content: center;
   width: 100%;
   margin-top: 20px;
 }

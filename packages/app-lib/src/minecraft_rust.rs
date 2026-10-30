@@ -371,6 +371,10 @@ async fn refresh(root: &Path) -> Result<()> {
         change(|s| {
             s.runtime = false;
             s.prepared = false;
+            s.offline_ready = false;
+            s.instances = json!([]);
+            s.versions = json!({});
+            s.accounts = json!({});
         });
         return Ok(());
     }
@@ -441,22 +445,17 @@ async fn run(r: Request) -> Result<()> {
         .await
         .map_err(|e| e.to_string())?;
     if r.action == "install" {
-        change(|s| s.stage = "download_runtime".into());
-        install_runtime(&root).await?;
-        change(|s| {
-            s.runtime = true;
-            s.stage = "download_game".into();
-            s.total = 0;
-            s.completed = 0;
-        });
-        // The released backend checks game archive integrity; no Minecraft files are bundled.
-        cli(&root, &["install", "latest"], false).await?;
-        let versions =
-            query(&root, &["--json", "versions", "--installed"]).await?;
-        let tag = versions["selected"]
-            .as_str()
-            .ok_or("Horizon did not select an installed version")?;
-        stamp_installed_engine(&root, tag)?;
+        install_runtime_and_game(&root, "latest").await?;
+    } else if matches!(r.action.as_str(), "play_online" | "play_offline") {
+        // No path comes from the UI. Horizon searches this launcher's configured cache,
+        // then the standard folders of supported launchers, checking the pinned game hashes.
+        let source = State::get()
+            .await
+            .map_err(|e| e.to_string())?
+            .directories
+            .config_dir
+            .clone();
+        play_automatically(&root, &source, &r).await?;
     } else if r.action != "refresh" {
         verified(&root).await?;
         match r.action.as_str() {
@@ -481,41 +480,165 @@ async fn run(r: Request) -> Result<()> {
             "prepare_download" => {
                 cli(&root, &["prepare", "--download"], false).await?;
             }
-            "play_online" | "play_offline" => {
-                let instances =
-                    query(&root, &["--json", "instance", "list"]).await?;
-                let id = selected_instance(&instances, &r.profile)?;
-                if r.action == "play_online" {
-                    let accounts =
-                        query(&root, &["--json", "account", "list"]).await?;
-                    if !accounts["accounts"].as_array().map_or(false, |a| {
-                        a.iter().any(|i| i["uuid"].as_str() == Some(&r.account))
-                    }) {
-                        return Err(
-                            "Choose a licensed Microsoft account".into()
-                        );
-                    }
-                    cli(&root, &["account", "select", "--", &r.account], false)
-                        .await?;
-                    change(|s| s.stage = "playing".into());
-                    cli(&root, &["play", "--instance", &id], false).await?;
-                } else {
-                    // Do not call account offline / play: those are owner-gated in the manager.
-                    // The native engine supports its own offline --name without a session file.
-                    let versions =
-                        query(&root, &["--json", "versions", "--installed"])
-                            .await?;
-                    let paths =
-                        offline_paths(&root, &instances, &versions, &id)?;
-                    let cmd = offline_command(&paths, &r.name);
-                    change(|s| s.stage = "playing".into());
-                    run_command(cmd, false, false, true).await?;
-                }
-            }
             _ => return Err("Unsupported Minecraft Rust action".into()),
         }
     }
     refresh(&root).await
+}
+async fn install_runtime_and_game(root: &Path, tag: &str) -> Result<()> {
+    change(|s| {
+        s.stage = "download_runtime".into();
+        s.total = 0;
+        s.completed = 0;
+    });
+    if verified(root).await.is_err() {
+        install_runtime(root).await?;
+    }
+    change(|s| {
+        s.runtime = true;
+        s.stage = "download_game".into();
+        s.total = 0;
+        s.completed = 0;
+    });
+    cli(root, &["install", tag], false).await?;
+    let versions = query(root, &["--json", "versions", "--installed"]).await?;
+    let installed = if tag == "latest" {
+        versions["selected"]
+            .as_str()
+            .ok_or("Horizon did not select an installed version")?
+    } else {
+        tag
+    };
+    stamp_installed_engine(root, installed)
+}
+fn launch_version(
+    instances: &Value,
+    versions: &Value,
+    id: &str,
+) -> Result<Option<String>> {
+    selected_instance(instances, id)?;
+    let instance = instances
+        .as_array()
+        .and_then(|all| all.iter().find(|i| i["id"].as_str() == Some(id)))
+        .ok_or("Choose a Horizon profile")?;
+    let tag = instance["version"]
+        .as_str()
+        .or_else(|| versions["selected"].as_str());
+    if tag.is_some_and(|tag| !safe_component(tag)) {
+        return Err("Invalid Horizon version".into());
+    }
+    Ok(tag.map(str::to_owned))
+}
+fn needs_game_install(
+    root: &Path,
+    versions: &Value,
+    tag: Option<&str>,
+) -> bool {
+    tag.map_or(true, |tag| {
+        !versions["installed"]
+            .as_array()
+            .is_some_and(|all| all.iter().any(|v| v.as_str() == Some(tag)))
+            || checked_engine(root, tag).is_err()
+    })
+}
+async fn prepare_automatically(
+    root: &Path,
+    source: &Path,
+    tag: &str,
+) -> Result<()> {
+    if prepared_at(root, &json!({"selected": tag})) {
+        return Ok(());
+    }
+    change(|s| {
+        s.stage = "prepare_auto".into();
+        s.total = 0;
+        s.completed = 0;
+    });
+    let source = source.to_str().ok_or("Invalid launcher data folder")?;
+    // The verified manager's resolver also searches official/Prism/Modrinth/etc. folders.
+    // Its normal ownership gate remains on downloads when no local files are found.
+    if let Err(e) = cli(
+        root,
+        &["prepare", "--version", tag, "--minecraft", source],
+        false,
+    )
+    .await
+    {
+        log_line(&e, false);
+        return Err(
+            "Automatic Minecraft preparation failed. See the operation log"
+                .into(),
+        );
+    }
+    if !prepared_at(root, &json!({"selected": tag})) {
+        return Err(
+            "Automatic Minecraft preparation failed. Resources are incomplete"
+                .into(),
+        );
+    }
+    Ok(())
+}
+async fn play_automatically(
+    root: &Path,
+    source: &Path,
+    r: &Request,
+) -> Result<()> {
+    if verified(root).await.is_err() {
+        change(|s| s.stage = "download_runtime".into());
+        install_runtime(root).await?;
+    }
+    let instances = query(root, &["--json", "instance", "list"]).await?;
+    let id = selected_instance(
+        &instances,
+        if r.profile.is_empty() {
+            "horizon"
+        } else {
+            &r.profile
+        },
+    )?;
+    if r.action == "play_online" {
+        let accounts = query(root, &["--json", "account", "list"]).await?;
+        if !accounts["owner"].as_bool().unwrap_or(false)
+            || !accounts["accounts"].as_array().is_some_and(|all| {
+                all.iter().any(|a| a["uuid"].as_str() == Some(&r.account))
+            })
+        {
+            return Err("Choose a licensed Microsoft account".into());
+        }
+        cli(root, &["account", "select", "--", &r.account], false).await?;
+    }
+    let mut versions =
+        query(root, &["--json", "versions", "--installed"]).await?;
+    let tag = launch_version(&instances, &versions, &id)?;
+    if needs_game_install(root, &versions, tag.as_deref()) {
+        install_runtime_and_game(root, tag.as_deref().unwrap_or("latest"))
+            .await?;
+        versions = query(root, &["--json", "versions", "--installed"]).await?;
+    }
+    let tag = launch_version(&instances, &versions, &id)?
+        .ok_or("Install Horizon first")?;
+    // Publish successful installation even if preparation later needs missing Minecraft files.
+    refresh(root).await?;
+    prepare_automatically(root, source, &tag).await?;
+    refresh(root).await?;
+    if r.action == "play_online" {
+        change(|s| {
+            s.stage = "playing".into();
+            s.total = 0;
+            s.completed = 0;
+        });
+        cli(root, &["play", "--instance", &id], false).await?;
+    } else {
+        let paths = offline_paths(root, &instances, &versions, &id)?;
+        change(|s| {
+            s.stage = "playing".into();
+            s.total = 0;
+            s.completed = 0;
+        });
+        run_command(offline_command(&paths, &r.name), false, false, true)
+            .await?;
+    }
+    Ok(())
 }
 fn safe_component(s: &str) -> bool {
     !s.is_empty()
@@ -969,6 +1092,47 @@ mod tests {
             .unwrap();
         assert!(offline_paths(dir.path(), &instances, &versions, "horizon")
             .is_err());
+    }
+    #[test]
+    fn automatic_launch_reuses_verified_install_and_prepared_files() {
+        let (dir, instances, versions) = offline_fixture();
+        let tag = launch_version(&instances, &versions, "horizon").unwrap();
+        assert_eq!(tag.as_deref(), Some("test"));
+        assert!(!needs_game_install(dir.path(), &versions, tag.as_deref()));
+        assert!(prepared_at(dir.path(), &json!({"selected": tag})));
+        std::fs::remove_file(
+            dir.path().join("launcher/versions/test/.u3-engine-sha256"),
+        )
+        .unwrap();
+        assert!(needs_game_install(dir.path(), &versions, tag.as_deref()));
+    }
+    #[test]
+    fn automatic_launch_installs_missing_game_and_honors_profile_pin() {
+        let (dir, mut instances, versions) = offline_fixture();
+        assert!(needs_game_install(dir.path(), &json!({}), None));
+        assert_eq!(
+            launch_version(&instances, &json!({}), "horizon").unwrap(),
+            None
+        );
+        instances[0]["version"] = json!("pinned");
+        let tag = launch_version(&instances, &versions, "horizon").unwrap();
+        assert_eq!(tag.as_deref(), Some("pinned"));
+        assert!(needs_game_install(dir.path(), &versions, tag.as_deref()));
+        instances[0]["version"] = json!("../escape");
+        assert!(launch_version(&instances, &versions, "horizon").is_err());
+        assert!(launch_version(&instances, &versions, "--help").is_err());
+    }
+    #[tokio::test]
+    async fn automatic_preparation_is_skipped_when_already_prepared() {
+        let (dir, _, _) = offline_fixture();
+        // No manager exe or source folder exists: a second play must not prepare or download.
+        prepare_automatically(
+            dir.path(),
+            &dir.path().join("absent-source"),
+            "test",
+        )
+        .await
+        .unwrap();
     }
     // Windows CI checks the actual pinned release, not a native API mock.
     #[cfg(windows)]

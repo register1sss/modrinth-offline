@@ -1,3 +1,5 @@
+// Tauri command futures for profile import exceed the default trait recursion depth.
+#![recursion_limit = "256"]
 #![cfg_attr(
     all(not(debug_assertions), target_os = "windows"),
     windows_subsystem = "windows"

@@ -65,7 +65,9 @@ function key(event) {
     chosen.value = null
   }
   if (event.key !== 'Tab') return
-  const nodes = [...dialog.value.querySelectorAll('button:not([disabled]), input, a[href]')]
+  const nodes = [
+    ...dialog.value.querySelectorAll('button:not([disabled]), input, summary, a[href]'),
+  ]
   const first = nodes[0],
     last = nodes.at(-1)
   if (event.shiftKey && [first, dialog.value].includes(document.activeElement)) {

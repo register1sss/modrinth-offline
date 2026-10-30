@@ -125,6 +125,6 @@ jobs:
           if [ -L horizon-source/CLAUDE.md ]; then cp --remove-destination "$(readlink -f horizon-source/CLAUDE.md)" horizon-source/CLAUDE.md; fi
           mkdir -p editor-mods/u3_edit
           cp packages/app-lib/src/minecraft_rust/u3_edit/{runtime.rs,command.rs,frame.rs,list.rs,horizon-mixin.toml} editor-mods/u3_edit/
-          native-tools/bin/horizon-mixins apply --workspace horizon-source --mods editor-mods --out horizon-stage
-          cd horizon-stage
-          cargo check --locked -p horizon-client --bin horizon-client
+          native-tools/bin/horizon-mixins apply --workspace horizon-source --mods editor-mods --out horizon-verified-stage
+          cd horizon-verified-stage
+          CARGO_TARGET_DIR="$GITHUB_WORKSPACE/horizon-stage/target" cargo check --locked -p horizon-client --bin horizon-client

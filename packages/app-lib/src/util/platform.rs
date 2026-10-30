@@ -65,12 +65,18 @@ pub fn os_rule(
     let mut rule_match = true;
 
     if let Some(ref arch) = rule.arch {
-        rule_match &= !matches!(arch.as_str(), "x86" | "arm");
+        let normalize = |arch: &str| match arch {
+            "amd64" | "x86_64" | "x64" => "x86_64".to_string(),
+            "x86" | "i386" | "i686" => "x86".to_string(),
+            "arm64" | "aarch64" => "aarch64".to_string(),
+            other => other.to_string(),
+        };
+        rule_match &= normalize(arch) == normalize(java_arch);
     }
 
     if let Some(name) = &rule.name {
         if minecraft_updated
-            && (name != &Os::LinuxArm64 || name != &Os::LinuxArm32)
+            && (name != &Os::LinuxArm64 && name != &Os::LinuxArm32)
         {
             rule_match &=
                 &Os::native() == name || &Os::native_arch(java_arch) == name;
@@ -98,5 +104,29 @@ pub fn classpath_separator(java_arch: &str) -> &'static str {
         | Os::LinuxArm64
         | Os::Unknown => ":",
         Os::Windows | Os::WindowsArm64 => ";",
+    }
+}
+
+#[cfg(test)]
+mod compatibility_tests {
+    use super::*;
+
+    #[test]
+    fn architecture_rules_match_actual_java_architecture() {
+        for (rule_arch, java_arch, expected) in [
+            ("x86", "amd64", false),
+            ("x86_64", "amd64", true),
+            ("arm64", "aarch64", true),
+            ("aarch64", "amd64", false),
+            ("x86", "x86", true),
+            ("amd64", "aarch64", false),
+        ] {
+            let rule = OsRule {
+                name: None,
+                version: None,
+                arch: Some(rule_arch.to_string()),
+            };
+            assert_eq!(os_rule(&rule, java_arch, true), expected);
+        }
     }
 }

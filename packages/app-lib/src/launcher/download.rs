@@ -21,6 +21,21 @@ use futures::prelude::*;
 use reqwest::Method;
 use tokio::sync::OnceCell;
 
+/// New Minecraft metadata includes optional launcher preferences. Daedalus
+/// 0.2.2 only knows the mandatory game/jvm sections, so strip this optional
+/// section before typed deserialization. Memory and GC remain user-controlled.
+/// Do not discard unknown sections silently: they may be required in the future.
+pub(super) fn parse_version_info(
+    mut value: serde_json::Value,
+) -> crate::Result<GameVersionInfo> {
+    if let Some(arguments) =
+        value.get_mut("arguments").and_then(|v| v.as_object_mut())
+    {
+        arguments.remove("default-user-jvm");
+    }
+    Ok(serde_json::from_value(value)?)
+}
+
 #[tracing::instrument(skip(st, version))]
 pub async fn download_minecraft(
     st: &State,
@@ -78,10 +93,10 @@ pub async fn download_version_info(
         io::read(path)
             .err_into::<crate::Error>()
             .await
-            .and_then(|ref it| Ok(serde_json::from_slice(it)?))
+            .and_then(|ref it| parse_version_info(serde_json::from_slice(it)?))
     } else {
         tracing::info!("Downloading version info for version {}", &version.id);
-        let mut info = fetch_json(
+        let raw = fetch_json::<serde_json::Value>(
             Method::GET,
             &version.url,
             None,
@@ -90,6 +105,7 @@ pub async fn download_version_info(
             &st.pool,
         )
         .await?;
+        let mut info = parse_version_info(raw)?;
 
         if let Some(loader) = loader {
             let partial: d::modded::PartialVersionInfo = fetch_json(

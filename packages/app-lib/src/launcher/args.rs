@@ -16,9 +16,6 @@ use std::io::{BufRead, BufReader};
 use std::{collections::HashMap, path::Path};
 use uuid::Uuid;
 
-// Replaces the space separator with a newline character, as to not split the arguments
-const TEMPORARY_REPLACE_CHAR: &str = "\n";
-
 pub fn get_class_paths(
     libraries_path: &Path,
     libraries: &[Library],
@@ -26,7 +23,7 @@ pub fn get_class_paths(
     java_arch: &str,
     minecraft_updated: bool,
 ) -> crate::Result<String> {
-    let mut cps = libraries
+    let cps = libraries
         .iter()
         .filter_map(|library| {
             if let Some(rules) = &library.rules {
@@ -41,25 +38,27 @@ pub fn get_class_paths(
 
             Some(get_lib_path(libraries_path, &library.name, false))
         })
-        .collect::<Result<HashSet<_>, _>>()?;
+        .collect::<Result<Vec<_>, _>>()?;
 
-    cps.insert(
-        canonicalize(client_path)
-            .map_err(|_| {
-                crate::ErrorKind::LauncherError(format!(
-                    "Specified class path {} does not exist",
-                    client_path.to_string_lossy()
-                ))
-                .as_error()
-            })?
-            .to_string_lossy()
-            .to_string(),
-    );
+    let client = canonicalize(client_path)
+        .map_err(|_| {
+            crate::ErrorKind::LauncherError(format!(
+                "Specified class path {} does not exist",
+                client_path.to_string_lossy()
+            ))
+            .as_error()
+        })?
+        .to_string_lossy()
+        .to_string();
 
-    Ok(cps
+    // Keep metadata order. A HashSet here randomized class loading precedence.
+    let mut seen = HashSet::new();
+    let cps = cps
         .into_iter()
-        .collect::<Vec<_>>()
-        .join(classpath_separator(java_arch)))
+        .chain(std::iter::once(client))
+        .filter(|path| seen.insert(path.clone()))
+        .collect::<Vec<_>>();
+    Ok(cps.join(classpath_separator(java_arch)))
 }
 
 pub fn get_class_paths_jar<T: AsRef<str>>(
@@ -153,14 +152,13 @@ pub fn get_jvm_arguments(
 }
 
 fn parse_jvm_argument(
-    mut argument: String,
+    argument: String,
     natives_path: &Path,
     libraries_path: &Path,
     class_paths: &str,
     version_name: &str,
     java_arch: &str,
 ) -> crate::Result<String> {
-    argument.retain(|c| !c.is_whitespace());
     Ok(argument
         .replace(
             "${natives_directory}",
@@ -234,7 +232,7 @@ pub fn get_minecraft_arguments(
         let mut parsed_arguments = Vec::new();
         for x in legacy_arguments.split(' ') {
             parsed_arguments.push(parse_minecraft_argument(
-                &x.replace(' ', TEMPORARY_REPLACE_CHAR),
+                x,
                 &credentials.access_token,
                 &credentials.username,
                 credentials.id,
@@ -331,26 +329,20 @@ where
 {
     for argument in arguments {
         match argument {
+            // Each JSON string is already one argv element. Do not tokenize it
+            // or replace whitespace (paths, usernames and JVM values may contain it).
             Argument::Normal(arg) => {
-                let parsed =
-                    parse_function(&arg.replace(' ', TEMPORARY_REPLACE_CHAR))?;
-                for arg in parsed.split(TEMPORARY_REPLACE_CHAR) {
-                    parsed_arguments.push(arg.to_string());
-                }
+                parsed_arguments.push(parse_function(arg)?);
             }
             Argument::Ruled { rules, value } => {
                 if parse_rules(rules, java_arch, true) {
                     match value {
                         ArgumentValue::Single(arg) => {
-                            parsed_arguments.push(parse_function(
-                                &arg.replace(' ', TEMPORARY_REPLACE_CHAR),
-                            )?);
+                            parsed_arguments.push(parse_function(arg)?);
                         }
                         ArgumentValue::Many(args) => {
                             for arg in args {
-                                parsed_arguments.push(parse_function(
-                                    &arg.replace(' ', TEMPORARY_REPLACE_CHAR),
-                                )?);
+                                parsed_arguments.push(parse_function(arg)?);
                             }
                         }
                     }
@@ -433,4 +425,215 @@ pub async fn get_processor_main_class(
     .await??;
 
     Ok(main_class)
+}
+
+#[cfg(test)]
+mod compatibility_tests {
+    use super::*;
+    use serde_json::json;
+
+    #[test]
+    fn json_arguments_preserve_spaces_and_boundaries() {
+        let args: Vec<Argument> = serde_json::from_value(json!([
+            "a b", "${value}",
+            {"rules":[{"action":"allow"}], "value":"c d"},
+            {"rules":[{"action":"allow"}], "value":["e f", "g h"]}
+        ]))
+        .unwrap();
+        let mut parsed = Vec::new();
+        parse_arguments(
+            &args,
+            &mut parsed,
+            |s| Ok(s.replace("${value}", "directory with spaces")),
+            "amd64",
+        )
+        .unwrap();
+        assert_eq!(
+            parsed,
+            ["a b", "directory with spaces", "c d", "e f", "g h"]
+        );
+    }
+
+    #[test]
+    fn jvm_literal_whitespace_is_preserved() {
+        let dir = tempfile::tempdir().unwrap();
+        let arg = "-Dexample=hello world";
+        assert_eq!(
+            parse_jvm_argument(
+                arg.to_owned(),
+                dir.path(),
+                dir.path(),
+                "cp",
+                "26.3",
+                "amd64"
+            )
+            .unwrap(),
+            arg
+        );
+    }
+
+    #[test]
+    fn modern_jvm_arguments_expand_without_unresolved_placeholders() {
+        let temp = tempfile::tempdir().unwrap();
+        let path = temp.path().join("directory with spaces");
+        std::fs::create_dir_all(&path).unwrap();
+        for raw in [
+            include_str!("../../tests/fixtures/1.21.11.json"),
+            include_str!("../../tests/fixtures/26.1.json"),
+            include_str!("../../tests/fixtures/26.3.json"),
+        ] {
+            let version = crate::launcher::download::parse_version_info(
+                serde_json::from_str(raw).unwrap(),
+            )
+            .unwrap();
+            let args = version.arguments.as_ref().unwrap();
+            let mut parsed = Vec::new();
+            parse_arguments(
+                args.get(&daedalus::minecraft::ArgumentType::Jvm).unwrap(),
+                &mut parsed,
+                |s| {
+                    parse_jvm_argument(
+                        s.to_owned(),
+                        &path,
+                        &path,
+                        "cp with spaces",
+                        &version.id,
+                        "amd64",
+                    )
+                },
+                "amd64",
+            )
+            .unwrap();
+            assert!(parsed.iter().all(|s| !s.contains("${")));
+            assert!(parsed.iter().any(|s| s == "cp with spaces"));
+            assert!(parsed.iter().any(|s| s.contains("directory with spaces")));
+            assert!(!parsed.iter().any(|s| s == "-Xss1M"));
+        }
+    }
+
+    #[test]
+    fn modern_game_arguments_expand_without_quick_play_placeholders() {
+        let temp = tempfile::tempdir().unwrap();
+        let path = temp.path().join("game directory with spaces");
+        std::fs::create_dir_all(&path).unwrap();
+        for raw in [
+            include_str!("../../tests/fixtures/1.21.11.json"),
+            include_str!("../../tests/fixtures/26.1.json"),
+            include_str!("../../tests/fixtures/26.3.json"),
+        ] {
+            let version = crate::launcher::download::parse_version_info(
+                serde_json::from_str(raw).unwrap(),
+            )
+            .unwrap();
+            let mut parsed = Vec::new();
+            parse_arguments(
+                version
+                    .arguments
+                    .as_ref()
+                    .unwrap()
+                    .get(&daedalus::minecraft::ArgumentType::Game)
+                    .unwrap(),
+                &mut parsed,
+                |s| {
+                    parse_minecraft_argument(
+                        s,
+                        "test-token",
+                        "TestPlayer",
+                        Uuid::nil(),
+                        &version.id,
+                        "test-assets",
+                        &path,
+                        &path,
+                        &version.type_,
+                        WindowSize(1280, 720),
+                    )
+                },
+                "amd64",
+            )
+            .unwrap();
+            assert!(parsed.iter().all(|s| !s.contains("${")));
+            assert!(!parsed
+                .iter()
+                .any(|s| s.starts_with("--quickPlay") || s == "--demo"));
+            assert!(parsed
+                .iter()
+                .any(|s| s.contains("game directory with spaces")));
+            assert!(parsed.windows(2).any(|pair| pair == ["--width", "1280"]));
+        }
+    }
+
+    #[test]
+    #[ignore = "Set TEST_JAVA_PATH to a Java 25 executable"]
+    fn modern_jvm_flags_are_accepted_by_real_java_25() {
+        let java = std::env::var("TEST_JAVA_PATH").unwrap();
+        let temp = tempfile::tempdir().unwrap();
+        for raw in [
+            include_str!("../../tests/fixtures/26.1.json"),
+            include_str!("../../tests/fixtures/26.3.json"),
+        ] {
+            let version = crate::launcher::download::parse_version_info(
+                serde_json::from_str(raw).unwrap(),
+            )
+            .unwrap();
+            let mut parsed = Vec::new();
+            parse_arguments(
+                version
+                    .arguments
+                    .as_ref()
+                    .unwrap()
+                    .get(&daedalus::minecraft::ArgumentType::Jvm)
+                    .unwrap(),
+                &mut parsed,
+                |s| {
+                    parse_jvm_argument(
+                        s.to_owned(),
+                        temp.path(),
+                        temp.path(),
+                        "test classpath",
+                        &version.id,
+                        "amd64",
+                    )
+                },
+                "amd64",
+            )
+            .unwrap();
+            let output = std::process::Command::new(&java)
+                .args(parsed)
+                .arg("-version")
+                .output()
+                .unwrap();
+            assert!(
+                output.status.success(),
+                "{}: {}",
+                version.id,
+                String::from_utf8_lossy(&output.stderr)
+            );
+        }
+    }
+
+    #[test]
+    fn classpath_order_is_stable_and_deduplicated() {
+        let temp = tempfile::tempdir().unwrap();
+        let libraries: Vec<Library> = serde_json::from_value(json!([
+            {"name":"test:first:1"}, {"name":"test:second:1"}, {"name":"test:first:1"}
+        ])).unwrap();
+        for lib in &libraries {
+            let file =
+                temp.path().join(get_path_from_artifact(&lib.name).unwrap());
+            std::fs::create_dir_all(file.parent().unwrap()).unwrap();
+            std::fs::write(file, b"").unwrap();
+        }
+        let client = temp.path().join("client.jar");
+        std::fs::write(&client, b"").unwrap();
+        let cp =
+            get_class_paths(temp.path(), &libraries, &client, "amd64", true)
+                .unwrap();
+        let expected = [
+            get_lib_path(temp.path(), "test:first:1", false).unwrap(),
+            get_lib_path(temp.path(), "test:second:1", false).unwrap(),
+            canonicalize(client).unwrap().to_string_lossy().into_owned(),
+        ]
+        .join(classpath_separator("amd64"));
+        assert_eq!(cp, expected);
+    }
 }

@@ -133,12 +133,22 @@ pub async fn auto_install_java(java_version: u32) -> crate::Result<PathBuf> {
 
         #[cfg(target_os = "macos")]
         {
-            base_path = base_path
-                .join(format!("zulu-{}.jre", java_version))
-                .join("Contents")
-                .join("Home")
-                .join("bin")
-                .join("java")
+            let homes = [
+                base_path
+                    .join(format!("zulu-{}.jre", java_version))
+                    .join("Contents")
+                    .join("Home"),
+                base_path
+                    .join(format!("zulu-{}.jdk", java_version))
+                    .join("Contents")
+                    .join("Home"),
+                base_path.join("Contents").join("Home"),
+                base_path.clone(),
+            ];
+            base_path = homes.iter().map(|home| home.join("bin").join(jre::JAVA_BIN))
+                .find(|java| java.is_file()).ok_or_else(|| {
+                    crate::ErrorKind::LauncherError("Downloaded Java archive has no supported macOS runtime layout".to_string())
+                })?;
         }
 
         #[cfg(not(target_os = "macos"))]
@@ -146,6 +156,21 @@ pub async fn auto_install_java(java_version: u32) -> crate::Result<PathBuf> {
             base_path = base_path.join("bin").join(jre::JAVA_BIN)
         }
 
+        // Fail during installation rather than storing a non-functional runtime.
+        let installed =
+            check_jre(base_path.clone()).await?.ok_or_else(|| {
+                crate::ErrorKind::LauncherError(format!(
+                    "Downloaded Java runtime is not executable: {}",
+                    base_path.display()
+                ))
+            })?;
+        if installed.major_version != java_version {
+            return Err(crate::ErrorKind::LauncherError(format!(
+                "Requested Java {}, but downloaded Java {}",
+                java_version, installed.major_version
+            ))
+            .into());
+        }
         Ok(base_path)
     } else {
         Err(crate::ErrorKind::LauncherError(format!(
@@ -169,7 +194,7 @@ pub async fn test_jre(
         Some(jre) => jre,
         None => return Ok(false),
     };
-    let (major, _) = extract_java_majorminor_version(&jre.version)?;
+    let (_, major) = extract_java_majorminor_version(&jre.version)?;
     Ok(major == major_version)
 }
 
@@ -182,4 +207,35 @@ pub async fn get_max_memory() -> crate::Result<u64> {
             ))
         })?
         .total)
+}
+
+#[cfg(test)]
+mod compatibility_tests {
+    use super::*;
+
+    #[test]
+    fn modern_java_version_major_component_is_not_legacy_prefix() {
+        for (version, expected) in [
+            ("1.8.0_361", 8),
+            ("17.0.12", 17),
+            ("21.0.5", 21),
+            ("25", 25),
+            ("25.0.4.1", 25),
+        ] {
+            let (_, major) = extract_java_majorminor_version(version).unwrap();
+            assert_eq!(major, expected);
+        }
+    }
+
+    #[tokio::test]
+    #[ignore = "Set TEST_JAVA_PATH and TEST_JAVA_MAJOR to test a real installed runtime"]
+    async fn installed_java_runtime_is_detected_and_validated() {
+        let path = PathBuf::from(std::env::var("TEST_JAVA_PATH").unwrap());
+        let major: u32 =
+            std::env::var("TEST_JAVA_MAJOR").unwrap().parse().unwrap();
+        let detected = check_jre(path.clone()).await.unwrap().unwrap();
+        assert_eq!(detected.major_version, major);
+        assert!(test_jre(path.clone(), major).await.unwrap());
+        assert!(!test_jre(path, major + 1).await.unwrap());
+    }
 }

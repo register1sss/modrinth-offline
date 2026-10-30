@@ -22,77 +22,42 @@ mod args;
 
 pub mod download;
 
-// All nones -> disallowed
-// 1+ true -> allowed
-// 1+ false -> disallowed
+// Mojang rules are ordered: the last matching rule wins. With no rules,
+// an entry is unconditional; with rules, it starts out disallowed.
 #[tracing::instrument]
 pub fn parse_rules(
     rules: &[d::minecraft::Rule],
     java_version: &str,
     minecraft_updated: bool,
 ) -> bool {
-    let mut x = rules
-        .iter()
-        .map(|x| parse_rule(x, java_version, minecraft_updated))
-        .collect::<Vec<Option<bool>>>();
-
-    if rules
-        .iter()
-        .all(|x| matches!(x.action, RuleAction::Disallow))
-    {
-        x.push(Some(true))
-    }
-
-    !(x.iter().any(|x| x == &Some(false)) || x.iter().all(|x| x.is_none()))
+    rules.iter().fold(rules.is_empty(), |allowed, rule| {
+        parse_rule(rule, java_version, minecraft_updated).unwrap_or(allowed)
+    })
 }
 
-// if anything is disallowed, it should NOT be included
-// if anything is not disallowed, it shouldn't factor in final result
-// if anything is not allowed, it shouldn't factor in final result
-// if anything is allowed, it should be included
 #[tracing::instrument]
 pub fn parse_rule(
     rule: &d::minecraft::Rule,
     java_version: &str,
     minecraft_updated: bool,
 ) -> Option<bool> {
-    use d::minecraft::{Rule, RuleAction};
-
-    let res = match rule {
-        Rule {
-            os: Some(ref os), ..
-        } => {
-            crate::util::platform::os_rule(os, java_version, minecraft_updated)
-        }
-        Rule {
-            features: Some(ref features),
-            ..
-        } => {
-            !features.is_demo_user.unwrap_or(true)
-                || features.has_custom_resolution.unwrap_or(false)
-                || !features.has_quick_plays_support.unwrap_or(true)
-                || !features.is_quick_play_multiplayer.unwrap_or(true)
-                || !features.is_quick_play_realms.unwrap_or(true)
-                || !features.is_quick_play_singleplayer.unwrap_or(true)
-        }
-        _ => return Some(true),
-    };
-
-    match rule.action {
-        RuleAction::Allow => {
-            if res {
-                Some(true)
-            } else {
-                None
-            }
-        }
-        RuleAction::Disallow => {
-            if res {
-                Some(false)
-            } else {
-                None
-            }
-        }
+    let os_matches = rule.os.as_ref().map_or(true, |os| {
+        crate::util::platform::os_rule(os, java_version, minecraft_updated)
+    });
+    // This launcher supplies a custom resolution, but does not supply demo or
+    // Quick Play arguments. Every declared feature is a condition, not an OR.
+    let features_match = rule.features.as_ref().map_or(true, |features| {
+        features.is_demo_user.map_or(true, |v| !v)
+            && features.has_custom_resolution.map_or(true, |v| v)
+            && features.has_quick_plays_support.map_or(true, |v| !v)
+            && features.is_quick_play_singleplayer.map_or(true, |v| !v)
+            && features.is_quick_play_multiplayer.map_or(true, |v| !v)
+            && features.is_quick_play_realms.map_or(true, |v| !v)
+    });
+    if os_matches && features_match {
+        Some(matches!(rule.action, RuleAction::Allow))
+    } else {
+        None
     }
 }
 
@@ -120,8 +85,22 @@ pub async fn get_java_version_from_profile(
             .flatten();
 
         if let Some(java) = java {
+            let required = version_info
+                .java_version
+                .as_ref()
+                .map(|v| v.major_version)
+                .unwrap_or(8);
+            if java.major_version != required {
+                return Err(crate::ErrorKind::LauncherError(format!(
+                    "Minecraft {} requires Java {}, but the profile override uses Java {}. Remove the custom Java path to enable automatic installation.",
+                    version_info.id, required, java.major_version,
+                )).into());
+            }
             return Ok(Some(java));
         }
+        return Err(crate::ErrorKind::LauncherError(
+            "The profile's custom Java path is invalid. Remove it to enable automatic installation.".to_string(),
+        ).into());
     }
 
     let key = version_info
@@ -132,9 +111,18 @@ pub async fn get_java_version_from_profile(
 
     let state = State::get().await?;
 
-    let java_version = JavaVersion::get(key, &state.pool).await?;
-
-    Ok(java_version)
+    // A previously configured runtime may have been removed or replaced.
+    // Recheck it so installation can recover instead of repeatedly failing.
+    if let Some(java) = JavaVersion::get(key, &state.pool).await? {
+        if let Some(current) =
+            crate::api::jre::check_jre(java.path.into()).await?
+        {
+            if current.major_version == key {
+                return Ok(Some(current));
+            }
+        }
+    }
+    Ok(None)
 }
 
 pub async fn get_loader_version_from_profile(
@@ -653,4 +641,101 @@ pub async fn launch_minecraft(
         &state.pool,
     )
     .await
+}
+
+#[cfg(test)]
+mod compatibility_tests {
+    use super::*;
+    use serde_json::json;
+
+    fn rules(value: serde_json::Value) -> Vec<d::minecraft::Rule> {
+        serde_json::from_value(value).unwrap()
+    }
+
+    #[test]
+    fn empty_rules_are_unconditional() {
+        assert!(parse_rules(&[], "amd64", true));
+    }
+
+    #[test]
+    fn last_matching_rule_wins() {
+        let r = rules(json!([
+            {"action":"allow"}, {"action":"disallow"}, {"action":"allow"}
+        ]));
+        assert!(parse_rules(&r, "amd64", true));
+        assert!(!parse_rules(&r[..2], "amd64", true));
+    }
+
+    #[test]
+    fn nonmatching_disallow_does_not_implicitly_allow() {
+        let r = rules(json!([{"action":"disallow", "os":{"arch":"aarch64"}}]));
+        assert!(!parse_rules(&r, "amd64", true));
+    }
+
+    #[test]
+    fn unconditional_disallow_is_not_allow() {
+        let r = rules(json!([{"action":"disallow"}]));
+        assert_eq!(parse_rule(&r[0], "amd64", true), Some(false));
+    }
+
+    #[test]
+    fn all_features_and_os_must_match() {
+        let r = rules(json!([{"action":"allow", "features":{
+            "has_custom_resolution":true, "is_demo_user":true
+        }}]));
+        assert!(!parse_rules(&r, "amd64", true));
+        let r = rules(json!([{"action":"allow", "os":{"arch":"aarch64"},
+            "features":{"has_custom_resolution":true}}]));
+        assert!(!parse_rules(&r, "amd64", true));
+    }
+
+    #[test]
+    fn quick_play_is_disabled_and_custom_resolution_enabled() {
+        let r = rules(
+            json!([{"action":"allow", "features":{"has_quick_plays_support":true}}]),
+        );
+        assert!(!parse_rules(&r, "amd64", true));
+        let r = rules(
+            json!([{"action":"allow", "features":{"has_custom_resolution":true}}]),
+        );
+        assert!(parse_rules(&r, "amd64", true));
+    }
+
+    #[test]
+    fn new_optional_jvm_section_was_incompatible_with_old_parser() {
+        let raw = include_str!("../../tests/fixtures/26.3.json");
+        assert!(serde_json::from_str::<VersionInfo>(raw).is_err());
+        let parsed =
+            download::parse_version_info(serde_json::from_str(raw).unwrap())
+                .unwrap();
+        assert!(parsed
+            .arguments
+            .unwrap()
+            .contains_key(&d::minecraft::ArgumentType::Jvm));
+    }
+
+    #[test]
+    fn unknown_argument_sections_are_not_silently_discarded() {
+        let mut value: serde_json::Value = serde_json::from_str(include_str!(
+            "../../tests/fixtures/26.3.json"
+        ))
+        .unwrap();
+        value["arguments"]["future-required-section"] = json!([]);
+        assert!(download::parse_version_info(value).is_err());
+    }
+
+    #[test]
+    fn modern_metadata_deserializes_with_correct_java_requirement() {
+        for (raw, major) in [
+            (include_str!("../../tests/fixtures/1.21.11.json"), 21),
+            (include_str!("../../tests/fixtures/26.1.json"), 25),
+            (include_str!("../../tests/fixtures/26.3.json"), 25),
+        ] {
+            let version = download::parse_version_info(
+                serde_json::from_str(raw).unwrap(),
+            )
+            .unwrap();
+            assert_eq!(version.java_version.unwrap().major_version, major);
+        }
+    }
 }

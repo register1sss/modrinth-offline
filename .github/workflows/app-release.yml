@@ -18,12 +18,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [windows-latest, ubuntu-20.04]
+        platform: [windows-2022]
 
     runs-on: ${{ matrix.platform }}
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Rust setup
         uses: dtolnay/rust-toolchain@stable
@@ -39,7 +39,7 @@ jobs:
             ${{ runner.os }}-rust-target-
 
       - name: Use Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: 20
 
@@ -56,7 +56,7 @@ jobs:
           echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
 
       - name: Setup pnpm cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
@@ -72,6 +72,9 @@ jobs:
       - name: Install frontend dependencies
         run: pnpm install
 
+      - name: Test launcher compatibility
+        run: cargo test -p theseus --lib --locked
+
       - name: build app
         uses: tauri-apps/tauri-action@v0
         id: build_os
@@ -79,9 +82,10 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           working-directory: ./apps/app
+          args: --bundles nsis
 
       - name: upload ${{ matrix.platform }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.platform }}
           path: "${{ join(fromJSON(steps.build_os.outputs.artifactPaths), '\n') }}"

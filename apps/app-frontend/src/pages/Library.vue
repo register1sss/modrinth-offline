@@ -40,10 +40,9 @@ onUnmounted(() => {
     <div class="icon">
       <NewInstanceImage />
     </div>
-    <h3>No instances found</h3>
+    <h3>{{ $u3t('No instances found') }}</h3>
     <Button color="primary" :disabled="offline" @click="$refs.installationModal.show()">
-      <PlusIcon />
-      Create new instance
+      <PlusIcon /> {{ $u3t('Create new instance') }}
     </Button>
     <InstanceCreationModal ref="installationModal" />
   </div>

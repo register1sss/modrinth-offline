@@ -8,7 +8,7 @@
     "build": "vite build",
     "lint": "eslint . && prettier --check .",
     "fix": "eslint . --fix && prettier --write .",
-    "test": "node --test tests/themes.test.mjs tests/branding.test.mjs"
+    "test": "node --test tests/themes.test.mjs tests/branding.test.mjs tests/assistant.test.mjs"
   },
   "dependencies": {
     "@modrinth/assets": "workspace:*",

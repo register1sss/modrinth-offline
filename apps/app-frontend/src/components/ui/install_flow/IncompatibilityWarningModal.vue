@@ -23,7 +23,7 @@
               v-if="versions?.length > 1"
               v-model="selectedVersion"
               :options="versions"
-              placeholder="Select version"
+              :placeholder="$u3t('Select version')"
               name="Version select"
               :display-name="
                 (version) =>
@@ -45,7 +45,7 @@
         </tr>
       </table>
       <div class="button-group">
-        <Button @click="() => incompatibleModal.hide()"><XIcon />Cancel</Button>
+        <Button @click="() => incompatibleModal.hide()"><XIcon /> {{ $u3t('Cancel') }} </Button>
         <Button color="primary" :disabled="installing" @click="install()">
           <DownloadIcon /> {{ installing ? 'Installing' : 'Install' }}
         </Button>

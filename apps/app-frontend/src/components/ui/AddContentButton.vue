@@ -34,7 +34,9 @@ const handleSearchContent = async () => {
 
 <template>
   <div class="joined-buttons">
-    <Button color="primary" @click="handleSearchContent"><SearchIcon /> Add content </Button>
+    <Button color="primary" @click="handleSearchContent"
+      ><SearchIcon /> {{ $u3t('Add content') }}
+    </Button>
 
     <OverflowMenu
       :options="[
@@ -52,7 +54,7 @@ const handleSearchContent = async () => {
       <DropdownIcon />
       <template #search>
         <SearchIcon />
-        <span class="no-wrap"> Search </span>
+        <span class="no-wrap"> {{ $u3t('Search') }} </span>
       </template>
       <template #from_file>
         <FolderOpenIcon />

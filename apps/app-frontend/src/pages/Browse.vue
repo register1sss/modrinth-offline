@@ -6,7 +6,6 @@ import {
   Checkbox,
   Button,
   DropdownSelect,
-  Promotion,
   NavRow,
   Card,
   SearchFilter,
@@ -582,7 +581,7 @@ const isModProject = computed(() => ['modpack', 'mod'].includes(projectType.valu
           "
           @click="clearFilters"
         >
-          <ClearIcon /> Clear filters
+          <ClearIcon /> {{ $u3t('Clear filters') }}
         </Button>
         <div
           v-if="(isModProject && ignoreInstanceLoaders) || projectType === 'shader'"
@@ -672,7 +671,6 @@ const isModProject = computed(() => ['modpack', 'mod'].includes(projectType.valu
       </Card>
     </aside>
     <div class="search">
-      <Promotion class="promotion" :external="false" query-param="?r=launcher" />
       <Card class="project-type-container">
         <NavRow :links="selectableProjectTypes" />
       </Card>
@@ -692,7 +690,7 @@ const isModProject = computed(() => ['modpack', 'mod'].includes(projectType.valu
           </Button>
         </div>
         <div class="inline-option">
-          <span>Sort by</span>
+          <span> {{ $u3t('Sort by') }} </span>
           <DropdownSelect
             v-model="sortType"
             name="Sort by"
@@ -723,7 +721,7 @@ const isModProject = computed(() => ['modpack', 'mod'].includes(projectType.valu
       />
       <SplashScreen v-if="loading" />
       <section v-else-if="offline && results.total_hits === 0" class="offline">
-        You are currently offline. Connect to the internet to browse Modrinth!
+        {{ $u3t('You are currently offline. Connect to the internet to browse Modrinth!') }}
       </section>
       <section v-else class="project-list display-mode--list instance-results" role="list">
         <SearchCard

@@ -20,11 +20,16 @@
   <Modal ref="chooseAccountTypeModal" header="Choose new account type">
     <div class="choose-account-modal">
       <div class="account-types">
-        <Button @click="login()">
-          <SSOMicrosoftIcon />Microsoft
-        </Button>
-        <Button @click="$refs.chooseAccountTypeModal.hide(); $refs.chooseOfflineUsernameModal.show()">
-          <ClientIcon />Offline
+        <Button @click="login()"> <SSOMicrosoftIcon />Microsoft </Button>
+        <Button
+          @click="
+            () => {
+              $refs.chooseAccountTypeModal.hide()
+              $refs.chooseOfflineUsernameModal.show()
+            }
+          "
+        >
+          <ClientIcon /> {{ $u3t('Offline') }}
         </Button>
       </div>
     </div>
@@ -32,7 +37,7 @@
 
   <Modal ref="chooseOfflineUsernameModal" header="Choose username for your offline account">
     <div class="choose-offline-username-modal">
-      <input type="text" placeholder="Username" v-model="offlineUsername" />
+      <input type="text" :placeholder="$u3t('Username')" v-model="offlineUsername" />
       <Button icon-only color="primary" @click="offlineLogin(offlineUsername)">
         <LogInIcon />
       </Button>
@@ -50,16 +55,20 @@
         <Avatar size="xs" :src="`https://mc-heads.net/avatar/${selectedAccount.id}/128`" />
         <div>
           <h4>{{ selectedAccount.username }}</h4>
-          <p>Selected</p>
+          <p>{{ $u3t('Selected') }}</p>
         </div>
         <Button v-tooltip="'Log out'" icon-only color="raised" @click="logout(selectedAccount.id)">
           <TrashIcon />
         </Button>
       </div>
       <div v-else class="logged-out account">
-        <h4>Not signed in</h4>
-        <Button v-tooltip="'Log in'" icon-only color="primary"
-            @click="$refs.chooseAccountTypeModal.show()">
+        <h4>{{ $u3t('Not signed in') }}</h4>
+        <Button
+          v-tooltip="'Log in'"
+          icon-only
+          color="primary"
+          @click="$refs.chooseAccountTypeModal.show()"
+        >
           <LogInIcon />
         </Button>
       </div>
@@ -75,8 +84,7 @@
         </div>
       </div>
       <Button v-if="accounts.length > 0" @click="$refs.chooseAccountTypeModal.show()">
-        <PlusIcon />
-        Add account
+        <PlusIcon /> {{ $u3t('Add account') }}
       </Button>
     </Card>
   </transition>

@@ -22,8 +22,7 @@
       />
       <div class="input-group push-right">
         <button class="btn" @click="$refs.modalConfirmUnlock.hide()">
-          <XIcon />
-          Cancel
+          <XIcon /> {{ $u3t('Cancel') }}
         </button>
         <button class="btn btn-danger" @click="unlockProfile">
           <LockIcon />
@@ -47,8 +46,7 @@
       />
       <div class="input-group push-right">
         <button class="btn" @click="$refs.modalConfirmUnpair.hide()">
-          <XIcon />
-          Cancel
+          <XIcon /> {{ $u3t('Cancel') }}
         </button>
         <button class="btn btn-danger" @click="unpairProfile">
           <XIcon />
@@ -65,11 +63,11 @@
   >
     <div class="change-versions-modal universal-body">
       <div class="input-row">
-        <p class="input-label">Loader</p>
+        <p class="input-label">{{ $u3t('Loader') }}</p>
         <Chips v-model="loader" :items="loaders" :never-empty="false" />
       </div>
       <div class="input-row">
-        <p class="input-label">Game Version</p>
+        <p class="input-label">{{ $u3t('Game Version') }}</p>
         <div class="versions">
           <DropdownSelect
             v-model="gameVersion"
@@ -93,8 +91,7 @@
       </div>
       <div class="push-right input-group">
         <button class="btn" @click="$refs.changeVersionsModal.hide()">
-          <XIcon />
-          Cancel
+          <XIcon /> {{ $u3t('Cancel') }}
         </button>
         <button
           class="btn btn-primary"
@@ -120,18 +117,16 @@
       <Avatar :src="icon ? convertFileSrc(icon) : icon" size="md" class="project__icon" />
       <div class="input-stack">
         <button id="instance-icon" class="btn" @click="setIcon">
-          <UploadIcon />
-          Select icon
+          <UploadIcon /> {{ $u3t('Select icon') }}
         </button>
         <button :disabled="!icon" class="btn" @click="resetIcon">
-          <TrashIcon />
-          Remove icon
+          <TrashIcon /> {{ $u3t('Remove icon') }}
         </button>
       </div>
     </div>
 
     <label for="project-name">
-      <span class="label__title">Name</span>
+      <span class="label__title"> {{ $u3t('Name') }} </span>
     </label>
     <input
       id="profile-name"
@@ -162,7 +157,7 @@
 
     <div class="adjacent-input">
       <label>
-        <span class="label__title">Categories</span>
+        <span class="label__title"> {{ $u3t('Categories') }} </span>
         <span class="label__description">
           Set the categories of this instance, for display in the library page. This is purely
           cosmetic.
@@ -192,17 +187,17 @@
   <Card>
     <div class="label">
       <h3>
-        <span class="label__title size-card-header">Java</span>
+        <span class="label__title size-card-header"> {{ $u3t('Java') }} </span>
       </h3>
     </div>
     <div class="settings-group">
-      <h3>Installation</h3>
+      <h3>{{ $u3t('Installation') }}</h3>
       <Checkbox v-model="overrideJavaInstall" label="Override global java installations" />
       <JavaSelector v-model="javaInstall" :disabled="!overrideJavaInstall" />
     </div>
     <hr class="card-divider" />
     <div class="settings-group">
-      <h3>Java arguments</h3>
+      <h3>{{ $u3t('Java arguments') }}</h3>
       <Checkbox v-model="overrideJavaArgs" label="Override global java arguments" />
       <input
         id="java-args"
@@ -215,7 +210,7 @@
       />
     </div>
     <div class="settings-group">
-      <h3>Environment variables</h3>
+      <h3>{{ $u3t('Environment variables') }}</h3>
       <Checkbox v-model="overrideEnvVars" label="Override global environment variables" />
       <input
         v-model="envVars"
@@ -228,7 +223,7 @@
     </div>
     <hr class="card-divider" />
     <div class="settings-group">
-      <h3>Java memory</h3>
+      <h3>{{ $u3t('Java memory') }}</h3>
       <Checkbox v-model="overrideMemorySettings" label="Override global memory settings" />
       <Slider
         v-model="memory.maximum"
@@ -251,7 +246,7 @@
     </div>
     <div class="adjacent-input">
       <label for="fullscreen">
-        <span class="label__title">Fullscreen</span>
+        <span class="label__title"> {{ $u3t('Fullscreen') }} </span>
         <span class="label__description">
           Make the game start in full screen when launched (using options.txt).
         </span>
@@ -270,8 +265,10 @@
     </div>
     <div class="adjacent-input">
       <label for="width">
-        <span class="label__title">Width</span>
-        <span class="label__description"> The width of the game window when launched. </span>
+        <span class="label__title"> {{ $u3t('Width') }} </span>
+        <span class="label__description">
+          {{ $u3t('The width of the game window when launched.') }}
+        </span>
       </label>
       <input
         id="width"
@@ -279,13 +276,15 @@
         autocomplete="off"
         :disabled="!overrideWindowSettings || fullscreenSetting"
         type="number"
-        placeholder="Enter width..."
+        :placeholder="$u3t('Enter width...')"
       />
     </div>
     <div class="adjacent-input">
       <label for="height">
-        <span class="label__title">Height</span>
-        <span class="label__description"> The height of the game window when launched. </span>
+        <span class="label__title"> {{ $u3t('Height') }} </span>
+        <span class="label__description">
+          {{ $u3t('The height of the game window when launched.') }}
+        </span>
       </label>
       <input
         id="height"
@@ -294,14 +293,14 @@
         :disabled="!overrideWindowSettings || fullscreenSetting"
         type="number"
         class="input"
-        placeholder="Enter height..."
+        :placeholder="$u3t('Enter height...')"
       />
     </div>
   </Card>
   <Card>
     <div class="label">
       <h3>
-        <span class="label__title size-card-header">Hooks</span>
+        <span class="label__title size-card-header"> {{ $u3t('Hooks') }} </span>
       </h3>
     </div>
     <div class="adjacent-input">
@@ -309,8 +308,8 @@
     </div>
     <div class="adjacent-input">
       <label for="pre-launch">
-        <span class="label__title">Pre launch</span>
-        <span class="label__description"> Ran before the instance is launched. </span>
+        <span class="label__title"> {{ $u3t('Pre launch') }} </span>
+        <span class="label__description"> {{ $u3t('Ran before the instance is launched.') }} </span>
       </label>
       <input
         id="pre-launch"
@@ -318,13 +317,15 @@
         autocomplete="off"
         :disabled="!overrideHooks"
         type="text"
-        placeholder="Enter pre-launch command..."
+        :placeholder="$u3t('Enter pre-launch command...')"
       />
     </div>
     <div class="adjacent-input">
       <label for="wrapper">
-        <span class="label__title">Wrapper</span>
-        <span class="label__description"> Wrapper command for launching Minecraft. </span>
+        <span class="label__title"> {{ $u3t('Wrapper') }} </span>
+        <span class="label__description">
+          {{ $u3t('Wrapper command for launching Minecraft.') }}
+        </span>
       </label>
       <input
         id="wrapper"
@@ -332,13 +333,13 @@
         autocomplete="off"
         :disabled="!overrideHooks"
         type="text"
-        placeholder="Enter wrapper command..."
+        :placeholder="$u3t('Enter wrapper command...')"
       />
     </div>
     <div class="adjacent-input">
       <label for="post-exit">
-        <span class="label__title">Post exit</span>
-        <span class="label__description"> Ran after the game closes. </span>
+        <span class="label__title"> {{ $u3t('Post exit') }} </span>
+        <span class="label__description"> {{ $u3t('Ran after the game closes.') }} </span>
       </label>
       <input
         id="post-exit"
@@ -346,7 +347,7 @@
         autocomplete="off"
         :disabled="!overrideHooks"
         type="text"
-        placeholder="Enter post-exit command..."
+        :placeholder="$u3t('Enter post-exit command...')"
       />
     </div>
   </Card>
@@ -453,12 +454,12 @@
         :disabled:="installing || inProgress || offline"
         @click="duplicateProfile"
       >
-        <ClipboardCopyIcon /> Duplicate
+        <ClipboardCopyIcon /> {{ $u3t('Duplicate') }}
       </Button>
     </div>
     <div class="adjacent-input">
       <label for="repair-profile">
-        <span class="label__title">Repair instance</span>
+        <span class="label__title"> {{ $u3t('Repair instance') }} </span>
         <span class="label__description">
           Reinstalls Minecraft dependencies and checks for corruption. Use this if your game is not
           launching due to launcher-related errors.
@@ -470,7 +471,7 @@
         :disabled="installing || inProgress || repairing || offline"
         @click="repairProfile(true)"
       >
-        <HammerIcon /> Repair
+        <HammerIcon /> {{ $u3t('Repair') }}
       </Button>
     </div>
     <div class="adjacent-input">
@@ -487,7 +488,7 @@
         :disabled="removing"
         @click="$refs.modal_confirm.show()"
       >
-        <TrashIcon /> Delete
+        <TrashIcon /> {{ $u3t('Delete') }}
       </Button>
     </div>
   </Card>

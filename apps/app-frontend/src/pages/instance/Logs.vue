@@ -16,15 +16,13 @@
           {{ copied ? 'Copied' : 'Copy' }}
         </Button>
         <Button color="primary" :disabled="offline || !logs[selectedLogIndex]" @click="share">
-          <ShareIcon />
-          Share
+          <ShareIcon /> {{ $u3t('Share') }}
         </Button>
         <Button
           v-if="logs[selectedLogIndex] && logs[selectedLogIndex].live === true"
           @click="clearLiveLog()"
         >
-          <TrashIcon />
-          Clear
+          <TrashIcon /> {{ $u3t('Clear') }}
         </Button>
 
         <Button
@@ -33,8 +31,7 @@
           color="danger"
           @click="deleteLog()"
         >
-          <TrashIcon />
-          Delete
+          <TrashIcon /> {{ $u3t('Delete') }}
         </Button>
       </div>
     </div>

@@ -17,13 +17,13 @@
         >{{
           breadcrumb.name.charAt(0) === '?'
             ? breadcrumbData.getName(breadcrumb.name.slice(1))
-            : breadcrumb.name
+            : $u3t(breadcrumb.name)
         }}
       </router-link>
       <span v-else class="selected">{{
         breadcrumb.name.charAt(0) === '?'
           ? breadcrumbData.getName(breadcrumb.name.slice(1))
-          : breadcrumb.name
+          : $u3t(breadcrumb.name)
       }}</span>
       <ChevronRightIcon v-if="breadcrumb.link" class="chevron" />
     </div>

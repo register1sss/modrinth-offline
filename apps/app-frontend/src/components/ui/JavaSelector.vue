@@ -31,13 +31,11 @@
         Auto detect
       </Button>
       <Button :disabled="props.disabled" @click="handleJavaFileInput()">
-        <FolderSearchIcon />
-        Browse
+        <FolderSearchIcon /> {{ $u3t('Browse') }}
       </Button>
       <Button v-if="testingJava" disabled> Testing... </Button>
       <Button v-else-if="testingJavaSuccess === true">
-        <CheckIcon class="test-success" />
-        Success
+        <CheckIcon class="test-success" /> {{ $u3t('Success') }}
       </Button>
       <Button v-else-if="testingJavaSuccess === false">
         <XIcon class="test-fail" />

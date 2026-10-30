@@ -8,18 +8,14 @@
       <div class="image-upload">
         <Avatar :src="display_icon" size="md" :rounded="true" />
         <div class="image-input">
-          <Button @click="upload_icon()">
-            <UploadIcon />
-            Select icon
-          </Button>
+          <Button @click="upload_icon()"> <UploadIcon /> {{ $u3t('Select icon') }} </Button>
           <Button :disabled="!display_icon" @click="reset_icon">
-            <XIcon />
-            Remove icon
+            <XIcon /> {{ $u3t('Remove icon') }}
           </Button>
         </div>
       </div>
       <div class="input-row">
-        <p class="input-label">Name</p>
+        <p class="input-label">{{ $u3t('Name') }}</p>
         <input
           v-model="profile_name"
           autocomplete="off"
@@ -29,11 +25,11 @@
         />
       </div>
       <div class="input-row">
-        <p class="input-label">Loader</p>
+        <p class="input-label">{{ $u3t('Loader') }}</p>
         <Chips v-model="loader" :items="loaders" />
       </div>
       <div class="input-row">
-        <p class="input-label">Game version</p>
+        <p class="input-label">{{ $u3t('Game version') }}</p>
         <div class="versions">
           <multiselect
             v-model="game_version"
@@ -54,12 +50,12 @@
         </div>
       </div>
       <div v-if="showAdvanced && loader !== 'vanilla'" class="input-row">
-        <p class="input-label">Loader version</p>
+        <p class="input-label">{{ $u3t('Loader version') }}</p>
         <Chips v-model="loader_version" :items="['stable', 'latest', 'other']" />
       </div>
       <div v-if="showAdvanced && loader_version === 'other' && loader !== 'vanilla'">
         <div v-if="game_version" class="input-row">
-          <p class="input-label">Select version</p>
+          <p class="input-label">{{ $u3t('Select version') }}</p>
           <multiselect
             v-model="specified_loader_version"
             class="selector"
@@ -71,7 +67,9 @@
           />
         </div>
         <div v-else class="input-row">
-          <p class="warning">Select a game version before you select a loader version</p>
+          <p class="warning">
+            {{ $u3t('Select a game version before you select a loader version') }}
+          </p>
         </div>
       </div>
       <div class="input-group push-right">
@@ -79,10 +77,7 @@
           <CodeIcon />
           {{ showAdvanced ? 'Hide advanced' : 'Show advanced' }}
         </Button>
-        <Button @click="hide()">
-          <XIcon />
-          Cancel
-        </Button>
+        <Button @click="hide()"> <XIcon /> {{ $u3t('Cancel') }} </Button>
         <Button color="primary" :disabled="!check_valid || creating" @click="create_instance()">
           <PlusIcon v-if="!creating" />
           {{ creating ? 'Creating...' : 'Create' }}
@@ -90,8 +85,8 @@
       </div>
     </div>
     <div v-else-if="creationType === 'from file'" class="modal-body">
-      <Button @click="openFile"> <FolderOpenIcon /> Import from file </Button>
-      <div class="info"><InfoIcon /> Or drag and drop your .mrpack file</div>
+      <Button @click="openFile"> <FolderOpenIcon /> {{ $u3t('Import from file') }} </Button>
+      <div class="info"><InfoIcon /> {{ $u3t('Or drag and drop your .mrpack file') }}</div>
     </div>
     <div v-else class="modal-body">
       <Chips
@@ -138,7 +133,7 @@
               "
             />
           </div>
-          <div class="name-cell table-cell">Profile name</div>
+          <div class="name-cell table-cell">{{ $u3t('Profile name') }}</div>
         </div>
         <div
           v-if="
@@ -160,7 +155,7 @@
             </div>
           </div>
         </div>
-        <div v-else class="table-content empty">No profiles found</div>
+        <div v-else class="table-content empty">{{ $u3t('No profiles found') }}</div>
       </div>
       <div class="button-row">
         <Button

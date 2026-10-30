@@ -60,8 +60,7 @@
       "
       :action="clearFilters"
     >
-      <ClearIcon />
-      Clear filters
+      <ClearIcon /> {{ $u3t('Clear filters') }}
     </Button>
   </Card>
   <Pagination
@@ -75,7 +74,7 @@
     <div class="table">
       <div class="table-row table-head">
         <div class="table-cell table-text download-cell" />
-        <div class="name-cell table-cell table-text">Name</div>
+        <div class="name-cell table-cell table-text">{{ $u3t('Name') }}</div>
         <div class="table-cell table-text">Supports</div>
         <div class="table-cell table-text">Stats</div>
       </div>
@@ -142,7 +141,7 @@
             <strong>
               {{ formatNumber(version.downloads) }}
             </strong>
-            <span> Downloads </span>
+            <span> {{ $u3t('Downloads') }} </span>
           </div>
         </div>
       </div>

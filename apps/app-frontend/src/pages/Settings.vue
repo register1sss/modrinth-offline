@@ -1,5 +1,6 @@
 <script setup>
 import { ref, watch } from 'vue'
+import { language, setLanguage, tr, translate } from '@/i18n/index.js'
 import { LogOutIcon, LogInIcon, BoxIcon, FolderSearchIcon, UpdatedIcon } from '@modrinth/assets'
 import { Card, Slider, DropdownSelect, Toggle, Modal, Button } from '@modrinth/ui'
 import { handleError, useTheming } from '@/store/state'
@@ -128,34 +129,49 @@ async function findLauncherDir() {
 
 <template>
   <div class="settings-page">
+    <Card
+      ><div class="adjacent-input">
+        <label for="interface-language"
+          ><span class="label__title">{{ tr('Язык интерфейса', 'Interface language') }}</span
+          ><span class="label__description">{{
+            tr('Сохраняется на этом компьютере.', 'Saved on this computer.')
+          }}</span></label
+        ><select
+          id="interface-language"
+          :value="language"
+          @change="setLanguage($event.target.value)"
+        >
+          <option value="ru">Русский</option>
+          <option value="en">{{ $u3t('English') }}</option>
+        </select>
+      </div></Card
+    >
     <Card>
       <div class="label">
         <h3>
-          <span class="label__title size-card-header">General settings</span>
+          <span class="label__title size-card-header"> {{ $u3t('General settings') }} </span>
         </h3>
       </div>
       <ModrinthLoginScreen ref="loginScreenModal" :callback="signInAfter" />
       <div class="adjacent-input">
         <label for="theme">
-          <span class="label__title">Manage account</span>
+          <span class="label__title"> {{ $u3t('Manage account') }} </span>
           <span v-if="credentials" class="label__description">
-            You are currently logged in as {{ credentials.user.username }}.
+            {{ $u3t('You are currently logged in as') }} {{ credentials.user.username }}.
           </span>
-          <span v-else> Sign in to your Modrinth account. </span>
+          <span v-else> {{ $u3t('Sign in to your Modrinth account.') }} </span>
         </label>
         <button v-if="credentials" class="btn" @click="logOut">
-          <LogOutIcon />
-          Sign out
+          <LogOutIcon /> {{ $u3t('Sign out') }}
         </button>
         <button v-else class="btn" @click="$refs.loginScreenModal.show()">
-          <LogInIcon />
-          Sign in
+          <LogInIcon /> {{ $u3t('Sign in') }}
         </button>
       </div>
       <label for="theme">
-        <span class="label__title">App directory</span>
+        <span class="label__title"> {{ $u3t('App directory') }} </span>
         <span class="label__description">
-          The directory where the launcher stores all of its files.
+          {{ $u3t('The directory where the launcher stores all of its files.') }}
         </span>
       </label>
       <div class="app-directory">
@@ -171,18 +187,21 @@ async function findLauncherDir() {
     <Card>
       <div class="label">
         <h3>
-          <span class="label__title size-card-header">Display</span>
+          <span class="label__title size-card-header"> {{ $u3t('Display') }} </span>
         </h3>
       </div>
       <div class="adjacent-input">
         <label for="theme">
-          <span class="label__title">Color theme</span>
-          <span class="label__description">Change the global launcher color theme.</span>
+          <span class="label__title"> {{ $u3t('Color theme') }} </span>
+          <span class="label__description">
+            {{ $u3t('Change the global launcher color theme.') }}
+          </span>
         </label>
         <DropdownSelect
           id="theme"
           name="Theme dropdown"
           :options="themeStore.themeOptions"
+          :display-name="translate"
           :default-value="settings.theme"
           :model-value="settings.theme"
           class="theme-dropdown"
@@ -194,13 +213,18 @@ async function findLauncherDir() {
           "
         />
       </div>
-      <RouterLink to="/themes" class="btn">Темы — 13 новых палитр и эффекты частиц</RouterLink>
+      <RouterLink to="/themes" class="btn">
+        {{ $u3t('Темы — 13 новых палитр и эффекты частиц') }}
+      </RouterLink>
       <div class="adjacent-input">
         <label for="advanced-rendering">
-          <span class="label__title">Advanced rendering</span>
+          <span class="label__title"> {{ $u3t('Advanced rendering') }} </span>
           <span class="label__description">
-            Enables advanced rendering such as blur effects that may cause performance issues
-            without hardware-accelerated rendering.
+            {{
+              $u3t(
+                'Enables advanced rendering such as blur effects that may cause performance issues without hardware-accelerated rendering.',
+              )
+            }}
           </span>
         </label>
         <Toggle
@@ -217,10 +241,10 @@ async function findLauncherDir() {
       </div>
       <div class="adjacent-input">
         <label for="minimize-launcher">
-          <span class="label__title">Minimize launcher</span>
-          <span class="label__description"
-            >Minimize the launcher when a Minecraft process starts.</span
-          >
+          <span class="label__title"> {{ $u3t('Minimize launcher') }} </span>
+          <span class="label__description">
+            {{ $u3t('Minimize the launcher when a Minecraft process starts.') }}
+          </span>
         </label>
         <Toggle
           id="minimize-launcher"
@@ -235,8 +259,10 @@ async function findLauncherDir() {
       </div>
       <div v-if="getOS() != 'MacOS'" class="adjacent-input">
         <label for="native-decorations">
-          <span class="label__title">Native decorations</span>
-          <span class="label__description">Use system window frame (app restart required).</span>
+          <span class="label__title"> {{ $u3t('Native decorations') }} </span>
+          <span class="label__description">
+            {{ $u3t('Use system window frame (app restart required).') }}
+          </span>
         </label>
         <Toggle
           id="native-decorations"
@@ -251,13 +277,16 @@ async function findLauncherDir() {
       </div>
       <div class="adjacent-input">
         <label for="opening-page">
-          <span class="label__title">Default landing page</span>
-          <span class="label__description">Change the page to which the launcher opens on.</span>
+          <span class="label__title"> {{ $u3t('Default landing page') }} </span>
+          <span class="label__description">
+            {{ $u3t('Change the page to which the launcher opens on.') }}
+          </span>
         </label>
         <DropdownSelect
           id="opening-page"
           name="Opening page dropdown"
           :options="pageOptions"
+          :display-name="translate"
           :default-value="settings.default_page"
           :model-value="settings.default_page"
           class="opening-page"
@@ -272,17 +301,19 @@ async function findLauncherDir() {
     <Card>
       <div class="label">
         <h3>
-          <span class="label__title size-card-header">Resource management</span>
+          <span class="label__title size-card-header"> {{ $u3t('Resource management') }} </span>
         </h3>
       </div>
 
       <div class="adjacent-input">
         <label for="max-downloads">
-          <span class="label__title">Maximum concurrent downloads</span>
+          <span class="label__title"> {{ $u3t('Maximum concurrent downloads') }} </span>
           <span class="label__description">
-            The maximum amount of files the launcher can download at the same time. Set this to a
-            lower value if you have a poor internet connection. (app restart required to take
-            effect)
+            {{
+              $u3t(
+                'The maximum amount of files the launcher can download at the same time. Set this to a lower value if you have a poor internet connection. (app restart required to take effect)',
+              )
+            }}
           </span>
         </label>
         <Slider
@@ -296,11 +327,13 @@ async function findLauncherDir() {
 
       <div class="adjacent-input">
         <label for="max-writes">
-          <span class="label__title">Maximum concurrent writes</span>
+          <span class="label__title"> {{ $u3t('Maximum concurrent writes') }} </span>
           <span class="label__description">
-            The maximum amount of files the launcher can write to the disk at once. Set this to a
-            lower value if you are frequently getting I/O errors. (app restart required to take
-            effect)
+            {{
+              $u3t(
+                'The maximum amount of files the launcher can write to the disk at once. Set this to a lower value if you are frequently getting I/O errors. (app restart required to take effect)',
+              )
+            }}
           </span>
         </label>
         <Slider
@@ -315,15 +348,18 @@ async function findLauncherDir() {
     <Card>
       <div class="label">
         <h3>
-          <span class="label__title size-card-header">Privacy</span>
+          <span class="label__title size-card-header"> {{ $u3t('Privacy') }} </span>
         </h3>
       </div>
       <div class="adjacent-input">
         <label for="opt-out-analytics">
-          <span class="label__title">Telemetry</span>
+          <span class="label__title"> {{ $u3t('Telemetry') }} </span>
           <span class="label__description">
-            When enabled, U3drinth sends launcher analytics to the existing Modrinth analytics
-            service. Disable this option to opt out of launcher analytics.
+            {{
+              $u3t(
+                'When enabled, U3drinth sends launcher analytics to the existing Modrinth analytics service. Disable this option to opt out of launcher analytics.',
+              )
+            }}
           </span>
         </label>
         <Toggle
@@ -341,10 +377,11 @@ async function findLauncherDir() {
         <label for="disable-discord-rpc">
           <span class="label__title">Discord RPC</span>
           <span class="label__description">
-            Manages the legacy Discord Rich Presence integration, which uses the Modrinth Discord
-            application. Disable it to hide launcher activity on your Discord profile. This does not
-            disable any instance-specific Discord Rich Presence integrations, such as those added by
-            mods. (app restart required to take effect)
+            {{
+              $u3t(
+                'Manages the legacy Discord Rich Presence integration, which uses the Modrinth Discord application. Disable it to hide launcher activity on your Discord profile. This does not disable any instance-specific Discord Rich Presence integrations, such as those added by mods. (app restart required to take effect)',
+              )
+            }}
           </span>
         </label>
         <Toggle
@@ -357,12 +394,12 @@ async function findLauncherDir() {
     <Card>
       <div class="label">
         <h3>
-          <span class="label__title size-card-header">Java settings</span>
+          <span class="label__title size-card-header"> {{ $u3t('Java settings') }} </span>
         </h3>
       </div>
       <template v-for="version in [21, 17, 8]">
         <label :for="'java-' + version">
-          <span class="label__title">Java {{ version }} location</span>
+          <span class="label__title"> {{ $u3t('Java') }} {{ version }} location</span>
         </label>
         <JavaSelector
           :id="'java-selector-' + version"
@@ -373,7 +410,7 @@ async function findLauncherDir() {
       </template>
       <hr class="card-divider" />
       <label for="java-args">
-        <span class="label__title">Java arguments</span>
+        <span class="label__title"> {{ $u3t('Java arguments') }} </span>
       </label>
       <input
         id="java-args"
@@ -384,7 +421,7 @@ async function findLauncherDir() {
         placeholder="Enter java arguments..."
       />
       <label for="env-vars">
-        <span class="label__title">Environmental variables</span>
+        <span class="label__title"> {{ $u3t('Environmental variables') }} </span>
       </label>
       <input
         id="env-vars"
@@ -397,9 +434,9 @@ async function findLauncherDir() {
       <hr class="card-divider" />
       <div class="adjacent-input">
         <label for="max-memory">
-          <span class="label__title">Java memory</span>
+          <span class="label__title"> {{ $u3t('Java memory') }} </span>
           <span class="label__description">
-            The memory allocated to each instance when it is ran.
+            {{ $u3t('The memory allocated to each instance when it is ran.') }}
           </span>
         </label>
         <Slider
@@ -415,60 +452,64 @@ async function findLauncherDir() {
     <Card>
       <div class="label">
         <h3>
-          <span class="label__title size-card-header">Hooks</span>
+          <span class="label__title size-card-header"> {{ $u3t('Hooks') }} </span>
         </h3>
       </div>
       <div class="adjacent-input">
         <label for="pre-launch">
-          <span class="label__title">Pre launch</span>
-          <span class="label__description"> Ran before the instance is launched. </span>
+          <span class="label__title"> {{ $u3t('Pre launch') }} </span>
+          <span class="label__description">
+            {{ $u3t('Ran before the instance is launched.') }}
+          </span>
         </label>
         <input
           id="pre-launch"
           v-model="settings.hooks.pre_launch"
           autocomplete="off"
           type="text"
-          placeholder="Enter pre-launch command..."
+          :placeholder="$u3t('Enter pre-launch command...')"
         />
       </div>
       <div class="adjacent-input">
         <label for="wrapper">
-          <span class="label__title">Wrapper</span>
-          <span class="label__description"> Wrapper command for launching Minecraft. </span>
+          <span class="label__title"> {{ $u3t('Wrapper') }} </span>
+          <span class="label__description">
+            {{ $u3t('Wrapper command for launching Minecraft.') }}
+          </span>
         </label>
         <input
           id="wrapper"
           v-model="settings.hooks.wrapper"
           autocomplete="off"
           type="text"
-          placeholder="Enter wrapper command..."
+          :placeholder="$u3t('Enter wrapper command...')"
         />
       </div>
       <div class="adjacent-input">
         <label for="post-exit">
-          <span class="label__title">Post exit</span>
-          <span class="label__description"> Ran after the game closes. </span>
+          <span class="label__title"> {{ $u3t('Post exit') }} </span>
+          <span class="label__description"> {{ $u3t('Ran after the game closes.') }} </span>
         </label>
         <input
           id="post-exit"
           v-model="settings.hooks.post_exit"
           autocomplete="off"
           type="text"
-          placeholder="Enter post-exit command..."
+          :placeholder="$u3t('Enter post-exit command...')"
         />
       </div>
     </Card>
     <Card>
       <div class="label">
         <h3>
-          <span class="label__title size-card-header">Window size</span>
+          <span class="label__title size-card-header"> {{ $u3t('Window size') }} </span>
         </h3>
       </div>
       <div class="adjacent-input">
         <label for="fullscreen">
-          <span class="label__title">Fullscreen</span>
+          <span class="label__title"> {{ $u3t('Fullscreen') }} </span>
           <span class="label__description">
-            Overwrites the options.txt file to start in full screen when launched.
+            {{ $u3t('Overwrites the options.txt file to start in full screen when launched.') }}
           </span>
         </label>
         <Toggle
@@ -484,8 +525,10 @@ async function findLauncherDir() {
       </div>
       <div class="adjacent-input">
         <label for="width">
-          <span class="label__title">Width</span>
-          <span class="label__description"> The width of the game window when launched. </span>
+          <span class="label__title"> {{ $u3t('Width') }} </span>
+          <span class="label__description">
+            {{ $u3t('The width of the game window when launched.') }}
+          </span>
         </label>
         <input
           id="width"
@@ -493,13 +536,15 @@ async function findLauncherDir() {
           :disabled="settings.force_fullscreen"
           autocomplete="off"
           type="number"
-          placeholder="Enter width..."
+          :placeholder="$u3t('Enter width...')"
         />
       </div>
       <div class="adjacent-input">
         <label for="height">
-          <span class="label__title">Height</span>
-          <span class="label__description"> The height of the game window when launched. </span>
+          <span class="label__title"> {{ $u3t('Height') }} </span>
+          <span class="label__description">
+            {{ $u3t('The height of the game window when launched.') }}
+          </span>
         </label>
         <input
           id="height"
@@ -508,20 +553,20 @@ async function findLauncherDir() {
           autocomplete="off"
           type="number"
           class="input"
-          placeholder="Enter height..."
+          :placeholder="$u3t('Enter height...')"
         />
       </div>
     </Card>
     <Card>
       <div class="label">
         <h3>
-          <span class="label__title size-card-header">About</span>
+          <span class="label__title size-card-header"> {{ $u3t('About') }} </span>
         </h3>
       </div>
       <div>
         <label>
-          <span class="label__title">App version</span>
-          <span class="label__description">U3drinth v{{ version }} </span>
+          <span class="label__title"> {{ $u3t('App version') }} </span>
+          <span class="label__description">U3drinth (custom modrinth) v1.0 </span>
         </label>
       </div>
     </Card>

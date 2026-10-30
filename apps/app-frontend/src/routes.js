@@ -10,6 +10,12 @@ export default new createRouter({
   history: createWebHistory(),
   routes: [
     {
+      path: '/assistant',
+      name: 'Assistant',
+      component: Pages.Assistant,
+      meta: { breadcrumb: [{ name: 'U3 AI' }] },
+    },
+    {
       path: '/',
       name: 'Home',
       component: Pages.Index,

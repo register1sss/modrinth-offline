@@ -130,6 +130,7 @@ fn main() {
     }
 
     let builder = builder
+        .plugin(api::assistant::init())
         .plugin(api::auth::init())
         .plugin(api::mr_auth::init())
         .plugin(api::import::init())

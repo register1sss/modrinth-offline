@@ -77,9 +77,9 @@ async function loginMinecraft() {
           <template v-if="metadata.network">
             <h3>Network issues</h3>
             <p>
-              It looks like there were issues with the U3drinth connecting to Microsoft's
-              servers. This is often the result of a poor connection, so we recommend trying again
-              to see if it works. If issues continue to persist, follow the steps in
+              It looks like there were issues with the U3drinth connecting to Microsoft's servers.
+              This is often the result of a poor connection, so we recommend trying again to see if
+              it works. If issues continue to persist, follow the steps in
               <a
                 href="https://support.modrinth.com/en/articles/9038231-minecraft-sign-in-issues#h_e71a5f805f"
               >
@@ -91,9 +91,9 @@ async function loginMinecraft() {
           <template v-else-if="metadata.hostsFile">
             <h3>Network issues</h3>
             <p>
-              The U3drinth tried to connect to Microsoft / Xbox / Minecraft services, but the
-              remote server rejected the connection. This may indicate that these services are
-              blocked by the hosts file. Please visit
+              The U3drinth tried to connect to Microsoft / Xbox / Minecraft services, but the remote
+              server rejected the connection. This may indicate that these services are blocked by
+              the hosts file. Please visit
               <a
                 href="https://support.modrinth.com/en/articles/9038231-minecraft-sign-in-issues#h_d694a29256"
               >
@@ -127,10 +127,9 @@ async function loginMinecraft() {
           </div>
           <hr />
           <p>
-            If nothing is working and you need help, visit
-            <a :href="supportLink">our support page</a>
-            and start a chat using the widget in the bottom right and we will be more than happy to
-            assist! Make sure to provide the following debug information to the agent:
+            If nothing is working and you need help, visit and start a chat using the widget in the
+            bottom right and we will be more than happy to assist! Make sure to provide the
+            following debug information to the agent:
           </p>
           <details>
             <summary>Debug information</summary>
@@ -167,8 +166,7 @@ async function loginMinecraft() {
         </template>
       </div>
       <div class="input-group push-right">
-        <a :href="supportLink" class="btn" @click="errorModal.hide()"><ChatIcon /> Get support</a>
-        <button class="btn" @click="errorModal.hide()"><XIcon /> Close</button>
+        <button class="btn" @click="errorModal.hide()"><XIcon /> {{ $u3t('Close') }}</button>
       </div>
     </div>
   </Modal>

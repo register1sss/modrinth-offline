@@ -1,4 +1,7 @@
 import { createApp } from 'vue'
+import { localization } from '@/i18n/index.js'
+import { startAssistantMonitor } from '@/assistant/monitor.js'
+import '@/assets/stylesheets/motion.scss'
 import router from '@/routes'
 import App from '@/App.vue'
 import { createPinia } from 'pinia'
@@ -39,6 +42,7 @@ app.use(pinia)
 app.use(FloatingVue)
 app.mixin(loadCssMixin)
 app.use(VIntlPlugin)
+app.use(localization)
 
 const mountedApp = app.mount('#app')
 
@@ -73,6 +77,7 @@ initialize_state()
       })
       .finally(() => {
         mountedApp.initialize()
+        startAssistantMonitor().catch(console.error)
         get_opening_command().then((command) => {
           console.log(JSON.stringify(command)) // change me to use whatever FE command handler is made
         })

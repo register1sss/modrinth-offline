@@ -273,11 +273,11 @@ const createInstance = async () => {
             <div class="creation-icon__description">
               <Button @click="upload_icon()">
                 <UploadIcon />
-                <span class="no-wrap"> Select icon </span>
+                <span class="no-wrap"> {{ $u3t('Select icon') }} </span>
               </Button>
               <Button :disabled="!display_icon" @click="reset_icon()">
                 <XIcon />
-                <span class="no-wrap"> Remove icon </span>
+                <span class="no-wrap"> {{ $u3t('Remove icon') }} </span>
               </Button>
             </div>
           </div>
@@ -286,7 +286,7 @@ const createInstance = async () => {
               v-model="name"
               autocomplete="off"
               type="text"
-              placeholder="Name"
+              :placeholder="$u3t('Name')"
               class="creation-input"
             />
             <Button :disabled="creatingInstance === true || !name" @click="createInstance()">
@@ -301,7 +301,7 @@ const createInstance = async () => {
           <PlusIcon />
           {{ showCreation ? 'Hide New Instance' : 'Create new instance' }}
         </Button>
-        <Button @click="installModal.hide()">Cancel</Button>
+        <Button @click="installModal.hide()"> {{ $u3t('Cancel') }} </Button>
       </div>
     </div>
   </Modal>

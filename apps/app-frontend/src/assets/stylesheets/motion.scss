@@ -1,0 +1,111 @@
+/* Short, transform-only jelly with one brief blur on the entering route. */
+@keyframes u3-jelly {
+  0% {
+    transform: scale(1);
+  }
+  35% {
+    transform: scale(1.16, 0.86) rotate(-3deg);
+  }
+  65% {
+    transform: scale(0.94, 1.08) rotate(2deg);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .btn svg,
+  .button-base svg,
+  button svg {
+    transform-origin: 50% 50%;
+    transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .btn:hover > svg,
+  .button-base:hover > svg,
+  button:hover > svg {
+    animation: u3-jelly 0.55s cubic-bezier(0.22, 0.8, 0.25, 1) both;
+  }
+  .route-motion-enter-active {
+    transition:
+      opacity 0.2s ease,
+      transform 0.24s cubic-bezier(0.2, 0.8, 0.2, 1),
+      filter 0.2s ease;
+  }
+  .route-motion-leave-active {
+    transition:
+      opacity 0.12s ease,
+      transform 0.12s ease;
+  }
+  .route-motion-enter-from {
+    opacity: 0;
+    transform: translateY(7px);
+    filter: blur(2px);
+  }
+  .route-motion-leave-to {
+    opacity: 0;
+    transform: translateY(-3px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .route-motion-enter-active,
+  .route-motion-leave-active,
+  .btn svg,
+  button svg {
+    animation: none !important;
+    transition: none !important;
+    filter: none !important;
+    transform: none !important;
+  }
+}
+.route-stage {
+  min-height: 100%;
+}
+.language-switch {
+  min-height: 36px;
+  border: 1px solid var(--color-button-bg);
+  border-radius: 8px;
+  background: var(--color-raised-bg);
+  color: var(--color-contrast);
+  font: 14px/1.4 inherit;
+  padding: 4px 8px;
+  cursor: pointer;
+}
+.language-switch:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 3px;
+}
+.ai-nav-link {
+  position: relative;
+}
+.ai-nav-alert {
+  position: absolute;
+  right: 1px;
+  top: 1px;
+  background: #a92349;
+  color: white;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  font: 700 12px/1 sans-serif;
+}
+
+.mod-stats {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.language-switch {
+  flex-shrink: 0;
+  align-self: center;
+  min-width: 58px;
+}
+.appbar-row .appbar {
+  min-width: 0;
+}
+
+.language-switch {
+  border-color: var(--color-secondary);
+}

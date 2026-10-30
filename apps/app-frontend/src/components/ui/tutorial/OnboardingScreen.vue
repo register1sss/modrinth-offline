@@ -60,7 +60,7 @@ const finishOnboarding = async () => {
       ]"
       logo
     >
-      <Button color="primary" @click="nextPage"> Get started </Button>
+      <Button color="primary" @click="nextPage"> {{ $u3t('Get started') }} </Button>
     </GalleryImage>
     <LoginCard v-else-if="page === 2" :next-page="finishOnboarding" :prev-page="prevPage" />
   </div>

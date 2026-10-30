@@ -140,7 +140,7 @@ async function createAccount() {
         <input v-model="twoFactorCode" maxlength="11" type="text" placeholder="Enter code..." />
       </template>
       <template v-else>
-        <h1 v-if="loggingIn">Login to Modrinth</h1>
+        <h1 v-if="loggingIn">{{ $u3t('Login to Modrinth') }}</h1>
         <h1 v-else>Create an account</h1>
         <div class="button-grid">
           <Button class="discord" large @click="signInOauth('discord')">
@@ -174,7 +174,7 @@ async function createAccount() {
         </div>
         <div v-if="!loggingIn" class="iconified-input username">
           <MailIcon />
-          <input v-model="email" type="text" placeholder="Email" />
+          <input v-model="email" type="text" :placeholder="$u3t('Email')" />
         </div>
         <div class="iconified-input username">
           <UserIcon />
@@ -186,7 +186,7 @@ async function createAccount() {
         </div>
         <div class="iconified-input" :class="{ username: !loggingIn }">
           <LockIcon />
-          <input v-model="password" type="password" placeholder="Password" />
+          <input v-model="password" type="password" :placeholder="$u3t('Password')" />
         </div>
         <div v-if="!loggingIn" class="iconified-input username">
           <LockIcon />
@@ -204,15 +204,17 @@ async function createAccount() {
         />
         <div class="link-row">
           <a v-if="loggingIn" class="button-base" @click="loggingIn = false"> Create account </a>
-          <a v-else class="button-base" @click="loggingIn = true">Sign in</a>
+          <a v-else class="button-base" @click="loggingIn = true"> {{ $u3t('Sign in') }} </a>
           <a class="button-base" href="https://modrinth.com/auth/reset-password">
             Forgot password?
           </a>
         </div>
       </template>
       <div class="button-row">
-        <Button class="transparent" large>Close</Button>
-        <Button v-if="twoFactorCode" color="primary" large @click="signIn2fa"> Login </Button>
+        <Button class="transparent" large> {{ $u3t('Close') }} </Button>
+        <Button v-if="twoFactorCode" color="primary" large @click="signIn2fa">
+          {{ $u3t('Login') }}
+        </Button>
         <Button
           v-else-if="loggingIn"
           color="primary"
@@ -220,7 +222,7 @@ async function createAccount() {
           @click="signIn"
           :disabled="!turnstileToken"
         >
-          Login
+          {{ $u3t('Login') }}
         </Button>
         <Button v-else color="primary" large @click="createAccount" :disabled="!turnstileToken">
           Create account

@@ -39,15 +39,14 @@
           rel="external"
           class="btn"
         >
-          <ExternalIcon />
-          Modrinth website
+          <ExternalIcon /> {{ $u3t('Modrinth website') }}
         </a>
       </div>
     </Card>
     <div class="version-container">
       <div class="description-cards">
         <Card>
-          <h3 class="card-title">Changelog</h3>
+          <h3 class="card-title">{{ $u3t('Changelog') }}</h3>
           <div class="markdown-body" v-html="renderString(version.changelog ?? '')" />
         </Card>
         <Card>
@@ -81,7 +80,7 @@
           </Card>
         </Card>
         <Card v-if="displayDependencies.length > 0">
-          <h2>Dependencies</h2>
+          <h2>{{ $u3t('Dependencies') }}</h2>
           <div v-for="dependency in displayDependencies" :key="dependency.title">
             <router-link v-if="dependency.link" class="btn dependency" :to="dependency.link">
               <Avatar size="sm" :src="dependency.icon" />
@@ -130,7 +129,7 @@
             <span class="metadata-value"> {{ version.game_versions.join(', ') }} </span>
           </div>
           <div class="metadata-item">
-            <span class="metadata-label">Downloads</span>
+            <span class="metadata-label"> {{ $u3t('Downloads') }} </span>
             <span class="metadata-value">{{ version.downloads }}</span>
           </div>
           <div class="metadata-item">
@@ -155,7 +154,7 @@
             </span>
           </div>
           <div v-if="author" class="metadata-item">
-            <span class="metadata-label">Author</span>
+            <span class="metadata-label"> {{ $u3t('Author') }} </span>
             <a
               :href="`https://modrinth.com/user/${author.user.username}`"
               rel="external"

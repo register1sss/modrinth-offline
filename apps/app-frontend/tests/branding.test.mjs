@@ -7,7 +7,7 @@ const config = JSON.parse(read('../../app/tauri.conf.json'))
 
 test('U3drinth is the desktop product and window title', () => {
   assert.equal(config.package.productName, 'U3drinth')
-  assert.equal(config.package.version, '0.8.0-3')
+  assert.equal(config.package.version, '1.0.0')
   assert.ok(config.tauri.windows.every((window) => window.title === 'U3drinth'))
   const mac = JSON.parse(read('../../app/tauri.macos.conf.json'))
   assert.ok(mac.tauri.windows.every((window) => window.title === 'U3drinth'))

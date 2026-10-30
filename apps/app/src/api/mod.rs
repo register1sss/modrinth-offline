@@ -102,3 +102,5 @@ impl_serialize! {
     IO,
     Tauri,
 }
+
+pub mod assistant;

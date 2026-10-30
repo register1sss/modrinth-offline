@@ -39,8 +39,7 @@
       Export modpack
     </Button>
     <Button v-if="!isPackLocked && projects.some((m) => m.outdated)" @click="updateAll">
-      <UpdatedIcon />
-      Update all
+      <UpdatedIcon /> {{ $u3t('Update all') }}
     </Button>
     <AddContentButton v-if="!isPackLocked" :instance="instance" />
   </Card>
@@ -60,13 +59,13 @@
         </div>
         <div v-if="selected.length === 0" class="table-cell table-text name-cell actions-cell">
           <Button class="transparent" @click="sortProjects('Name')">
-            Name
+            {{ $u3t('Name') }}
             <DropdownIcon v-if="sortColumn === 'Name'" :class="{ down: ascending }" />
           </Button>
         </div>
         <div v-if="selected.length === 0" class="table-cell table-text version">
           <Button class="transparent" @click="sortProjects('Version')">
-            Version
+            {{ $u3t('Version') }}
             <DropdownIcon v-if="sortColumn === 'Version'" :class="{ down: ascending }" />
           </Button>
         </div>
@@ -91,8 +90,7 @@
             @click="shareNames()"
             @mouseover="selectedOption = 'Share'"
           >
-            <ShareIcon />
-            Share
+            <ShareIcon /> {{ $u3t('Share') }}
           </Button>
           <div v-tooltip="isPackLocked ? 'Unlock this instance to remove mods' : ''">
             <Button
@@ -101,8 +99,7 @@
               @click="deleteWarning.show()"
               @mouseover="selectedOption = 'Delete'"
             >
-              <TrashIcon />
-              Delete
+              <TrashIcon /> {{ $u3t('Delete') }}
             </Button>
           </div>
           <div v-tooltip="isPackLocked ? 'Unlock this instance to update mods' : ''">
@@ -112,8 +109,7 @@
               @click="updateSelected()"
               @mouseover="selectedOption = 'Update'"
             >
-              <UpdatedIcon />
-              Update
+              <UpdatedIcon /> {{ $u3t('Update') }}
             </Button>
           </div>
           <div v-tooltip="isPackLocked ? 'Unlock this instance to toggle mods' : ''">
@@ -160,8 +156,7 @@
         </section>
         <section v-if="selectedOption === 'Update'" class="options">
           <Button class="transparent" :disabled="offline" @click="updateAll()">
-            <UpdatedIcon />
-            Update all
+            <UpdatedIcon /> {{ $u3t('Update all') }}
           </Button>
           <Button class="transparent" @click="selectUpdatable()">
             <CheckIcon />
@@ -287,11 +282,8 @@
         </p>
       </div>
       <div class="button-group push-right">
-        <Button @click="deleteWarning.hide()"> Cancel </Button>
-        <Button color="danger" @click="deleteSelected">
-          <TrashIcon />
-          Remove
-        </Button>
+        <Button @click="deleteWarning.hide()"> {{ $u3t('Cancel') }} </Button>
+        <Button color="danger" @click="deleteSelected"> <TrashIcon /> {{ $u3t('Remove') }} </Button>
       </div>
     </div>
   </Modal>
@@ -310,11 +302,8 @@
         </p>
       </div>
       <div class="button-group push-right">
-        <Button @click="deleteDisabledWarning.hide()"> Cancel </Button>
-        <Button color="danger" @click="deleteDisabled">
-          <TrashIcon />
-          Remove
-        </Button>
+        <Button @click="deleteDisabledWarning.hide()"> {{ $u3t('Cancel') }} </Button>
+        <Button color="danger" @click="deleteDisabled"> <TrashIcon /> {{ $u3t('Remove') }} </Button>
       </div>
     </div>
   </Modal>

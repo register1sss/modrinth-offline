@@ -130,7 +130,7 @@ const exportPack = async () => {
       </div>
       <div class="adjacent-input">
         <div class="labeled_input">
-          <p>Description</p>
+          <p>{{ $u3t('Description') }}</p>
 
           <div class="textarea-wrapper">
             <textarea v-model="exportDescription" placeholder="Enter modpack description..." />
@@ -198,14 +198,8 @@ const exportPack = async () => {
         </div>
       </div>
       <div class="button-row push-right">
-        <Button @click="exportModal.hide">
-          <XIcon />
-          Cancel
-        </Button>
-        <Button color="primary" @click="exportPack">
-          <PackageIcon />
-          Export
-        </Button>
+        <Button @click="exportModal.hide"> <XIcon /> {{ $u3t('Cancel') }} </Button>
+        <Button color="primary" @click="exportPack"> <PackageIcon /> {{ $u3t('Export') }} </Button>
       </div>
     </div>
   </Modal>

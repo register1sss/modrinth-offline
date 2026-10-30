@@ -61,7 +61,7 @@ async function install() {
     <div class="modal-body">
       <p>You already have this modpack installed. Are you sure you want to install it again?</p>
       <div class="input-group push-right">
-        <Button @click="() => $refs.confirmModal.hide()"><XIcon />Cancel</Button>
+        <Button @click="() => $refs.confirmModal.hide()"><XIcon /> {{ $u3t('Cancel') }} </Button>
         <Button color="primary" :disabled="installing" @click="install()"
           ><DownloadIcon /> {{ installing ? 'Installing' : 'Install' }}</Button
         >

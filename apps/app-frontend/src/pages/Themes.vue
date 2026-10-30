@@ -1,5 +1,6 @@
 <script setup>
 import { computed, ref } from 'vue'
+import { tr, translate } from '@/i18n/index.js'
 import { useTheming } from '@/store/theme.js'
 import { BASE_THEMES, CUSTOM_THEMES, EFFECT_LEVELS } from '@/themes/catalog.js'
 import ThemePreview from '@/components/themes/ThemePreview.vue'
@@ -13,24 +14,30 @@ const notice = ref('')
 const saveError = ref(false)
 const activeNumber = computed(() => {
   const index = CUSTOM_THEMES.findIndex((theme) => theme.id === active.value.id)
-  return index < 0 ? 'БАЗОВАЯ' : `${String(index + 1).padStart(2, '0')} / 13`
+  return index < 0 ? tr('БАЗОВАЯ', 'BASE') : `${String(index + 1).padStart(2, '0')} / 13`
 })
 async function selectTheme(theme) {
   if (saving.value || theme.id === active.value.id) return
   saving.value = true
   const previous = themeStore.selectedTheme
   themeStore.setThemeState(theme.id)
-  notice.value = 'Сохраняем оформление…'
+  notice.value = tr('Сохраняем оформление…', 'Saving appearance…')
   saveError.value = false
   try {
     // Merge into fresh native settings, not a stale page snapshot.
     const settings = await get()
     await set({ ...settings, theme: theme.id })
-    notice.value = `Тема «${theme.name}» применена и сохранена.`
+    notice.value = tr(
+      `Тема «${theme.name}» применена и сохранена.`,
+      `Theme ${translate(theme.name)} applied and saved.`,
+    )
   } catch {
     themeStore.setThemeState(previous)
     saveError.value = true
-    notice.value = 'Не удалось сохранить тему. Вернули предыдущее оформление. Попробуй ещё раз.'
+    notice.value = tr(
+      'Не удалось сохранить тему. Вернули предыдущее оформление. Попробуй ещё раз.',
+      'Could not save theme. Previous appearance restored. Try again.',
+    )
   } finally {
     saving.value = false
   }
@@ -41,23 +48,26 @@ async function selectTheme(theme) {
   <main class="themes-page">
     <header class="themes-heading">
       <div>
-        <p class="eyebrow"><PaintBrushIcon aria-hidden="true" /> ТВОЁ ПРОСТРАНСТВО</p>
+        <p class="eyebrow"><PaintBrushIcon aria-hidden="true" /> {{ $u3t('ТВОЁ ПРОСТРАНСТВО') }}</p>
         <div class="title-line">
-          <h1>Темы</h1>
-          <span class="collection-count">13 новых</span>
+          <h1>{{ $u3t('Темы') }}</h1>
+          <span class="collection-count"> {{ $u3t('13 новых') }} </span>
         </div>
-        <p class="heading-copy">Настроение начинается с деталей. Выбери своё.</p>
+        <p class="heading-copy">{{ $u3t('Настроение начинается с деталей. Выбери своё.') }}</p>
       </div>
-      <span class="saved-indicator"><CheckIcon aria-hidden="true" /> Выбор сохраняется</span>
+      <span class="saved-indicator"
+        ><CheckIcon aria-hidden="true" /> {{ $u3t('Выбор сохраняется') }}
+      </span>
     </header>
 
     <section class="active-theme-panel" aria-labelledby="current-theme-heading">
       <div class="active-theme-copy">
         <div class="section-kicker">
-          <span class="live-dot" /> СЕЙЧАС В ПРИЛОЖЕНИИ <span>{{ activeNumber }}</span>
+          <span class="live-dot" /> {{ $u3t('СЕЙЧАС В ПРИЛОЖЕНИИ') }}
+          <span>{{ activeNumber }}</span>
         </div>
-        <h2 id="current-theme-heading">{{ active.name }}</h2>
-        <p>{{ active.subtitle ?? 'Знакомое оформление без декоративных эффектов.' }}</p>
+        <h2 id="current-theme-heading">{{ $u3t(active.name) }}</h2>
+        <p>{{ $u3t(active.subtitle ?? 'Знакомое оформление без декоративных эффектов.') }}</p>
         <div class="active-swatches" aria-hidden="true">
           <span
             v-for="color in [
@@ -69,10 +79,11 @@ async function selectTheme(theme) {
             :key="color"
             :style="{ background: color }"
           />
-          <span class="effect-caption">{{ active.effect }}</span>
+          <span class="effect-caption">{{ $u3t(active.effect) }}</span>
         </div>
         <div class="active-label">
-          <CheckIcon aria-hidden="true" /> {{ saving ? 'Сохраняем…' : 'Применена' }}
+          <CheckIcon aria-hidden="true" />
+          {{ saving ? tr('Сохраняем…', 'Saving…') : $u3t('Применена') }}
         </div>
       </div>
       <ThemePreview :theme="active" large />
@@ -81,8 +92,8 @@ async function selectTheme(theme) {
     <section class="effects-panel" aria-labelledby="effects-heading">
       <div class="effect-toggle-row">
         <div class="effect-intro">
-          <h2 id="effects-heading">Атмосфера в движении</h2>
-          <p>У каждой новой темы — свои частицы и характер движения.</p>
+          <h2 id="effects-heading">{{ $u3t('Атмосфера в движении') }}</h2>
+          <p>{{ $u3t('У каждой новой темы — свои частицы и характер движения.') }}</p>
         </div>
         <label class="motion-switch">
           <input
@@ -91,11 +102,11 @@ async function selectTheme(theme) {
             @change="themeStore.setEffectsEnabled($event.target.checked)"
           />
           <span class="switch-track" aria-hidden="true"><span /></span>
-          <span>Летающие частицы</span>
+          <span> {{ $u3t('Летающие частицы') }} </span>
         </label>
       </div>
       <div class="quality-row">
-        <span id="quality-label">Насыщенность эффектов</span>
+        <span id="quality-label"> {{ $u3t('Насыщенность эффектов') }} </span>
         <div class="quality-options" role="group" aria-labelledby="quality-label">
           <button
             v-for="level in EFFECT_LEVELS"
@@ -105,28 +116,42 @@ async function selectTheme(theme) {
             :disabled="!themeStore.effectsEnabled"
             @click="themeStore.setEffectsQuality(level.id)"
           >
-            {{ level.name }}
+            {{ $u3t(level.name) }}
           </button>
         </div>
       </div>
       <p v-if="themeStore.reducedMotion" class="motion-note" role="status">
-        Движение приостановлено: в системе включено уменьшение анимации. Превью остаются статичными.
+        {{
+          $u3t(
+            'Движение приостановлено: в системе включено уменьшение анимации. Превью остаются статичными.',
+          )
+        }}
       </p>
       <p v-else-if="!active.particle" class="motion-note">
-        Частицы появятся после выбора одной из 13 новых тем.
+        {{ $u3t('Частицы появятся после выбора одной из 13 новых тем.') }}
       </p>
       <p v-else class="motion-note">
-        До 30 кадров/с · пауза в фоне · статичные превью без лишней нагрузки
+        {{
+          tr(
+            'До 30 кадров/с · пауза в фоне · статичные превью без лишней нагрузки',
+            'Up to 30 fps · paused in background · static previews',
+          )
+        }}
       </p>
       <p v-if="themeStore.effectsStorageError" class="save-notice error" role="alert">
-        Эффекты применены, но их настройки не удалось сохранить для следующего запуска.
+        {{
+          tr(
+            'Эффекты применены, но их настройки не удалось сохранить для следующего запуска.',
+            'Effects applied, but preferences could not be saved for the next launch.',
+          )
+        }}
       </p>
     </section>
 
     <section class="collection" aria-labelledby="collection-heading">
       <div class="collection-heading">
-        <h2 id="collection-heading">Найди своё настроение</h2>
-        <span>13 палитр · 13 эффектов</span>
+        <h2 id="collection-heading">{{ $u3t('Найди своё настроение') }}</h2>
+        <span> {{ $u3t('13 палитр · 13 эффектов') }} </span>
       </div>
       <div class="theme-grid" :aria-busy="saving">
         <button
@@ -136,7 +161,7 @@ async function selectTheme(theme) {
           class="theme-choice"
           :class="{ selected: active.id === theme.id }"
           :aria-pressed="active.id === theme.id"
-          :aria-label="`Выбрать тему «${theme.name}»`"
+          :aria-label="tr(`Выбрать тему «${theme.name}»`, `Select ${translate(theme.name)} theme`)"
           :disabled="saving"
           :data-theme-id="theme.id"
           @click="selectTheme(theme)"
@@ -150,14 +175,16 @@ async function selectTheme(theme) {
           </div>
           <div class="theme-card-copy">
             <div class="card-title-line">
-              <h3>{{ theme.name }}</h3>
+              <h3>{{ $u3t(theme.name) }}</h3>
               <span class="card-swatches" aria-hidden="true"
                 ><i :style="{ background: theme.palette.accent }" /><i
                   :style="{ background: theme.palette.secondary }"
               /></span>
             </div>
-            <p>{{ theme.subtitle }}</p>
-            <span class="particle-label"><span aria-hidden="true">✧</span> {{ theme.effect }}</span>
+            <p>{{ $u3t(theme.subtitle) }}</p>
+            <span class="particle-label"
+              ><span aria-hidden="true">✧</span> {{ $u3t(theme.effect) }}</span
+            >
           </div>
         </button>
       </div>
@@ -165,8 +192,8 @@ async function selectTheme(theme) {
 
     <section class="base-themes" aria-labelledby="base-themes-heading">
       <div>
-        <h2 id="base-themes-heading">Любимая классика</h2>
-        <p>Три базовые темы всегда остаются под рукой.</p>
+        <h2 id="base-themes-heading">{{ $u3t('Любимая классика') }}</h2>
+        <p>{{ $u3t('Три базовые темы всегда остаются под рукой.') }}</p>
       </div>
       <div class="base-theme-options">
         <button
@@ -179,7 +206,7 @@ async function selectTheme(theme) {
           @click="selectTheme(theme)"
         >
           <span class="base-dot" :style="{ background: theme.palette.bg }" aria-hidden="true" />{{
-            theme.name
+            $u3t(theme.name)
           }}<CheckIcon v-if="active.id === theme.id" aria-hidden="true" />
         </button>
       </div>

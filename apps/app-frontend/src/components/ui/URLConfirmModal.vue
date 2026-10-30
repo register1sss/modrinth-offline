@@ -47,11 +47,13 @@ async function install() {
       <div class="button-row">
         <div class="markdown-body">
           <p>
-            Installing <code>{{ version.id }}</code> from Modrinth
+            {{ $u3t('Installing') }} <code>{{ version.id }}</code> from Modrinth
           </p>
         </div>
         <div class="button-group">
-          <Button :loading="installing" color="primary" @click="install">Install</Button>
+          <Button :loading="installing" color="primary" @click="install">
+            {{ $u3t('Install') }}
+          </Button>
         </div>
       </div>
     </div>

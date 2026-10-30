@@ -17,8 +17,7 @@
             class="instance-button"
             @click="stopInstance('InstancePage')"
           >
-            <StopCircleIcon />
-            Stop
+            <StopCircleIcon /> {{ $u3t('Stop') }}
           </Button>
           <Button
             v-else-if="playing === false && loading === false"
@@ -26,15 +25,14 @@
             class="instance-button"
             @click="startInstance('InstancePage')"
           >
-            <PlayIcon />
-            Play
+            <PlayIcon /> {{ $u3t('Play') }}
           </Button>
           <Button
             v-else-if="loading === true && playing === false"
             disabled
             class="instance-button"
           >
-            Loading...
+            {{ $u3t('Loading...') }}
           </Button>
           <Button
             v-tooltip="'Open instance folder'"
@@ -48,22 +46,18 @@
         <hr class="card-divider" />
         <div class="pages-list">
           <RouterLink :to="`/instance/${encodeURIComponent($route.params.id)}/`" class="btn">
-            <BoxIcon />
-            Content
+            <BoxIcon /> {{ $u3t('Content') }}
           </RouterLink>
           <RouterLink :to="`/instance/${encodeURIComponent($route.params.id)}/logs`" class="btn">
-            <FileIcon />
-            Logs
+            <FileIcon /> {{ $u3t('Logs') }}
           </RouterLink>
           <RouterLink :to="`/instance/${encodeURIComponent($route.params.id)}/options`" class="btn">
-            <SettingsIcon />
-            Options
+            <SettingsIcon /> {{ $u3t('Options') }}
           </RouterLink>
         </div>
       </Card>
     </div>
     <div class="content">
-      <Promotion :external="false" query-param="?r=launcher" />
       <RouterView v-slot="{ Component }">
         <template v-if="Component">
           <Suspense @pending="loadingBar.startLoading()" @resolve="loadingBar.stopLoading()">
@@ -82,14 +76,16 @@
     </div>
   </div>
   <ContextMenu ref="options" @option-clicked="handleOptionsClick">
-    <template #play> <PlayIcon /> Play </template>
-    <template #stop> <StopCircleIcon /> Stop </template>
-    <template #add_content> <PlusIcon /> Add Content </template>
-    <template #edit> <EditIcon /> Edit </template>
+    <template #play> <PlayIcon /> {{ $u3t('Play') }} </template>
+    <template #stop> <StopCircleIcon /> {{ $u3t('Stop') }} </template>
+    <template #add_content> <PlusIcon /> {{ $u3t('Add Content') }} </template>
+    <template #edit> <EditIcon /> {{ $u3t('Edit') }} </template>
     <template #copy_path> <ClipboardCopyIcon /> Copy Path </template>
-    <template #open_folder> <ClipboardCopyIcon /> Open Folder </template>
+    <template #open_folder> <ClipboardCopyIcon /> {{ $u3t('Open Folder') }} </template>
     <template #copy_link> <ClipboardCopyIcon /> Copy Link </template>
-    <template #open_link> <ClipboardCopyIcon /> Open In Modrinth <ExternalIcon /> </template>
+    <template #open_link>
+      <ClipboardCopyIcon /> {{ $u3t('Open In Modrinth') }} <ExternalIcon />
+    </template>
     <template #copy_names><EditIcon />Copy names</template>
     <template #copy_slugs><HashIcon />Copy slugs</template>
     <template #copy_links><GlobeIcon />Copy Links</template>
@@ -98,13 +94,13 @@
     <template #enable><CheckCircleIcon />Enable selected</template>
     <template #hide_show><EyeIcon />Show/Hide unselected</template>
     <template #update_all
-      ><UpdatedIcon />Update {{ selected.length > 0 ? 'selected' : 'all' }}</template
+      ><UpdatedIcon /> {{ $u3t('Update') }} {{ selected.length > 0 ? 'selected' : 'all' }}</template
     >
     <template #filter_update><UpdatedIcon />Select Updatable</template>
   </ContextMenu>
 </template>
 <script setup>
-import { Button, Avatar, Card, Promotion } from '@modrinth/ui'
+import { Button, Avatar, Card } from '@modrinth/ui'
 import {
   BoxIcon,
   SettingsIcon,

@@ -242,13 +242,13 @@ const filteredResults = computed(() => {
   <Card class="header">
     <div class="iconified-input">
       <SearchIcon />
-      <input v-model="search" type="text" placeholder="Search" class="search-input" />
+      <input v-model="search" type="text" :placeholder="$u3t('Search')" class="search-input" />
       <Button class="r-btn" @click="() => (search = '')">
         <XIcon />
       </Button>
     </div>
     <div class="labeled_button">
-      <span>Sort by</span>
+      <span> {{ $u3t('Sort by') }} </span>
       <DropdownSelect
         v-model="sortBy"
         class="sort-dropdown"
@@ -301,13 +301,13 @@ const filteredResults = computed(() => {
     </section>
   </div>
   <ContextMenu ref="instanceOptions" @option-clicked="handleOptionsClick">
-    <template #play> <PlayIcon /> Play </template>
-    <template #stop> <StopCircleIcon /> Stop </template>
-    <template #add_content> <PlusIcon /> Add content </template>
+    <template #play> <PlayIcon /> {{ $u3t('Play') }} </template>
+    <template #stop> <StopCircleIcon /> {{ $u3t('Stop') }} </template>
+    <template #add_content> <PlusIcon /> {{ $u3t('Add content') }} </template>
     <template #edit> <EyeIcon /> View instance </template>
     <template #duplicate> <ClipboardCopyIcon /> Duplicate instance</template>
-    <template #delete> <TrashIcon /> Delete </template>
-    <template #open> <FolderOpenIcon /> Open folder </template>
+    <template #delete> <TrashIcon /> {{ $u3t('Delete') }} </template>
+    <template #open> <FolderOpenIcon /> {{ $u3t('Open folder') }} </template>
     <template #copy> <ClipboardCopyIcon /> Copy path </template>
   </ContextMenu>
 </template>

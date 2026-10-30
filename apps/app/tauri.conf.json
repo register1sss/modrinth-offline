@@ -8,7 +8,7 @@
   },
   "package": {
     "productName": "U3drinth",
-    "version": "0.8.0-3"
+    "version": "1.0.0"
   },
   "tauri": {
     "allowlist": {
@@ -66,7 +66,7 @@
         "signingIdentity": null
       },
       "resources": [],
-      "shortDescription": "U3drinth Minecraft launcher",
+      "shortDescription": "U3drinth (custom modrinth)",
       "targets": "all",
       "windows": {
         "certificateThumbprint": null,
@@ -75,7 +75,8 @@
         "wix": {
           "template": "./msi/main.wxs"
         }
-      }
+      },
+      "publisher": "U3"
     },
     "security": {
       "csp": "default-src 'self'; connect-src https://modrinth.com https://*.modrinth.com https://mixpanel.com https://*.mixpanel.com https://*.cloudflare.com https://api.mclo.gs; font-src https://cdn-raw.modrinth.com/fonts/inter/; img-src tauri: https: data: blob: 'unsafe-inline' asset: https://asset.localhost; script-src https://*.cloudflare.com 'self'; frame-src https://*.cloudflare.com https://www.youtube.com https://www.youtube-nocookie.com https://discord.com 'self'; style-src 'unsafe-inline' 'self'"

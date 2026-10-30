@@ -241,16 +241,16 @@ onUnmounted(() => {
     </div>
   </div>
   <ContextMenu ref="instanceOptions" @option-clicked="handleOptionsClick">
-    <template #play> <PlayIcon /> Play </template>
-    <template #stop> <StopCircleIcon /> Stop </template>
-    <template #add_content> <PlusIcon /> Add content </template>
+    <template #play> <PlayIcon /> {{ $u3t('Play') }} </template>
+    <template #stop> <StopCircleIcon /> {{ $u3t('Stop') }} </template>
+    <template #add_content> <PlusIcon /> {{ $u3t('Add content') }} </template>
     <template #edit> <EyeIcon /> View instance </template>
-    <template #delete> <TrashIcon /> Delete </template>
-    <template #open_folder> <FolderOpenIcon /> Open folder </template>
+    <template #delete> <TrashIcon /> {{ $u3t('Delete') }} </template>
+    <template #open_folder> <FolderOpenIcon /> {{ $u3t('Open folder') }} </template>
     <template #duplicate> <ClipboardCopyIcon /> Duplicate instance</template>
     <template #copy_path> <ClipboardCopyIcon /> Copy path </template>
-    <template #install> <DownloadIcon /> Install </template>
-    <template #open_link> <GlobeIcon /> Open in Modrinth <ExternalIcon /> </template>
+    <template #install> <DownloadIcon /> {{ $u3t('Install') }} </template>
+    <template #open_link> <GlobeIcon /> {{ $u3t('Open in Modrinth') }} <ExternalIcon /> </template>
     <template #copy_link> <ClipboardCopyIcon /> Copy link </template>
   </ContextMenu>
 </template>

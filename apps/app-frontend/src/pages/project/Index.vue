@@ -86,7 +86,8 @@
           <div class="stat date">
             <UpdatedIcon aria-hidden="true" />
             <span
-              ><span class="date-label">Updated </span> {{ dayjs(data.updated).fromNow() }}</span
+              ><span class="date-label"> {{ $u3t('Updated') }} </span>
+              {{ dayjs(data.updated).fromNow() }}</span
             >
           </div>
         </div>
@@ -163,7 +164,6 @@
       </Card>
     </div>
     <div v-if="data" class="content-container">
-      <Promotion :external="false" query-param="?r=launcher" />
       <Card class="tabs">
         <NavRow
           v-if="data.gallery.length > 0"
@@ -209,8 +209,8 @@
     </div>
   </div>
   <ContextMenu ref="options" @option-clicked="handleOptionsClick">
-    <template #install> <DownloadIcon /> Install </template>
-    <template #open_link> <GlobeIcon /> Open in Modrinth <ExternalIcon /> </template>
+    <template #install> <DownloadIcon /> {{ $u3t('Install') }} </template>
+    <template #open_link> <GlobeIcon /> {{ $u3t('Open in Modrinth') }} <ExternalIcon /> </template>
     <template #copy_link> <ClipboardCopyIcon /> Copy link </template>
   </ContextMenu>
 </template>
@@ -231,15 +231,7 @@ import {
   GlobeIcon,
   ClipboardCopyIcon,
 } from '@modrinth/assets'
-import {
-  Categories,
-  EnvironmentIndicator,
-  Card,
-  Avatar,
-  Button,
-  Promotion,
-  NavRow,
-} from '@modrinth/ui'
+import { Categories, EnvironmentIndicator, Card, Avatar, Button, NavRow } from '@modrinth/ui'
 import { formatNumber } from '@modrinth/utils'
 import {
   BuyMeACoffeeIcon,

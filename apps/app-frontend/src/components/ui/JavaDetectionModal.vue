@@ -3,7 +3,7 @@
     <div class="auto-detect-modal">
       <div class="table">
         <div class="table-row table-head">
-          <div class="table-cell table-text">Version</div>
+          <div class="table-cell table-text">{{ $u3t('Version') }}</div>
           <div class="table-cell table-text">Path</div>
           <div class="table-cell table-text">Actions</div>
         </div>
@@ -16,9 +16,11 @@
           </div>
           <div class="table-cell table-text manage">
             <Button v-if="currentSelected.path === javaInstall.path" disabled
-              ><CheckIcon /> Selected</Button
-            >
-            <Button v-else @click="setJavaInstall(javaInstall)"><PlusIcon /> Select</Button>
+              ><CheckIcon /> {{ $u3t('Selected') }}
+            </Button>
+            <Button v-else @click="setJavaInstall(javaInstall)"
+              ><PlusIcon /> {{ $u3t('Select') }}
+            </Button>
           </div>
         </div>
         <div v-if="chosenInstallOptions.length === 0" class="table-row entire-row">
@@ -26,10 +28,7 @@
         </div>
       </div>
       <div class="input-group push-right">
-        <Button @click="$refs.detectJavaModal.hide()">
-          <XIcon />
-          Cancel
-        </Button>
+        <Button @click="$refs.detectJavaModal.hide()"> <XIcon /> {{ $u3t('Cancel') }} </Button>
       </div>
     </div>
   </Modal>

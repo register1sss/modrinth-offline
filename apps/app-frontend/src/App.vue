@@ -1,5 +1,7 @@
 <script setup>
 import { computed, ref, onMounted, onBeforeUnmount } from 'vue'
+import { language, setLanguage, tr, translate } from '@/i18n/index.js'
+import { session as aiSession } from '@/assistant/state.js'
 import { RouterView, RouterLink, useRouter, useRoute } from 'vue-router'
 import {
   HomeIcon,
@@ -13,6 +15,7 @@ import {
 } from '@modrinth/assets'
 import { Button, Notifications, Card } from '@modrinth/ui'
 import { useLoading, useTheming } from '@/store/state'
+import AssistantIcon from '@/components/brand/AssistantIcon.vue'
 import ParticleCanvas from '@/components/themes/ParticleCanvas.vue'
 import AccountsCard from '@/components/ui/AccountsCard.vue'
 import InstanceCreationModal from '@/components/ui/InstanceCreationModal.vue'
@@ -24,7 +27,7 @@ import ErrorModal from '@/components/ui/ErrorModal.vue'
 import ModrinthLoadingIndicator from '@/components/modrinth-loading-indicator'
 import { handleError, useNotifications } from '@/store/notifications.js'
 import { command_listener, warning_listener } from '@/helpers/events.js'
-import { MinimizeIcon, MaximizeIcon, ChatIcon } from '@/assets/icons'
+import { MinimizeIcon, MaximizeIcon } from '@/assets/icons'
 import { type } from '@tauri-apps/api/os'
 import { appWindow } from '@tauri-apps/api/window'
 import { isDev, getOS, showLauncherLogsFolder } from '@/helpers/utils.js'
@@ -253,8 +256,7 @@ command_listener(async (e) => {
           <li>Redownloading the app.</li>
         </ul>
         <div class="error-div">
-          If it still does not work, you can seek support using the link below. You should provide
-          the following error, as well as any recent launcher logs in the folder below.
+          Review the error and recent launcher logs below. U3 AI can help explain crash reports.
         </div>
         <div class="error-div">The following error was provided:</div>
 
@@ -263,11 +265,9 @@ command_listener(async (e) => {
         </Card>
 
         <div class="button-row push-right">
-          <Button @click="showLauncherLogsFolder"><FileIcon />Open launcher logs</Button>
-
-          <a class="btn" href="https://github.com/register1sss/modrinth-offline/issues">
-            <ChatIcon /> Get support
-          </a>
+          <Button @click="showLauncherLogsFolder"
+            ><FileIcon /> {{ $u3t('Open launcher logs') }}
+          </Button>
         </div>
       </Card>
     </div>
@@ -289,11 +289,11 @@ command_listener(async (e) => {
           <AccountsCard ref="accounts" mode="small" />
         </suspense>
         <div class="pages-list">
-          <RouterLink v-tooltip="'Home'" to="/" class="btn icon-only collapsed-button">
+          <RouterLink v-tooltip="translate('Home')" to="/" class="btn icon-only collapsed-button">
             <HomeIcon />
           </RouterLink>
           <RouterLink
-            v-tooltip="'Browse'"
+            v-tooltip="translate('Browse')"
             to="/browse/modpack"
             class="btn icon-only collapsed-button"
             :class="{
@@ -302,17 +302,33 @@ command_listener(async (e) => {
           >
             <SearchIcon />
           </RouterLink>
-          <RouterLink v-tooltip="'Library'" to="/library" class="btn icon-only collapsed-button">
+          <RouterLink
+            v-tooltip="translate('Library')"
+            to="/library"
+            class="btn icon-only collapsed-button"
+          >
             <LibraryIcon />
           </RouterLink>
           <RouterLink
-            v-tooltip="'Темы'"
+            v-tooltip="translate('Темы')"
             to="/themes"
-            aria-label="Темы"
+            :aria-label="translate('Темы')"
             class="btn icon-only collapsed-button"
           >
             <PaintBrushIcon />
           </RouterLink>
+          <RouterLink
+            to="/assistant"
+            class="btn icon-only collapsed-button ai-nav-link"
+            aria-label="U3 AI"
+            v-tooltip="'U3 AI'"
+            ><AssistantIcon /><span
+              v-if="aiSession.alerts.length"
+              class="ai-nav-alert"
+              aria-label="Errors"
+              >!</span
+            ></RouterLink
+          >
           <Suspense>
             <InstanceCreationModal ref="installationModal" />
           </Suspense>
@@ -328,7 +344,11 @@ command_listener(async (e) => {
         >
           <PlusIcon />
         </Button>
-        <RouterLink v-tooltip="'Settings'" to="/settings" class="btn icon-only collapsed-button">
+        <RouterLink
+          v-tooltip="translate('Settings')"
+          to="/settings"
+          class="btn icon-only collapsed-button"
+        >
           <SettingsIcon />
         </RouterLink>
       </div>
@@ -340,6 +360,15 @@ command_listener(async (e) => {
             <Breadcrumbs data-tauri-drag-region />
           </section>
           <section class="mod-stats">
+            <select
+              class="language-switch"
+              :value="language"
+              :aria-label="tr('Язык интерфейса', 'Interface language')"
+              @change="setLanguage($event.target.value)"
+            >
+              <option value="ru">RU</option>
+              <option value="en">EN</option>
+            </select>
             <Suspense>
               <RunningAppBar />
             </Suspense>
@@ -373,9 +402,12 @@ command_listener(async (e) => {
         />
         <RouterView v-slot="{ Component }">
           <template v-if="Component">
-            <Suspense @pending="loading.startLoading()" @resolve="loading.stopLoading()">
-              <component :is="Component"></component>
-            </Suspense>
+            <Transition name="route-motion" mode="out-in"
+              ><div :key="route.path" class="route-stage">
+                <Suspense @pending="loading.startLoading()" @resolve="loading.stopLoading()"
+                  ><component :is="Component"
+                /></Suspense></div
+            ></Transition>
           </template>
         </RouterView>
       </div>

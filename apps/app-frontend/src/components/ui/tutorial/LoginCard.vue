@@ -58,7 +58,7 @@ async function login() {
         </a>
       </p>
       <div class="action-row">
-        <Button class="transparent" large @click="prevPage"> Back </Button>
+        <Button class="transparent" large @click="prevPage"> {{ $u3t('Back') }} </Button>
         <div class="sign-in-pair">
           <Button color="primary" large :disabled="loading" @click="login">
             <LogInIcon />

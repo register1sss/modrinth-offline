@@ -1,9 +1,5 @@
 <template>
   <div class="action-groups">
-    <a href="https://support.modrinth.com" class="link">
-      <ChatIcon />
-      <span> Get support </span>
-    </a>
     <Button
       v-if="currentLoadingBars.length > 0"
       ref="infoButton"
@@ -16,7 +12,7 @@
     <div v-if="offline" class="status">
       <span class="circle stopped" />
       <div class="running-text">
-        <span> Offline </span>
+        <span> {{ $u3t('Offline') }} </span>
       </div>
     </div>
     <div v-if="selectedProcess" class="status">
@@ -57,7 +53,7 @@
     </div>
     <div v-else class="status">
       <span class="circle stopped" />
-      <span class="running-text"> No instances running </span>
+      <span class="running-text"> {{ $u3t('No instances running') }} </span>
     </div>
   </div>
   <transition name="download">

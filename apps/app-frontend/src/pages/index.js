@@ -5,3 +5,5 @@ import Settings from './Settings.vue'
 import Themes from './Themes.vue'
 
 export { Index, Browse, Library, Settings, Themes }
+
+export { default as Assistant } from './Assistant.vue'

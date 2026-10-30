@@ -1,12 +1,10 @@
 <template>
   <div class="page-loading" :class="{ 'app-loading': appLoading }">
-    <AnimatedLogo class="initializing-icon" />
+    <img class="initializing-icon" src="/u3drinth.svg" alt="U3drinth" />
   </div>
 </template>
 
 <script setup>
-import { AnimatedLogo } from '@modrinth/ui'
-
 defineProps({
   appLoading: Boolean,
 })

@@ -753,12 +753,13 @@ mod tests {
         let d = tempfile::tempdir().unwrap();
         std::fs::create_dir(d.path().join("config")).unwrap();
         std::fs::write(d.path().join("config/a.txt"), "ok").unwrap();
-        assert!(safe_path(d.path(), "config/a.txt").await.is_ok());
+        let base = tokio::fs::canonicalize(d.path()).await.unwrap();
+        assert!(safe_path(&base, "config/a.txt").await.is_ok());
         #[cfg(unix)]
         {
             std::os::unix::fs::symlink("/tmp", d.path().join("config/link"))
                 .unwrap();
-            assert!(safe_path(d.path(), "config/link").await.is_err());
+            assert!(safe_path(&base, "config/link").await.is_err());
         }
     }
     #[test]

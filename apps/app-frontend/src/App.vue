@@ -674,3 +674,13 @@ command_listener(async (e) => {
   background: var(--color-raised-bg);
 }
 </style>
+
+<style scoped>
+/* Keep account popovers above the page without moving decoration above controls. */
+.nav-container {
+  z-index: 20;
+}
+.appbar-row {
+  z-index: 10;
+}
+</style>

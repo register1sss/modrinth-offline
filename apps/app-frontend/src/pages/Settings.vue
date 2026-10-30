@@ -322,9 +322,8 @@ async function findLauncherDir() {
         <label for="opt-out-analytics">
           <span class="label__title">Telemetry</span>
           <span class="label__description">
-            Modrinth collects anonymized analytics and usage data to improve our user experience and
-            customize your experience. By disabling this option, you opt out and your data will no
-            longer be collected.
+            When enabled, U3drinth sends launcher analytics to the existing Modrinth analytics
+            service. Disable this option to opt out of launcher analytics.
           </span>
         </label>
         <Toggle
@@ -342,8 +341,8 @@ async function findLauncherDir() {
         <label for="disable-discord-rpc">
           <span class="label__title">Discord RPC</span>
           <span class="label__description">
-            Manages the Discord Rich Presence integration. Disabling this will cause 'Modrinth' to
-            no longer show up as a game or app you are using on your Discord profile. This does not
+            Manages the legacy Discord Rich Presence integration, which uses the Modrinth Discord
+            application. Disable it to hide launcher activity on your Discord profile. This does not
             disable any instance-specific Discord Rich Presence integrations, such as those added by
             mods. (app restart required to take effect)
           </span>
@@ -522,7 +521,7 @@ async function findLauncherDir() {
       <div>
         <label>
           <span class="label__title">App version</span>
-          <span class="label__description">Modrinth App v{{ version }} </span>
+          <span class="label__description">U3drinth v{{ version }} </span>
         </label>
       </div>
     </Card>

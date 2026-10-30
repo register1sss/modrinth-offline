@@ -41,13 +41,15 @@ mockIPC(async (cmd, args) => {
   if (cmd === 'plugin:metadata|metadata_get_game_versions') return { versions: [] }
   if (cmd === 'plugin:tags|tags_get_loaders') return []
   if (cmd === 'plugin:profile|profile_get_many' || cmd === 'plugin:profile|profile_list') return []
+  if (cmd === 'plugin:jre|get_java_versions') return {}
+  if (cmd === 'plugin:jre|jre_get_max_memory') return 16384
   if (cmd === 'is_dev') return true
   if (cmd === 'plugin:utils|get_os') return 'Windows'
   if (cmd === 'plugin:auth|auth_users' || cmd === 'plugin:process|process_get_all') return []
   if (cmd === 'plugin:utils|progress_bars_list') return {}
   if (cmd === 'tauri') {
     if (args.__tauriModule === 'Os') return 'Windows_NT'
-    if (args.__tauriModule === 'App') return '0.8.0-2'
+    if (args.__tauriModule === 'App') return '0.8.0-3'
     if (args.__tauriModule === 'Event') return 1
   }
   return null

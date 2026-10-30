@@ -77,7 +77,7 @@ async function loginMinecraft() {
           <template v-if="metadata.network">
             <h3>Network issues</h3>
             <p>
-              It looks like there were issues with the Modrinth App connecting to Microsoft's
+              It looks like there were issues with the U3drinth connecting to Microsoft's
               servers. This is often the result of a poor connection, so we recommend trying again
               to see if it works. If issues continue to persist, follow the steps in
               <a
@@ -91,7 +91,7 @@ async function loginMinecraft() {
           <template v-else-if="metadata.hostsFile">
             <h3>Network issues</h3>
             <p>
-              The Modrinth App tried to connect to Microsoft / Xbox / Minecraft services, but the
+              The U3drinth tried to connect to Microsoft / Xbox / Minecraft services, but the
               remote server rejected the connection. This may indicate that these services are
               blocked by the hosts file. Please visit
               <a

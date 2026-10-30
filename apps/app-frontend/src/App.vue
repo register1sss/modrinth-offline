@@ -121,7 +121,7 @@ defineExpose({
     )
 
     if (showOnboarding.value) {
-      onboardingVideo.value.play()
+      await onboardingVideo.value?.play()?.catch(() => {})
     }
   },
   failure: async (e) => {
@@ -244,8 +244,8 @@ command_listener(async (e) => {
           </h3>
         </div>
         <div class="error-div">
-          Modrinth App failed to load correctly. This may be because of a corrupted file, or because
-          the app is missing crucial files.
+          U3drinth failed to load correctly. This may be because of a corrupted file, or because the
+          app is missing crucial files.
         </div>
         <div class="error-div">You may be able to fix it one of the following ways:</div>
         <ul class="error-div">
@@ -265,7 +265,9 @@ command_listener(async (e) => {
         <div class="button-row push-right">
           <Button @click="showLauncherLogsFolder"><FileIcon />Open launcher logs</Button>
 
-          <a class="btn" href="https://support.modrinth.com"> <ChatIcon /> Get support </a>
+          <a class="btn" href="https://github.com/register1sss/modrinth-offline/issues">
+            <ChatIcon /> Get support
+          </a>
         </div>
       </Card>
     </div>

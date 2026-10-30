@@ -46,7 +46,7 @@ pub async fn auth_login(app: tauri::AppHandle) -> Result<Option<Credentials>> {
             },
         )?),
     )
-    .title("Sign into Modrinth")
+    .title("Sign into U3drinth with Microsoft")
     .always_on_top(true)
     .center()
     .build()?;

@@ -79,7 +79,7 @@
       ref="shareModal"
       header="Share Log"
       share-title="Instance Log"
-      share-text="Check out this log from an instance on the Modrinth App"
+      share-text="Check out this log from an instance on the U3drinth"
       :open-in-new-tab="false"
       link
     />

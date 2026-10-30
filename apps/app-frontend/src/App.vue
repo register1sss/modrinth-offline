@@ -23,6 +23,7 @@ import ThemeChrome from '@/components/themes/ThemeChrome.vue'
 import NavigationBurst from '@/components/themes/NavigationBurst.vue'
 import ParticleCanvas from '@/components/themes/ParticleCanvas.vue'
 import AccountsCard from '@/components/ui/AccountsCard.vue'
+import InstanceCrashPrompt from '@/components/ui/InstanceCrashPrompt.vue'
 import InstanceCreationModal from '@/components/ui/InstanceCreationModal.vue'
 import { get } from '@/helpers/settings'
 import Breadcrumbs from '@/components/ui/Breadcrumbs.vue'
@@ -445,6 +446,7 @@ command_listener(async (e) => {
     </div>
   </div>
   <URLConfirmModal ref="urlModal" />
+  <InstanceCrashPrompt />
   <Notifications ref="notificationsWrapper" />
   <ErrorModal ref="errorModal" />
   <ModInstallModal ref="modInstallModal" />

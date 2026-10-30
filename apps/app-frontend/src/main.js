@@ -1,5 +1,6 @@
 import { createApp } from 'vue'
 import { localization } from '@/i18n/index.js'
+import { startHealthMonitor } from '@/instance-health/monitor.js'
 import { startAssistantMonitor } from '@/assistant/monitor.js'
 import '@/assets/stylesheets/motion.scss'
 import router from '@/routes'
@@ -78,6 +79,7 @@ initialize_state()
       .finally(() => {
         mountedApp.initialize()
         startAssistantMonitor().catch(console.error)
+        startHealthMonitor().catch(console.error)
         get_opening_command().then((command) => {
           console.log(JSON.stringify(command)) // change me to use whatever FE command handler is made
         })

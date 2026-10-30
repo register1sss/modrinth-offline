@@ -142,6 +142,15 @@ export default new createRouter({
           },
         },
         {
+          path: 'health',
+          name: 'InstanceHealth',
+          component: Instance.Health,
+          meta: {
+            useRootContext: true,
+            breadcrumb: [{ name: '?Instance', link: '/instance/{id}/' }, { name: 'Диагностика' }],
+          },
+        },
+        {
           path: 'logs',
           name: 'Logs',
           component: Instance.Logs,

@@ -28,3 +28,5 @@ pub mod assistant;
 pub mod assistant_setup;
 
 pub mod minecraft_rust;
+
+pub mod instance_health;

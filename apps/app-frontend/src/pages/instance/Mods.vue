@@ -307,6 +307,53 @@
       </div>
     </div>
   </Modal>
+  <Modal ref="removalDialog" header="Последствия удаления">
+    <div class="universal-modal">
+      <p>Будут удалены: {{ pendingRemoval.map((m) => m.name).join(', ') }}.</p>
+      <p>
+        Дерево строится по локальным манифестам. Проверка не гарантирует совместимость версий и не
+        учитывает все динамические зависимости.
+      </p>
+      <h4>Могут перестать запускаться</h4>
+      <ul>
+        <li v-for="m in impact.affected" :key="m.path">
+          {{ m.name }} → обязательная зависимость {{ m.dependency }}
+        </li>
+      </ul>
+      <p v-if="!impact.affected.length">
+        По известным обязательным зависимостям затронутых модов не найдено.
+      </p>
+      <h4 v-if="impact.optional.length">Необязательные функции могут пропасть</h4>
+      <ul>
+        <li v-for="(m, i) in impact.optional" :key="i">{{ m.name }} → {{ m.dependency }}</li>
+      </ul>
+      <details v-if="impact.incomplete.length">
+        <summary>Есть неполные сведения о зависимостях</summary>
+        <ul>
+          <li v-for="path in impact.incomplete" :key="path">{{ path }}</li>
+        </ul>
+      </details>
+      <Checkbox
+        v-if="impact.affected.length"
+        v-model="removeDependents"
+        label="Также удалить перечисленные зависимые моды"
+      />
+      <Checkbox
+        v-model="removalAcknowledged"
+        label="Понимаю последствия и подтверждаю удаление файлов"
+      />
+      <p v-if="removalError" role="alert">{{ removalError }}</p>
+      <div class="button-group">
+        <Button :disabled="removalBusy" @click="removalDialog.hide()">Отмена</Button>
+        <Button
+          color="danger"
+          :disabled="removalBusy || !removalAcknowledged || playing"
+          @click="confirmRemoval"
+          >{{ removalBusy ? 'Удаление...' : 'Удалить' }}</Button
+        >
+      </div>
+    </div>
+  </Modal>
   <ShareModal
     ref="shareModal"
     share-title="Sharing modpack content"
@@ -374,8 +421,11 @@ import {
   get_version_many,
 } from '@/helpers/cache.js'
 import { profile_listener } from '@/helpers/events.js'
+import { health } from '@/instance-health/api.js'
+import { removalImpact, normalizePath } from '@/instance-health/model.js'
 
 const props = defineProps({
+  playing: Boolean,
   instance: {
     type: Object,
     default() {
@@ -720,36 +770,80 @@ const toggleDisableMod = async (mod) => {
   await lock.value
 }
 
-const removeMod = async (mod) => {
-  await remove_project(props.instance.path, mod.path).catch(handleError)
-  projects.value = projects.value.filter((x) => mod.path !== x.path)
-
-  mixpanel_track('InstanceProjectRemove', {
-    loader: props.instance.loader,
-    game_version: props.instance.game_version,
-    id: mod.id,
-    name: mod.name,
-    project_type: mod.project_type,
-  })
-}
-
-const deleteSelected = async () => {
-  for (const project of functionValues.value) {
-    await remove_project(props.instance.path, project.path).catch(handleError)
+const removalDialog = ref(null)
+const pendingRemoval = ref([])
+const removalGraph = ref([])
+const impact = ref({ affected: [], optional: [], incomplete: [] })
+const removeDependents = ref(false)
+const removalAcknowledged = ref(false)
+const removalBusy = ref(false)
+const removalError = ref('')
+async function requestRemoval(items) {
+  if (!items.length || removalBusy.value) return
+  removalError.value = ''
+  if (props.playing) {
+    handleError(new Error('Останови экземпляр перед удалением файлов.'))
+    return
   }
-
-  projects.value = projects.value.filter((x) => !x.selected)
-  deleteWarning.value.hide()
-}
-
-const deleteDisabled = async () => {
-  for (const project of Array.of(projects.value.values().filter((x) => x.disabled))) {
-    await remove_project(props.instance.path, project.path).catch(handleError)
+  pendingRemoval.value = [...items]
+  removeDependents.value = false
+  removalAcknowledged.value = false
+  removalBusy.value = true
+  try {
+    removalGraph.value = items.some((m) => normalizePath(m.path).startsWith('mods/'))
+      ? await health('inventory', props.instance.path)
+      : []
+    impact.value = removalImpact(
+      removalGraph.value,
+      items.map((m) => m.path),
+    )
+    deleteWarning.value.hide()
+    deleteDisabledWarning.value.hide()
+    removalDialog.value.show()
+  } catch (e) {
+    handleError(e)
+  } finally {
+    removalBusy.value = false
   }
-
-  projects.value = projects.value.filter((x) => !x.selected)
-  deleteDisabledWarning.value.hide()
 }
+async function confirmRemoval() {
+  if (removalBusy.value || !removalAcknowledged.value || props.playing) return
+  removalBusy.value = true
+  removalError.value = ''
+  try {
+    if (removalGraph.value.length) {
+      const fresh = await health('inventory', props.instance.path)
+      if (JSON.stringify(fresh) !== JSON.stringify(removalGraph.value)) {
+        removalGraph.value = fresh
+        impact.value = removalImpact(
+          fresh,
+          pendingRemoval.value.map((m) => m.path),
+        )
+        removalAcknowledged.value = false
+        throw new Error(
+          'Список файлов изменился. Проверь обновлённые последствия и подтверди ещё раз.',
+        )
+      }
+    }
+    const paths = new Set(pendingRemoval.value.map((m) => m.path))
+    if (removeDependents.value) {
+      for (const m of impact.value.affected) paths.add(m.path)
+    }
+    // Remove one at a time and refresh even after a partial failure. No hidden success.
+    for (const path of paths) await remove_project(props.instance.path, path)
+    removalDialog.value.hide()
+    deleteWarning.value.hide()
+    deleteDisabledWarning.value.hide()
+  } catch (e) {
+    removalError.value = String(e?.message || e)
+  } finally {
+    await initProjects().catch(handleError)
+    removalBusy.value = false
+  }
+}
+const removeMod = (mod) => requestRemoval([mod])
+const deleteSelected = () => requestRemoval(functionValues.value)
+const deleteDisabled = () => requestRemoval(projects.value.filter((x) => x.disabled))
 
 const shareNames = async () => {
   await shareModal.value.show(functionValues.value.map((x) => x.name).join('\n'))

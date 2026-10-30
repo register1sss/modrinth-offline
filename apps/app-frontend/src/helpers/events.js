@@ -49,6 +49,7 @@ export async function loading_listener(callback) {
     ProcessPayload {
         uuid: unique identification of the process in the state (currently identified by PID, but that will change)
         pid: process ID
+        exit_code: actual child exit code, or null for a rescued process / manual stop
         event: event type ("Launched", "Finished")
         message: message to display to the user
     }

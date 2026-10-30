@@ -33,6 +33,11 @@ macro_rules! select_process_with_predicate {
     };
 }
 
+lazy_static::lazy_static! {
+    static ref USER_STOPS: std::sync::Mutex<std::collections::HashSet<(i64, i64)>> =
+        std::sync::Mutex::new(std::collections::HashSet::new());
+}
+
 impl Process {
     /// Runs on launcher startup. Queries all the cached processes and removes processes that no
     /// longer exist. If a PID is found, they are "rescued" and passed to our process manager
@@ -56,7 +61,9 @@ impl Process {
                             .map(|x| x.to_string_lossy())
                             .unwrap_or_default()
                 {
-                    tokio::spawn(cached_process.sequential_process_manager());
+                    tokio::spawn(
+                        cached_process.sequential_process_manager(None),
+                    );
 
                     break;
                 }
@@ -114,15 +121,17 @@ impl Process {
         };
         process.upsert(exec).await?;
 
-        tokio::spawn(process.clone().sequential_process_manager());
-
-        emit_process(
+        let launched_event = emit_process(
             profile_path,
             pid,
             ProcessPayloadType::Launched,
             "Launched Minecraft",
+            None,
         )
-        .await?;
+        .await;
+        // Publish launch before a fast-failing child can publish its exit.
+        tokio::spawn(process.clone().sequential_process_manager(Some(mc_proc)));
+        launched_event?;
 
         Ok(process)
     }
@@ -130,7 +139,10 @@ impl Process {
     // Spawns a new child process and inserts it into the hashmap
     // Also, as the process ends, it spawns the follow-up process if it exists
     // By convention, ExitStatus is last command's exit status, and we exit on the first non-zero exit status
-    async fn sequential_process_manager(self) -> crate::Result<i32> {
+    async fn sequential_process_manager(
+        self,
+        mut child: Option<tokio::process::Child>,
+    ) -> crate::Result<i32> {
         async fn update_playtime(
             last_updated_playtime: &mut DateTime<Utc>,
             profile_path: &str,
@@ -161,7 +173,13 @@ impl Process {
         let mut last_updated_playtime = Utc::now();
 
         loop {
-            if let Some(t) = self.try_wait().await? {
+            if let Some(child) = child.as_mut() {
+                if let Some(status) = child.try_wait().map_err(IOError::from)? {
+                    mc_exit_status = status.code().unwrap_or(-1);
+                    break;
+                }
+            } else if let Some(t) = self.try_wait().await? {
+                // Rescued processes have no wait handle; their exit status is unknown.
                 mc_exit_status = t;
                 break;
             }
@@ -214,7 +232,7 @@ impl Process {
         if mc_exit_status == 0 {
             // We do not wait on the post exist command to finish running! We let it spawn + run on its own.
             // This behaviour may be changed in the future
-            if let Some(hook) = self.post_exit_command {
+            if let Some(ref hook) = self.post_exit_command {
                 let mut cmd = hook.split(' ');
                 if let Some(command) = cmd.next() {
                     let mut command = Command::new(command);
@@ -227,11 +245,24 @@ impl Process {
             }
         }
 
+        let user_stopped = USER_STOPS
+            .lock()
+            .map(|mut s| s.remove(&(self.pid, self.start_time)))
+            .unwrap_or(false);
         emit_process(
             &self.profile_path,
             self.pid as u32,
             ProcessPayloadType::Finished,
-            "Exited process",
+            if user_stopped {
+                "Stopped by user"
+            } else {
+                "Exited process"
+            },
+            if child.is_some() && !user_stopped {
+                Some(mc_exit_status)
+            } else {
+                None
+            },
         )
         .await?;
 
@@ -247,7 +278,14 @@ impl Process {
         let process = system.process(sysinfo::Pid::from_u32(self.pid as u32));
 
         if let Some(process) = process {
-            if process.status() == sysinfo::ProcessStatus::Run {
+            if process.start_time() as i64 == self.start_time
+                && process.name() == self.name
+                && !matches!(
+                    process.status(),
+                    sysinfo::ProcessStatus::Zombie
+                        | sysinfo::ProcessStatus::Dead
+                )
+            {
                 Ok(None)
             } else {
                 Ok(Some(0))
@@ -275,7 +313,18 @@ impl Process {
             let process =
                 system.process(sysinfo::Pid::from_u32(self.pid as u32));
             if let Some(process) = process {
-                process.kill();
+                if process.start_time() as i64 == self.start_time
+                    && process.name() == self.name
+                {
+                    if let Ok(mut stops) = USER_STOPS.lock() {
+                        stops.insert((self.pid, self.start_time));
+                    }
+                    if !process.kill() {
+                        if let Ok(mut stops) = USER_STOPS.lock() {
+                            stops.remove(&(self.pid, self.start_time));
+                        }
+                    }
+                }
             }
         }
 
@@ -362,5 +411,29 @@ impl Process {
         .await?;
 
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod health_process_tests {
+    use super::*;
+    #[tokio::test]
+    async fn running_or_sleeping_process_is_not_an_exit() {
+        let mut system = sysinfo::System::new();
+        system.refresh_processes();
+        let pid = std::process::id();
+        let current = system.process(sysinfo::Pid::from_u32(pid)).unwrap();
+        let p = Process {
+            pid: pid as i64,
+            start_time: current.start_time() as i64,
+            name: current.name().to_string(),
+            executable: current.exe().unwrap().to_string_lossy().into_owned(),
+            profile_path: String::new(),
+            post_exit_command: None,
+        };
+        assert_eq!(p.try_wait().await.unwrap(), None);
+        let mut reused = p;
+        reused.start_time -= 1;
+        assert_eq!(reused.try_wait().await.unwrap(), Some(0));
     }
 }

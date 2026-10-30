@@ -221,6 +221,8 @@ pub enum CommandPayload {
 
 #[derive(Serialize, Clone)]
 pub struct ProcessPayload {
+    /// None for rescued processes or a manual stop.
+    pub exit_code: Option<i32>,
     pub profile_path_id: String,
     pub pid: u32,
     pub event: ProcessPayloadType,

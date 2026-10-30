@@ -253,6 +253,7 @@ pub async fn emit_process(
     pid: u32,
     event: ProcessPayloadType,
     message: &str,
+    exit_code: Option<i32>,
 ) -> crate::Result<()> {
     #[cfg(feature = "tauri")]
     {
@@ -262,6 +263,7 @@ pub async fn emit_process(
             .emit_all(
                 "process",
                 ProcessPayload {
+                    exit_code,
                     profile_path_id: profile_path.to_string(),
                     pid,
                     event,

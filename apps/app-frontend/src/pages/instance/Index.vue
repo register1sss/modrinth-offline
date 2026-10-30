@@ -45,6 +45,9 @@
         </span>
         <hr class="card-divider" />
         <div class="pages-list">
+          <RouterLink :to="`/instance/${encodeURIComponent($route.params.id)}/health`" class="btn"
+            ><SettingsIcon /> Диагностика</RouterLink
+          >
           <RouterLink :to="`/instance/${encodeURIComponent($route.params.id)}/`" class="btn">
             <BoxIcon /> {{ $u3t('Content') }}
           </RouterLink>

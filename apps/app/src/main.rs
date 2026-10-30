@@ -136,6 +136,7 @@ fn main() {
         .plugin(api::mr_auth::init())
         .plugin(api::import::init())
         .plugin(api::logs::init())
+        .plugin(api::instance_health::init())
         .plugin(api::jre::init())
         .plugin(api::metadata::init())
         .plugin(api::pack::init())

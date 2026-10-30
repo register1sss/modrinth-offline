@@ -106,3 +106,5 @@ impl_serialize! {
 pub mod assistant;
 
 pub mod minecraft_rust;
+
+pub mod instance_health;

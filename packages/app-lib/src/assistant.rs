@@ -88,7 +88,12 @@ async fn bounded_json(r: reqwest::Response) -> Result<Value> {
     serde_json::from_slice(&bytes).map_err(err)
 }
 pub async fn status() -> Result<Value> {
-    let r = client(true)?.get("http://127.0.0.1:11434/api/tags").timeout(Duration::from_secs(3)).send().await.map_err(|_| "Ollama is not running. Install Ollama, then run: ollama pull qwen2.5:1.5b".to_string())?;
+    let r = client(true)?
+        .get("http://127.0.0.1:11434/api/tags")
+        .timeout(Duration::from_secs(3))
+        .send()
+        .await
+        .map_err(|_| "Ollama is not running. Click Install AI".to_string())?;
     let d = bounded_json(r).await?;
     let ready = d["models"]
         .as_array()

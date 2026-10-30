@@ -55,3 +55,36 @@ test('custom badge, publisher and displayed v1.0 are configured', () => {
   assert.match(read('../public/u3drinth.svg'), /#c73562/)
   assert.match(read('../src/assets/stylesheets/motion.scss'), /prefers-reduced-motion:\s*reduce/)
 })
+
+test('AI install is an explicit command with fixed signed official runtime', () => {
+  const setup = read('../../../packages/app-lib/src/assistant_setup.rs')
+  assert.match(setup, /Get-AuthenticodeSignature/)
+  assert.match(setup, /https:\/\/ollama.com\/download\/OllamaSetup.exe/)
+  assert.match(setup, /trusted_download_url/)
+  assert.match(setup, /create_new\(true\)/)
+  const page = read('../src/pages/Assistant.vue')
+  assert.match(page, /Установить ИИ/)
+  assert.ok(!page.includes('ollama pull'))
+  assert.ok(!page.includes('ollama.com/download/windows'))
+})
+test('account migration preserves rows and permits several inactive accounts', () => {
+  const migration = read(
+    '../../../packages/app-lib/migrations/20261030140000_minecraft_accounts.sql',
+  )
+  assert.match(migration, /WHERE active = 1/)
+  assert.ok(!migration.includes('DELETE'))
+  const card = read('../src/components/ui/AccountsCard.vue')
+  assert.ok(card.indexOf('await set_default_user(account.id)') < card.indexOf("emit('change')"))
+})
+test('theme page uses short labels without descriptive subtitles', () => {
+  const p = read('../src/pages/Themes.vue')
+  for (const label of [
+    'Настроение начинается',
+    'Найди своё настроение',
+    'theme.subtitle',
+    'active.subtitle',
+    'Атмосфера в движении',
+  ])
+    assert.ok(!p.includes(label), label)
+  assert.ok(!/[\u2013\u2014]/.test(p))
+})

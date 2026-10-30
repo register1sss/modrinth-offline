@@ -37,7 +37,7 @@
 
   <Modal ref="chooseOfflineUsernameModal" header="Choose username for your offline account">
     <div class="choose-offline-username-modal">
-      <input type="text" :placeholder="$u3t('Username')" v-model="offlineUsername" />
+      <input v-model="offlineUsername" type="text" :placeholder="$u3t('Username')" />
       <Button icon-only color="primary" @click="offlineLogin(offlineUsername)">
         <LogInIcon />
       </Button>
@@ -74,7 +74,7 @@
       </div>
       <div v-if="displayAccounts.length > 0" class="account-group">
         <div v-for="account in displayAccounts" :key="account.id" class="account-row">
-          <Button class="option account" @click="setAccount(account)">
+          <Button class="option account" :disabled="accountBusy" @click="setAccount(account)">
             <Avatar :src="`https://mc-heads.net/avatar/${account.id}/128`" class="icon" />
             <p>{{ account.username }}</p>
           </Button>
@@ -120,7 +120,8 @@ const emit = defineEmits(['change'])
 const chooseAccountTypeModal = ref(null)
 const chooseOfflineUsernameModal = ref(null)
 
-const accounts = ref({})
+const accounts = ref([])
+const accountBusy = ref(false)
 const defaultUser = ref()
 const offlineUsername = ref('')
 
@@ -142,9 +143,17 @@ const selectedAccount = computed(() =>
 )
 
 async function setAccount(account) {
-  defaultUser.value = account.id
-  await set_default_user(account.id).catch(handleError)
-  emit('change')
+  if (accountBusy.value) return
+  accountBusy.value = true
+  try {
+    await set_default_user(account.id)
+    await refreshValues()
+    emit('change')
+  } catch (e) {
+    handleError(e)
+  } finally {
+    accountBusy.value = false
+  }
 }
 
 async function login() {
@@ -159,12 +168,12 @@ async function login() {
 }
 
 async function offlineLogin(username) {
-  if (username.length == 0) {
+  if (!username.trim() || accountBusy.value) {
     return
   }
 
   chooseOfflineUsernameModal.value.hide()
-  const loggedIn = await offline_login(username).catch(handleSevereError)
+  const loggedIn = await offline_login(username.trim()).catch(handleSevereError)
 
   if (loggedIn) {
     await setAccount(loggedIn)
@@ -195,7 +204,7 @@ const handleClickOutside = (event) => {
     card.value &&
     card.value.$el !== event.target &&
     !elements.includes(card.value.$el) &&
-    !button.value.contains(event.target)
+    !button.value?.contains(event.target)
   ) {
     showCard.value = false
   }

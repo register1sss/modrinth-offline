@@ -25,3 +25,4 @@ pub use logger::start_logger;
 pub use state::State;
 
 pub mod assistant;
+pub mod assistant_setup;

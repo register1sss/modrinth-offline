@@ -3,6 +3,9 @@ use theseus::assistant as ai;
 pub fn init<R: tauri::Runtime>() -> tauri::plugin::TauriPlugin<R> {
     tauri::plugin::Builder::new("assistant")
         .invoke_handler(tauri::generate_handler![
+            install,
+            install_status,
+            install_cancel,
             preferences,
             set_access,
             status,
@@ -89,4 +92,19 @@ async fn collection(
     projects: Vec<String>,
 ) -> ai::Result<String> {
     ai::collection(&profile_id, &name, projects).await
+}
+
+#[tauri::command]
+async fn install() -> ai::Result<theseus::assistant_setup::SetupProgress> {
+    theseus::assistant_setup::begin()
+}
+#[tauri::command]
+async fn install_status() -> ai::Result<theseus::assistant_setup::SetupProgress>
+{
+    theseus::assistant_setup::get_progress()
+}
+#[tauri::command]
+async fn install_cancel() -> ai::Result<theseus::assistant_setup::SetupProgress>
+{
+    theseus::assistant_setup::cancel()
 }

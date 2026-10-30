@@ -95,8 +95,11 @@ test('all thirteen drawing paths execute independently without leaking canvas st
       {
         get:
           (_, method) =>
-          (...args) =>
-            calls.push([method, ...args]),
+          (...args) => {
+            calls.push([method, ...args])
+            if (String(method).startsWith('create'))
+              return { addColorStop: (...a) => calls.push(['stop', ...a]) }
+          },
         set: () => true,
       },
     )

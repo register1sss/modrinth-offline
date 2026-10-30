@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, nextTick, watch } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, nextTick, watch } from 'vue'
 import { ai } from '@/assistant/api.js'
 import { session } from '@/assistant/state.js'
 import { diagnose } from '@/assistant/diagnostics.js'
@@ -54,18 +54,74 @@ async function loadProfiles() {
   if (!profiles.value.some((p) => p.path === profile.value))
     profile.value = profiles.value[0]?.path ?? ''
 }
-async function check() {
+async function check(silent = false) {
   checking.value = true
   error.value = ''
   try {
     connection.value = await ai('status')
   } catch (e) {
     connection.value = null
-    error.value = messageError(e)
+    if (!silent) error.value = messageError(e)
   } finally {
     checking.value = false
   }
 }
+
+const setup = ref({ running: false, stage: 'idle', completed: 0, total: 0 })
+let setupTimer = 0,
+  disposed = false
+const setupLabel = computed(
+  () =>
+    ({
+      checking: tr('Проверка ИИ', 'Checking AI'),
+      download_runtime: tr('Загрузка Ollama', 'Downloading Ollama'),
+      verify_runtime: tr('Проверка подписи', 'Verifying signature'),
+      install_runtime: tr('Установка Ollama', 'Installing Ollama'),
+      start_runtime: tr('Запуск Ollama', 'Starting Ollama'),
+      download_model: tr('Загрузка модели', 'Downloading model'),
+      ready: tr('ИИ установлен', 'AI installed'),
+      error: tr('Не удалось установить ИИ', 'AI installation failed'),
+      cancelled: tr('Загрузка остановлена', 'Download stopped'),
+    })[setup.value.stage] ?? '',
+)
+const setupPercent = computed(() =>
+  setup.value.total > 0
+    ? Math.min(100, Math.round((setup.value.completed / setup.value.total) * 100))
+    : null,
+)
+async function pollSetup() {
+  try {
+    const p = await ai('install_status')
+    if (disposed) return
+    setup.value = p
+    if (p.stage === 'ready') await check()
+    if (p.running) setupTimer = setTimeout(pollSetup, 800)
+  } catch (e) {
+    if (!disposed) error.value = messageError(e)
+  }
+}
+async function installAI() {
+  error.value = ''
+  try {
+    setup.value = await ai('install')
+    clearTimeout(setupTimer)
+    await pollSetup()
+  } catch (e) {
+    error.value = messageError(e)
+  }
+}
+async function cancelInstall() {
+  try {
+    setup.value = await ai('install_cancel')
+  } catch (e) {
+    error.value = messageError(e)
+  }
+}
+onBeforeUnmount(() => {
+  disposed = true
+  clearTimeout(setupTimer)
+})
+
 async function permission(event) {
   const enabled = event.target.checked
   await task(async () => {
@@ -92,7 +148,8 @@ onMounted(async () => {
     loaded.value = true
     await loadProfiles()
   })
-  await check()
+  await check(true)
+  await pollSetup()
 })
 async function send() {
   if (!text.value.trim() || busy.value) return
@@ -265,12 +322,7 @@ function importCollection() {
         <p class="ai-eyebrow">U3 / LOCAL INTELLIGENCE</p>
         <h1>U3 AI <span>LOCAL</span></h1>
         <p>
-          {{
-            tr(
-              'Твой помощник по Minecraft. На твоём компьютере.',
-              'Your Minecraft companion. On your computer.',
-            )
-          }}
+          {{ tr('Помощник по Minecraft.', 'Minecraft assistant.') }}
         </p>
       </div>
       <span class="ai-status" :class="{ ready: connection?.ready }"
@@ -288,7 +340,7 @@ function importCollection() {
         <p>
           {{
             tr(
-              'Только профили лаунчера. Изменения — после подтверждения. Без командной строки и удаления файлов.',
+              'Только профили лаунчера. Изменения - после подтверждения. Без командной строки и удаления файлов.',
               'Launcher profiles only. Changes require confirmation. No shell access or file deletion.',
             )
           }}
@@ -303,35 +355,57 @@ function importCollection() {
         /><span>{{ access ? tr('Включён', 'Enabled') : tr('Отключён', 'Disabled') }}</span></label
       >
     </section>
-    <section v-if="!connection?.ready" class="ai-setup">
+    <section v-if="!connection?.ready || setup.running" class="ai-setup">
       <div>
-        <h2>{{ tr('Один раз настроить — дальше локально', 'Set up once. Then stay local.') }}</h2>
+        <h2>{{ tr('Установка ИИ', 'AI setup') }}</h2>
         <p>
           {{
             tr(
-              'Установи Ollama с официального сайта, затем скачай лёгкую модель этой командой. U3drinth не скачивает её скрытно.',
-              'Install Ollama from its official website, then download the lightweight model with this command. U3drinth never downloads it silently.',
+              'Кнопка установит Ollama и модель Qwen 1.5B. Нужен интернет и около 8 ГБ свободного места. Ollama устанавливается отдельно и работает в фоне.',
+              'Install Ollama and the Qwen 1.5B model. Internet and about 8 GB of free disk space are required. Ollama is installed separately and runs in the background.',
             )
           }}
         </p>
-        <code>ollama pull qwen2.5:1.5b</code>
         <p>
           {{
             tr(
-              'Режим экономии: CPU, 4 потока, контекст 4096; модель выгружается после ответа, видеопамять остаётся игре. Первый запуск и ответы могут быть медленнее.',
-              'Economy mode: CPU, 4 threads, 4096 context; unload after each reply, leaving VRAM for the game. First replies may take longer.',
+              'ИИ работает на CPU. Видеопамять остаётся игре.',
+              'AI runs on the CPU. VRAM remains available for the game.',
             )
           }}
         </p>
+        <div v-if="setupLabel" class="setup-progress" role="status" aria-live="polite">
+          <strong
+            >{{ setupLabel
+            }}<span v-if="setupPercent !== null"> · {{ setupPercent }}%</span></strong
+          >
+          <progress
+            v-if="setup.running"
+            :value="setupPercent ?? undefined"
+            max="100"
+            :aria-label="setupLabel"
+          />
+          <p v-if="setup.total">
+            {{ (setup.completed / 1048576).toFixed(0) }} / {{ (setup.total / 1048576).toFixed(0) }}
+            {{ tr('МБ', 'MB') }}
+          </p>
+          <p v-if="setup.error" role="alert">{{ setup.error }}</p>
+          <p v-if="setup.running && !setup.cancellable">
+            {{ tr('Дождись завершения установки.', 'Wait for installation to finish.') }}
+          </p>
+        </div>
       </div>
       <div class="setup-actions">
-        <a href="https://ollama.com/download/windows">{{
-          tr('Скачать Ollama ↗', 'Download Ollama ↗')
-        }}</a
-        ><button :disabled="checking" @click="check">
+        <button :disabled="setup.running" @click="installAI">
+          {{ tr('Установить ИИ', 'Install AI') }}
+        </button>
+        <button v-if="setup.running && setup.cancellable" @click="cancelInstall">
+          {{ tr('Остановить загрузку', 'Stop download') }}
+        </button>
+        <button :disabled="checking || setup.running" @click="check()">
           {{
             checking
-              ? tr('Проверяем…', 'Checking…')
+              ? tr('Проверка...', 'Checking...')
               : tr('Проверить подключение', 'Check connection')
           }}
         </button>
@@ -341,7 +415,7 @@ function importCollection() {
     <div v-if="notice" role="status" class="ai-notice">{{ notice }}</div>
     <div v-if="session.alerts.length" class="ai-alerts">
       <strong>{{ tr('Обнаружены ошибки после запуска', 'Errors found after a run') }}</strong>
-      <p v-for="(a, i) in session.alerts.slice(-3)" :key="i">{{ a.name }} — {{ a.summary }}</p>
+      <p v-for="(a, i) in session.alerts.slice(-3)" :key="i">{{ a.name }} - {{ a.summary }}</p>
       <button @click="session.alerts = []">{{ tr('Скрыть', 'Dismiss') }}</button>
     </div>
     <nav class="ai-tabs" :aria-label="tr('Инструменты помощника', 'Assistant tools')">
@@ -366,8 +440,8 @@ function importCollection() {
           <p>
             {{
               tr(
-                'Расскажи, как хочешь играть, или открой лог вылета. ИИ предложит план — ты решаешь, что применить.',
-                'Describe how you want to play, or open a crash log. AI suggests a plan — you decide what to apply.',
+                'Расскажи, как хочешь играть, или открой лог вылета. ИИ предложит план - ты решаешь, что применить.',
+                'Describe how you want to play, or open a crash log. AI suggests a plan - you decide what to apply.',
               )
             }}
           </p>
@@ -547,7 +621,7 @@ function importCollection() {
           ><label
             >{{ tr('Профиль для коллекции', 'Collection profile')
             }}<select v-model="profile">
-              <option value="">—</option>
+              <option value="">-</option>
               <option v-for="p in profiles" :key="p.path" :value="p.path">{{ p.name }}</option>
             </select></label
           >
@@ -555,7 +629,7 @@ function importCollection() {
       </div>
       <div v-if="plan" class="ai-plan">
         <h3>
-          {{ tr('Проверенный план — подтвердить загрузку', 'Verified plan — approve download') }}
+          {{ tr('Проверенный план - подтвердить загрузку', 'Verified plan - approve download') }}
         </h3>
         <p>
           {{ plan.name }} · Minecraft {{ plan.game }} · {{ plan.loader }} · {{ plan.files.length }}
@@ -622,7 +696,7 @@ function importCollection() {
               }
             "
           >
-            <option value="">—</option>
+            <option value="">-</option>
             <option v-for="p in profiles" :key="p.path" :value="p.path">{{ p.name }}</option>
           </select></label
         ><button :disabled="!access || !profile || busy" @click="list('')">
@@ -1305,5 +1379,21 @@ textarea {
   color: var(--color-contrast);
   text-decoration: underline;
   text-underline-offset: 3px;
+}
+</style>
+
+<style scoped>
+.setup-progress {
+  margin-top: 16px;
+  display: grid;
+  gap: 8px;
+}
+.setup-progress progress {
+  width: 100%;
+  height: 12px;
+  accent-color: var(--color-brand);
+}
+.setup-progress p {
+  margin: 0;
 }
 </style>

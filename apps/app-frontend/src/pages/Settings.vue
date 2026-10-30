@@ -214,7 +214,7 @@ async function findLauncherDir() {
         />
       </div>
       <RouterLink to="/themes" class="btn">
-        {{ $u3t('Темы — 13 новых палитр и эффекты частиц') }}
+        {{ $u3t('Темы - 13 новых палитр и эффекты частиц') }}
       </RouterLink>
       <div class="adjacent-input">
         <label for="advanced-rendering">

@@ -150,7 +150,7 @@ pub async fn login_begin(
 #[tracing::instrument]
 pub async fn offline_login(
     username: &str,
-    exec: impl sqlx::Executor<'_, Database = sqlx::Sqlite> + Copy,
+    exec: &sqlx::SqlitePool,
 ) -> crate::Result<Credentials> {
     let credentials = Credentials {
         id: Uuid::new_v4(),
@@ -169,7 +169,7 @@ pub async fn offline_login(
 pub async fn login_finish(
     code: &str,
     flow: MinecraftLoginFlow,
-    exec: impl sqlx::Executor<'_, Database = sqlx::Sqlite> + Copy,
+    exec: &sqlx::SqlitePool,
 ) -> crate::Result<Credentials> {
     let (pair, _, _) =
         DeviceTokenPair::refresh_and_get_device_token(Utc::now(), false, exec)
@@ -226,10 +226,7 @@ pub struct Credentials {
 }
 
 impl Credentials {
-    async fn refresh(
-        &mut self,
-        exec: impl sqlx::Executor<'_, Database = sqlx::Sqlite> + Copy,
-    ) -> crate::Result<()> {
+    async fn refresh(&mut self, exec: &sqlx::SqlitePool) -> crate::Result<()> {
         let oauth_token = oauth_refresh(&self.refresh_token).await?;
         let (pair, current_date, _) =
             DeviceTokenPair::refresh_and_get_device_token(
@@ -270,7 +267,7 @@ impl Credentials {
 
     #[tracing::instrument]
     pub async fn get_default_credential(
-        exec: impl sqlx::Executor<'_, Database = sqlx::Sqlite> + Copy,
+        exec: &sqlx::SqlitePool,
     ) -> crate::Result<Option<Credentials>> {
         let credentials = Self::get_active(exec).await?;
 
@@ -367,13 +364,11 @@ impl Credentials {
         Ok(res)
     }
 
-    pub async fn upsert(
-        &self,
-        exec: impl sqlx::Executor<'_, Database = sqlx::Sqlite> + Copy,
-    ) -> crate::Result<()> {
+    pub async fn upsert(&self, exec: &sqlx::SqlitePool) -> crate::Result<()> {
         let expires = self.expires.timestamp();
         let uuid = self.id.as_hyphenated().to_string();
 
+        let mut tx = exec.begin().await?;
         if self.active {
             sqlx::query!(
                 "
@@ -381,7 +376,7 @@ impl Credentials {
                 SET active = FALSE
                 ",
             )
-            .execute(exec)
+            .execute(&mut *tx)
             .await?;
         }
 
@@ -403,9 +398,10 @@ impl Credentials {
             self.refresh_token,
             expires,
         )
-            .execute(exec)
+            .execute(&mut *tx)
             .await?;
 
+        tx.commit().await?;
         Ok(())
     }
 
@@ -1213,4 +1209,46 @@ fn generate_oauth_challenge() -> String {
 
     let bytes: Vec<u8> = (0..64).map(|_| rng.gen::<u8>()).collect();
     bytes.iter().map(|byte| format!("{:02x}", byte)).collect()
+}
+
+#[cfg(test)]
+mod account_tests {
+    use super::*;
+    #[tokio::test]
+    async fn multiple_accounts_and_repeated_switches_preserve_all_users() {
+        let pool = sqlx::sqlite::SqlitePoolOptions::new()
+            .max_connections(1)
+            .connect("sqlite::memory:")
+            .await
+            .unwrap();
+        // Reproduce an installed v1 database, then apply the real migration.
+        sqlx::raw_sql("CREATE TABLE minecraft_users (uuid TEXT PRIMARY KEY, active INTEGER NOT NULL DEFAULT FALSE, username TEXT NOT NULL, access_token TEXT NOT NULL, refresh_token TEXT NOT NULL, expires INTEGER NOT NULL); CREATE UNIQUE INDEX minecraft_users_active ON minecraft_users(active);").execute(&pool).await.unwrap();
+        let first = offline_login("First", &pool).await.unwrap();
+        sqlx::raw_sql(include_str!(
+            "../../migrations/20261030140000_minecraft_accounts.sql"
+        ))
+        .execute(&pool)
+        .await
+        .unwrap();
+        let second = offline_login("Second", &pool).await.unwrap();
+        let third = offline_login("Third", &pool).await.unwrap();
+        for mut account in [first.clone(), second.clone(), first, third] {
+            account.active = true;
+            account.upsert(&pool).await.unwrap();
+            assert_eq!(
+                Credentials::get_active(&pool).await.unwrap().unwrap().id,
+                account.id
+            );
+            assert_eq!(Credentials::get_all(&pool).await.unwrap().len(), 3);
+        }
+        // A failed write must not leave the launcher with no selected account.
+        sqlx::raw_sql("CREATE TRIGGER reject_bad BEFORE INSERT ON minecraft_users WHEN NEW.username='Bad' BEGIN SELECT RAISE(ABORT, 'test failure'); END;").execute(&pool).await.unwrap();
+        let selected =
+            Credentials::get_active(&pool).await.unwrap().unwrap().id;
+        assert!(offline_login("Bad", &pool).await.is_err());
+        assert_eq!(
+            Credentials::get_active(&pool).await.unwrap().unwrap().id,
+            selected
+        );
+    }
 }

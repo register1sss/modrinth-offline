@@ -33,6 +33,38 @@ mockIPC(async (cmd, args) => {
   window.__mockCalls.push(cmd === 'tauri' ? JSON.stringify(args) : cmd)
   if (cmd.startsWith('plugin:assistant|')) {
     const tool = cmd.split('|')[1]
+    if (tool === 'install') {
+      window.__aiInstallAt = Date.now()
+      window.__aiInstallCancelled = false
+      return {
+        running: true,
+        stage: 'download_runtime',
+        completed: 0,
+        total: 100,
+        cancellable: true,
+      }
+    }
+    if (tool === 'install_cancel') {
+      window.__aiInstallCancelled = true
+      return { running: false, stage: 'cancelled', completed: 20, total: 100, cancellable: false }
+    }
+    if (tool === 'install_status') {
+      if (window.__aiInstallCancelled)
+        return { running: false, stage: 'cancelled', cancellable: false }
+      if (!window.__aiInstallAt) return { running: false, stage: 'idle', cancellable: false }
+      const elapsed = Date.now() - window.__aiInstallAt
+      if (elapsed > 4000) {
+        window.__aiReady = true
+        return { running: false, stage: 'ready', completed: 100, total: 100, cancellable: false }
+      }
+      return {
+        running: true,
+        stage: elapsed > 1800 ? 'download_model' : 'download_runtime',
+        completed: Math.round(elapsed / 40),
+        total: 100,
+        cancellable: true,
+      }
+    }
     if (tool === 'preferences') return { file_access: window.__aiAccess }
     if (tool === 'set_access') {
       window.__aiAccess = args.enabled

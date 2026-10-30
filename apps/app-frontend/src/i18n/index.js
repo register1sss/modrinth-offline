@@ -18,10 +18,11 @@ export function setLanguage(value) {
     /* current session still works */
   }
 }
-export const tr = (russian, english) => (language.value === 'ru' ? russian : english)
+const simple = (value) => String(value).replace(/[\u2013\u2014]/g, '-')
+export const tr = (russian, english) => simple(language.value === 'ru' ? russian : english)
 export function translate(text) {
   const key = String(text).replace(/\s+/g, ' ').trim()
-  return (language.value === 'ru' ? ru[key] : en[key]) ?? text
+  return simple((language.value === 'ru' ? ru[key] : en[key]) ?? text)
 }
 export const localization = {
   install(app) {

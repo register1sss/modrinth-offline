@@ -16,6 +16,8 @@ import {
 import { Button, Notifications, Card } from '@modrinth/ui'
 import { useLoading, useTheming } from '@/store/state'
 import AssistantIcon from '@/components/brand/AssistantIcon.vue'
+import ThemeChrome from '@/components/themes/ThemeChrome.vue'
+import NavigationBurst from '@/components/themes/NavigationBurst.vue'
 import ParticleCanvas from '@/components/themes/ParticleCanvas.vue'
 import AccountsCard from '@/components/ui/AccountsCard.vue'
 import InstanceCreationModal from '@/components/ui/InstanceCreationModal.vue'
@@ -283,7 +285,9 @@ command_listener(async (e) => {
       :reduced-motion="themeStore.reducedMotion"
       subdued
     />
+    <NavigationBurst />
     <div class="nav-container">
+      <ThemeChrome v-if="themeStore.activeTheme.particle && themeStore.effectsEnabled" vertical />
       <div class="nav-section">
         <suspense>
           <AccountsCard ref="accounts" mode="small" />
@@ -318,10 +322,10 @@ command_listener(async (e) => {
             <PaintBrushIcon />
           </RouterLink>
           <RouterLink
+            v-tooltip="'U3 AI'"
             to="/assistant"
             class="btn icon-only collapsed-button ai-nav-link"
             aria-label="U3 AI"
-            v-tooltip="'U3 AI'"
             ><AssistantIcon /><span
               v-if="aiSession.alerts.length"
               class="ai-nav-alert"
@@ -355,6 +359,7 @@ command_listener(async (e) => {
     </div>
     <div class="view">
       <div class="appbar-row">
+        <ThemeChrome v-if="themeStore.activeTheme.particle && themeStore.effectsEnabled" />
         <div data-tauri-drag-region class="appbar">
           <section class="navigation-controls">
             <Breadcrumbs data-tauri-drag-region />
@@ -646,5 +651,26 @@ command_listener(async (e) => {
   .transparent {
     padding: var(--gap-sm) 0;
   }
+}
+</style>
+
+<style scoped>
+.nav-container,
+.appbar-row {
+  position: relative;
+  isolation: isolate;
+}
+.nav-container > .nav-section,
+.nav-container > .settings,
+.appbar-row > .appbar,
+.appbar-row > .window-controls {
+  position: relative;
+  z-index: 1;
+}
+.container .view .appbar-row > .appbar {
+  background: transparent;
+}
+.appbar-row {
+  background: var(--color-raised-bg);
 }
 </style>

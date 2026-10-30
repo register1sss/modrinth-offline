@@ -300,7 +300,7 @@ export const en = {
   'Без частиц': 'No particles',
   Применена: 'Applied',
   'Атмосфера в движении': 'Atmosphere in motion',
-  'У каждой новой темы — свои частицы и характер движения.':
+  'У каждой новой темы - свои частицы и характер движения.':
     'Each new theme has its own particles and motion.',
   'Летающие частицы': 'Floating particles',
   'Насыщенность эффектов': 'Effect intensity',
@@ -354,7 +354,7 @@ export const en = {
   'Обсидиан, рубин и красное свечение': 'Obsidian, ruby and a crimson glow',
   'Чёрный графит и сдержанное шампанское': 'Dark graphite and subtle champagne',
   'Глубокая бирюза и биолюминесцентный свет': 'Deep turquoise and bioluminescence',
-  'Темы — 13 новых палитр и эффекты частиц': 'Themes — 13 new palettes and particle effects',
+  'Темы - 13 новых палитр и эффекты частиц': 'Themes - 13 new palettes and particle effects',
   'Движение приостановлено: в системе включено уменьшение анимации. Превью остаются статичными.':
     'Motion paused: reduced motion is enabled in system settings. Previews remain static.',
   'До 30 кадров/с · пауза в фоне · статичные превью без лишней нагрузки.':

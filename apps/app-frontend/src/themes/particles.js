@@ -1,3 +1,4 @@
+import { particleArt } from './particle-art.js'
 import { EFFECT_LEVELS } from './catalog.js'
 
 // The same deterministic renderer powers gallery previews and the real atmosphere.
@@ -106,131 +107,12 @@ export function advanceParticles(particles, kind, width, height, delta, time) {
 export function drawParticles(ctx, particles, kind, width, height, time = 0, subdued = false) {
   ctx.clearRect(0, 0, width, height)
   for (const p of particles) {
-    const s = p.size
     ctx.save()
     ctx.translate(p.x, p.y)
-    ctx.globalAlpha = p.alpha * (subdued ? 0.42 : 0.85) * (0.72 + Math.sin(time + p.phase) * 0.2)
-    ctx.strokeStyle = p.color
-    ctx.fillStyle = p.color
-    ctx.lineWidth = 0.9
-    ctx.beginPath()
-    switch (kind) {
-      case 'rain':
-        ctx.moveTo(0, 0)
-        ctx.lineTo(-s * 1.6, s * 6)
-        ctx.stroke()
-        break
-      case 'ember':
-        ctx.rotate(p.rotation)
-        ctx.moveTo(0, -s * 1.8)
-        ctx.lineTo(s * 0.5, 0)
-        ctx.lineTo(0, s)
-        ctx.lineTo(-s * 0.5, 0)
-        ctx.closePath()
-        ctx.fill()
-        break
-      case 'petal':
-        ctx.rotate(p.rotation)
-        ctx.moveTo(0, -s)
-        ctx.bezierCurveTo(s * 2, -s * 0.6, s * 1.4, s * 1.8, 0, s * 1.9)
-        ctx.bezierCurveTo(-s * 1.4, s * 1.8, -s * 2, -s * 0.6, 0, -s)
-        ctx.fill()
-        break
-      case 'bubble':
-        ctx.arc(0, 0, s * 1.6, 0, Math.PI * 2)
-        ctx.stroke()
-        ctx.beginPath()
-        ctx.arc(-s * 0.45, -s * 0.45, s * 0.8, Math.PI, Math.PI * 1.5)
-        ctx.stroke()
-        break
-      case 'star':
-        ctx.rotate(p.rotation)
-        ctx.moveTo(0, -s * 1.8)
-        ctx.lineTo(s * 0.35, -s * 0.35)
-        ctx.lineTo(s * 1.8, 0)
-        ctx.lineTo(s * 0.35, s * 0.35)
-        ctx.lineTo(0, s * 1.8)
-        ctx.lineTo(-s * 0.35, s * 0.35)
-        ctx.lineTo(-s * 1.8, 0)
-        ctx.lineTo(-s * 0.35, -s * 0.35)
-        ctx.closePath()
-        ctx.fill()
-        break
-      case 'leaf':
-        ctx.rotate(p.rotation)
-        ctx.moveTo(0, -s * 1.5)
-        ctx.quadraticCurveTo(s * 2.2, 0, 0, s * 1.5)
-        ctx.quadraticCurveTo(-s * 2.2, 0, 0, -s * 1.5)
-        ctx.fill()
-        ctx.globalAlpha *= 0.6
-        ctx.strokeStyle = '#102117'
-        ctx.moveTo(0, -s)
-        ctx.lineTo(0, s)
-        ctx.stroke()
-        break
-      case 'snow':
-        ctx.rotate(p.rotation)
-        for (let arm = 0; arm < 6; arm++) {
-          ctx.moveTo(0, 0)
-          ctx.lineTo(0, -s * 1.8)
-          ctx.moveTo(0, -s)
-          ctx.lineTo(-s * 0.5, -s * 1.45)
-          ctx.moveTo(0, -s)
-          ctx.lineTo(s * 0.5, -s * 1.45)
-          ctx.rotate(Math.PI / 3)
-        }
-        ctx.stroke()
-        break
-      case 'sand':
-        ctx.rotate(-0.15)
-        ctx.ellipse(0, 0, s * 1.5, s * 0.35, 0, 0, Math.PI * 2)
-        ctx.fill()
-        break
-      case 'crystal':
-        ctx.rotate(p.rotation)
-        ctx.moveTo(0, -s * 2)
-        ctx.lineTo(s, 0)
-        ctx.lineTo(0, s * 2)
-        ctx.lineTo(-s, 0)
-        ctx.closePath()
-        ctx.stroke()
-        ctx.moveTo(0, -s * 2)
-        ctx.lineTo(0, s * 2)
-        ctx.moveTo(-s, 0)
-        ctx.lineTo(s, 0)
-        ctx.stroke()
-        break
-      case 'comet':
-        ctx.moveTo(-s * 7, -s * 3.5)
-        ctx.lineTo(0, 0)
-        ctx.stroke()
-        ctx.beginPath()
-        ctx.arc(0, 0, s * 0.7, 0, Math.PI * 2)
-        ctx.fill()
-        break
-      case 'ribbon':
-        ctx.rotate(p.rotation)
-        ctx.moveTo(-s * 5, 0)
-        ctx.bezierCurveTo(-s * 2, -s * 3, s * 2, s * 3, s * 5, 0)
-        ctx.stroke()
-        break
-      case 'plankton':
-        ctx.arc(0, 0, s, 0, Math.PI * 2)
-        ctx.fill()
-        ctx.globalAlpha *= 0.3
-        ctx.beginPath()
-        ctx.arc(0, 0, s * 2.4, 0, Math.PI * 2)
-        ctx.stroke()
-        break
-      default: // fireflies: a distinct softly glowing core, without costly shadowBlur.
-        ctx.globalAlpha *= 0.22
-        ctx.arc(0, 0, s * 2.7, 0, Math.PI * 2)
-        ctx.fill()
-        ctx.globalAlpha *= 4
-        ctx.beginPath()
-        ctx.arc(0, 0, s * 0.65, 0, Math.PI * 2)
-        ctx.fill()
-    }
+    ctx.rotate(p.rotation)
+    ctx.scale(p.size, p.size)
+    ctx.globalAlpha = p.alpha * (subdued ? 0.65 : 1) * (0.82 + Math.sin(time + p.phase) * 0.15)
+    particleArt(ctx, kind, p.color, p.phase, time)
     ctx.restore()
   }
 }

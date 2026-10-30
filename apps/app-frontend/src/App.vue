@@ -1,6 +1,8 @@
 <script setup>
 import { computed, ref, onMounted, onBeforeUnmount } from 'vue'
 import { language, setLanguage, tr, translate } from '@/i18n/index.js'
+import { invoke as rustInvoke } from '@tauri-apps/api/tauri'
+import { updateRustSession } from '@/minecraft-rust/state.js'
 import { session as aiSession } from '@/assistant/state.js'
 import { RouterView, RouterLink, useRouter, useRoute } from 'vue-router'
 import {
@@ -15,6 +17,7 @@ import {
 } from '@modrinth/assets'
 import { Button, Notifications, Card } from '@modrinth/ui'
 import { useLoading, useTheming } from '@/store/state'
+import MinecraftRustIcon from '@/components/brand/MinecraftRustIcon.vue'
 import AssistantIcon from '@/components/brand/AssistantIcon.vue'
 import ThemeChrome from '@/components/themes/ThemeChrome.vue'
 import NavigationBurst from '@/components/themes/NavigationBurst.vue'
@@ -144,6 +147,22 @@ TauriWindow.getCurrent().listen(TauriEvent.WINDOW_CLOSE_REQUESTED, async () => {
   await handleClose()
 })
 
+let rustPoll,
+  rustPolling = false
+onMounted(() => {
+  rustPoll = setInterval(async () => {
+    if (rustPolling) return
+    rustPolling = true
+    try {
+      updateRustSession(await rustInvoke('plugin:minecraft-rust|status'))
+    } catch {
+      /* Older native builds have no Rust plugin. */
+    } finally {
+      rustPolling = false
+    }
+  }, 2500)
+})
+onBeforeUnmount(() => clearInterval(rustPoll))
 const router = useRouter()
 router.afterEach((to, from, failure) => {
   if (mixpanel_is_loaded()) {
@@ -333,6 +352,13 @@ command_listener(async (e) => {
               >!</span
             ></RouterLink
           >
+          <RouterLink
+            v-tooltip="'Minecraft Rust'"
+            to="/minecraft-rust"
+            class="btn icon-only collapsed-button"
+            aria-label="Minecraft Rust"
+            ><MinecraftRustIcon
+          /></RouterLink>
           <Suspense>
             <InstanceCreationModal ref="installationModal" />
           </Suspense>

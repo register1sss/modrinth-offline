@@ -10,6 +10,12 @@ export default new createRouter({
   history: createWebHistory(),
   routes: [
     {
+      path: '/minecraft-rust',
+      name: 'MinecraftRust',
+      component: Pages.MinecraftRust,
+      meta: { breadcrumb: [{ name: 'Minecraft Rust' }] },
+    },
+    {
       path: '/assistant',
       name: 'Assistant',
       component: Pages.Assistant,

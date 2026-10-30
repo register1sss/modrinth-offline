@@ -104,3 +104,5 @@ impl_serialize! {
 }
 
 pub mod assistant;
+
+pub mod minecraft_rust;

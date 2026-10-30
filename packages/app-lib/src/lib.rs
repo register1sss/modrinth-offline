@@ -26,3 +26,5 @@ pub use state::State;
 
 pub mod assistant;
 pub mod assistant_setup;
+
+pub mod minecraft_rust;

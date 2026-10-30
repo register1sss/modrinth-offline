@@ -109,3 +109,48 @@
 .language-switch {
   border-color: var(--color-secondary);
 }
+
+/* Long page names must not cover language or window controls. */
+.appbar .navigation-controls {
+  flex: 1;
+  min-width: 0;
+}
+.appbar .breadcrumbs {
+  min-width: 0;
+}
+.appbar .breadcrumbs__item {
+  min-width: 0;
+}
+.appbar .breadcrumbs__item .selected {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.appbar .mod-stats {
+  flex-shrink: 0;
+}
+@media (max-width: 520px) {
+  .appbar .breadcrumbs__forward {
+    display: none;
+  }
+  .appbar .breadcrumbs__back {
+    flex-shrink: 0;
+  }
+  .appbar .breadcrumbs__item {
+    margin-left: 4px;
+  }
+}
+@media (max-width: 520px) {
+  .appbar .action-groups .status:has(> span.running-text) {
+    display: none;
+  }
+  .appbar .action-groups .running-text {
+    max-width: 40px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  .appbar-row .window-controls {
+    flex-shrink: 0;
+  }
+}

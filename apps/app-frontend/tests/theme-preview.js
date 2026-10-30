@@ -31,6 +31,57 @@ window.__aiEvents = {}
 
 mockIPC(async (cmd, args) => {
   window.__mockCalls.push(cmd === 'tauri' ? JSON.stringify(args) : cmd)
+  if (cmd.startsWith('plugin:minecraft-rust|')) {
+    const tool = cmd.split('|')[1]
+    window.__rustState ??= {
+      supported: true,
+      runtime: false,
+      prepared: false,
+      release: 'launcher@0.2.28',
+      running: false,
+      stage: 'idle',
+      completed: 0,
+      total: 0,
+      error: null,
+      logs: [],
+      accounts: {},
+      instances: [],
+      versions: {},
+    }
+    if (tool === 'cancel_sign_in') {
+      window.__rustState.running = false
+      window.__rustState.auth_code = null
+      window.__rustState.auth_url = null
+    }
+    if (tool === 'start') {
+      window.__rustActions ??= []
+      window.__rustActions.push(args.request)
+      if (window.__rustFail) throw 'Horizon test failure'
+      const r = args.request,
+        s = window.__rustState
+      s.action = r.action
+      s.error = null
+      if (r.action === 'install') {
+        s.runtime = true
+        s.versions = { installed: ['nightly-2026-10-30'], selected: 'nightly-2026-10-30' }
+        s.instances = [{ id: 'horizon', name: 'Horizon', java: null }]
+        s.accounts.sign_in_configured = true
+      }
+      if (r.action === 'sign_in') {
+        s.running = true
+        s.stage = 'sign_in'
+        s.auth_url = 'https://www.microsoft.com/link'
+        s.auth_code = 'TEST12345'
+      }
+      if (r.action === 'create') s.instances.push({ id: 'test-profile', name: r.name, java: null })
+      if (r.action.startsWith('prepare_')) s.prepared = true
+      if (r.action.startsWith('play_')) {
+        s.running = true
+        s.stage = 'playing'
+      }
+    }
+    return JSON.parse(JSON.stringify(window.__rustState))
+  }
   if (cmd.startsWith('plugin:assistant|')) {
     const tool = cmd.split('|')[1]
     if (tool === 'install') {

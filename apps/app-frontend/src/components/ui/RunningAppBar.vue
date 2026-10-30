@@ -1,5 +1,12 @@
 <template>
   <div class="action-groups">
+    <router-link
+      v-if="rustSession.running && rustSession.action.startsWith('play_')"
+      to="/minecraft-rust"
+      class="status"
+      aria-label="Horizon"
+      ><span class="circle running" /><span>Horizon</span></router-link
+    >
     <Button
       v-if="currentLoadingBars.length > 0"
       ref="infoButton"
@@ -51,7 +58,10 @@
         <DownloadIcon />
       </Button>
     </div>
-    <div v-else class="status">
+    <div
+      v-else-if="!(rustSession.running && rustSession.action.startsWith('play_'))"
+      class="status"
+    >
       <span class="circle stopped" />
       <span class="running-text"> {{ $u3t('No instances running') }} </span>
     </div>
@@ -79,7 +89,7 @@
         v-for="process in currentProcesses"
         :key="process.pid"
         class="profile-button"
-        @click="selectedProcess(process)"
+        @click="selectProcess(process)"
       >
         <div class="text"><span class="circle running" /> {{ process.profile.name }}</div>
         <Button
@@ -104,6 +114,7 @@
 </template>
 
 <script setup>
+import { rustSession } from '@/minecraft-rust/state.js'
 import { DownloadIcon, StopCircleIcon, TerminalSquareIcon, DropdownIcon } from '@modrinth/assets'
 import { Button, Card } from '@modrinth/ui'
 import { onBeforeUnmount, onMounted, ref } from 'vue'
@@ -114,7 +125,6 @@ import { progress_bars_list } from '@/helpers/state.js'
 import ProgressBar from '@/components/ui/ProgressBar.vue'
 import { handleError } from '@/store/notifications.js'
 import { mixpanel_track } from '@/helpers/mixpanel'
-import { ChatIcon } from '@/assets/icons'
 import { get_many } from '@/helpers/profile.js'
 
 const router = useRouter()

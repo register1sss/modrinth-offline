@@ -169,9 +169,7 @@ async function selectTheme(theme) {
                   :style="{ background: theme.palette.secondary }"
               /></span>
             </div>
-            <span class="particle-label"
-              ><span aria-hidden="true">✧</span> {{ $u3t(theme.effect) }}</span
-            >
+            <span class="particle-label">{{ $u3t(theme.effect) }}</span>
           </div>
         </button>
       </div>

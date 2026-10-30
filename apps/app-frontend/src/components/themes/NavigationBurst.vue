@@ -54,6 +54,9 @@ function click(e) {
     control.getAttribute('aria-disabled') === 'true'
   )
     return
+  clearTimeout(timer)
+  timer = 0
+  pending = ''
   const theme = store.activeTheme
   if (!theme.particle || !store.effectsEnabled || store.reducedMotion) return
   const rect = control.getBoundingClientRect(),
@@ -73,7 +76,11 @@ function click(e) {
       y,
       kind: theme.particle,
       vx: Math.cos(angle) * speed,
-      vy: Math.sin(angle) * speed - (theme.particle === 'ember' ? 80 : 15),
+      vy: ['petal', 'leaf', 'snow', 'sand'].includes(theme.particle)
+        ? 25 + Math.random() * 100
+        : ['ember', 'bubble', 'firefly', 'plankton'].includes(theme.particle)
+          ? -50 - Math.random() * 140
+          : Math.sin(angle) * speed - 15,
       size: 1.5 + Math.random() * 2.2,
       phase: Math.random() * 6.28,
       spin: (Math.random() - 0.5) * 4,

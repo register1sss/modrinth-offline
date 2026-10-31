@@ -52,7 +52,9 @@ fn atomic(path: &Path, bytes: &[u8]) -> Result<()> {
 fn embedded() -> Result<Vec<u8>> {
     let mut z = zip::ZipWriter::new(Cursor::new(Vec::new()));
     let opt = zip::write::FileOptions::default()
-        .compression_method(zip::CompressionMethod::Stored);
+        .compression_method(zip::CompressionMethod::Stored)
+        .last_modified_time(zip::DateTime::default())
+        .unix_permissions(0o644);
     for (name, content) in [
         (
             "horizon-native.json",
@@ -87,7 +89,9 @@ fn own_bundle(project: &str) -> Result<Vec<u8>> {
     }
     let mut z = zip::ZipWriter::new(Cursor::new(Vec::new()));
     let opt = zip::write::FileOptions::default()
-        .compression_method(zip::CompressionMethod::Stored);
+        .compression_method(zip::CompressionMethod::Stored)
+        .last_modified_time(zip::DateTime::default())
+        .unix_permissions(0o644);
     for (name, content) in [
         (
             "horizon-native.json",
@@ -112,6 +116,66 @@ fn own_bundle(project: &str) -> Result<Vec<u8>> {
         z.write_all(content.as_bytes()).map_err(|e| e.to_string())?;
     }
     Ok(z.finish().map_err(|e| e.to_string())?.into_inner())
+}
+// ZIP timestamps used to follow the clock. Accept a legacy archive ONLY when
+// every member exactly matches the current embedded source. No extra files,
+// missing members, modified source, or unbounded decompression are permitted.
+fn embedded_source_matches(project: &str, bytes: &[u8]) -> bool {
+    use std::io::Read;
+    let Ok(expected_bytes) = own_bundle(project) else {
+        return false;
+    };
+    let Ok(mut expected) = zip::ZipArchive::new(Cursor::new(expected_bytes))
+    else {
+        return false;
+    };
+    let Ok(mut actual) = zip::ZipArchive::new(Cursor::new(bytes)) else {
+        return false;
+    };
+    if actual.len() != expected.len() {
+        return false;
+    }
+    for i in 0..expected.len() {
+        let Ok(mut source) = expected.by_index(i) else {
+            return false;
+        };
+        let Ok(candidate) = actual.by_name(source.name()) else {
+            return false;
+        };
+        if source.size() != candidate.size() || source.size() > LIMIT {
+            return false;
+        }
+        let mut wanted = Vec::new();
+        let mut found = Vec::new();
+        if source.read_to_end(&mut wanted).is_err()
+            || candidate
+                .take(source.size() + 1)
+                .read_to_end(&mut found)
+                .is_err()
+            || wanted != found
+        {
+            return false;
+        }
+    }
+    true
+}
+fn installed_embedded_source_matches(
+    home: &Path,
+    project: &str,
+    checksum: &str,
+) -> bool {
+    use std::io::Read;
+    let path = home
+        .join("horizon-native-mods")
+        .join(format!("{project}.hnmod"));
+    let Ok(file) = std::fs::File::open(path) else {
+        return false;
+    };
+    let mut bytes = Vec::new();
+    file.take(LIMIT + 1).read_to_end(&mut bytes).is_ok()
+        && bytes.len() <= LIMIT as usize
+        && digest(&bytes) == checksum
+        && embedded_source_matches(project, &bytes)
 }
 async fn index(root: &Path) -> Result<Value> {
     let client = reqwest::Client::builder()
@@ -486,8 +550,13 @@ async fn install_checked(
             .get(&file_name)
             .filter(|old| !(automatic && *old == &r.checksum))
         {
-            let receipt = read_json(&home.join(&receipt_name))?;
-            if receipt["checksum"] != *old {
+            let recorded = read_json(&home.join(&receipt_name))
+                .ok()
+                .is_some_and(|receipt| receipt["checksum"] == *old);
+            let legacy_patch = automatic
+                && r.project == "u3_fixes"
+                && installed_embedded_source_matches(&home, "u3_fixes", old);
+            if !recorded && !legacy_patch {
                 return Err("First-party mod file was changed outside the launcher. Back it up and remove it before reinstalling".into());
             }
         }
@@ -515,7 +584,7 @@ async fn install_checked(
     let after = bundles(&home)?;
     let expected_file = format!("{}.hnmod", r.project);
     if after.get(&expected_file) != Some(&r.checksum) {
-        return Err("Installed mod checksum does not match your consent".into());
+        return Err(format!("Installed mod checksum does not match your consent: {expected_file}. Reload the catalog and retry"));
     }
     let mut expected = before;
     expected.insert(expected_file, r.checksum.clone());
@@ -700,6 +769,9 @@ pub(super) async fn ensure_fixes(root: &Path, profile: &str) -> Result<()> {
     });
     let exact_embedded = files.get("u3_fixes.hnmod") == Some(&checksum);
     let own_receipt = exact_embedded
+        || files.get("u3_fixes.hnmod").is_some_and(|hash| {
+            installed_embedded_source_matches(&home, "u3_fixes", hash)
+        })
         || read_json(&home.join("u3-fixes-installed.json"))
             .ok()
             .is_some_and(|r| {
@@ -745,6 +817,134 @@ pub(super) fn check_build(
 #[cfg(test)]
 mod tests {
     use super::*;
+    fn legacy_fixture(project: &str, mode: &str) -> Vec<u8> {
+        use std::io::Read;
+        let mut source =
+            zip::ZipArchive::new(Cursor::new(own_bundle(project).unwrap()))
+                .unwrap();
+        let mut out = zip::ZipWriter::new(Cursor::new(Vec::new()));
+        let options = zip::write::FileOptions::default()
+            .compression_method(zip::CompressionMethod::Stored)
+            .last_modified_time(
+                zip::DateTime::from_date_and_time(2026, 10, 31, 10, 12, 50)
+                    .unwrap(),
+            );
+        for i in 0..source.len() {
+            if mode == "missing" && i + 1 == source.len() {
+                continue;
+            }
+            let mut file = source.by_index(i).unwrap();
+            let name = if mode == "duplicate" && i == 5 {
+                "horizon-native.json"
+            } else {
+                file.name()
+            }
+            .to_owned();
+            let mut bytes = Vec::new();
+            file.read_to_end(&mut bytes).unwrap();
+            if mode == "modified" && i == 2 {
+                bytes[0] ^= 1;
+            }
+            out.start_file(name, options).unwrap();
+            out.write_all(&bytes).unwrap();
+        }
+        if mode == "extra" {
+            out.start_file("mixins/extra.rs", options).unwrap();
+            out.write_all(b"unknown native code").unwrap();
+        }
+        out.finish().unwrap().into_inner()
+    }
+    #[test]
+    fn embedded_hashes_do_not_follow_the_clock() {
+        let first = [embedded().unwrap(), own_bundle("u3_fixes").unwrap()];
+        // ZIP clocks have a two-second resolution. Fast same-tick tests hid this bug.
+        std::thread::sleep(Duration::from_millis(2200));
+        assert_eq!(first[0], embedded().unwrap());
+        assert_eq!(first[1], own_bundle("u3_fixes").unwrap());
+        for bytes in first {
+            let mut archive = zip::ZipArchive::new(Cursor::new(bytes)).unwrap();
+            for i in 0..archive.len() {
+                let file = archive.by_index(i).unwrap();
+                let time = file.last_modified();
+                assert_eq!(
+                    (
+                        time.year(),
+                        time.month(),
+                        time.day(),
+                        time.hour(),
+                        time.minute(),
+                        time.second()
+                    ),
+                    (1980, 1, 1, 0, 0, 0)
+                );
+                assert_eq!(file.unix_mode().unwrap() & 0o777, 0o644);
+            }
+        }
+    }
+    #[test]
+    fn legacy_recovery_requires_exact_embedded_source_and_current_file_hash() {
+        let legacy = legacy_fixture("u3_fixes", "normal");
+        assert_ne!(digest(&legacy), digest(&own_bundle("u3_fixes").unwrap()));
+        assert!(embedded_source_matches("u3_fixes", &legacy));
+        assert!(!embedded_source_matches("u3_edit", &legacy));
+        assert!(!embedded_source_matches("u3_fixes", b"not a zip"));
+        for mode in ["modified", "extra", "missing", "duplicate"] {
+            assert!(
+                !embedded_source_matches(
+                    "u3_fixes",
+                    &legacy_fixture("u3_fixes", mode)
+                ),
+                "{mode}"
+            );
+        }
+        let dir = tempfile::tempdir().unwrap();
+        let mods = dir.path().join("horizon-native-mods");
+        std::fs::create_dir_all(&mods).unwrap();
+        let path = mods.join("u3_fixes.hnmod");
+        std::fs::write(&path, &legacy).unwrap();
+        let checksum = digest(&legacy);
+        assert!(installed_embedded_source_matches(
+            dir.path(),
+            "u3_fixes",
+            &checksum
+        ));
+        assert!(!installed_embedded_source_matches(
+            dir.path(),
+            "u3_fixes",
+            &"a".repeat(64)
+        ));
+        let files =
+            BTreeMap::from([("u3_fixes.hnmod".to_owned(), checksum.clone())]);
+        let source_verified = installed_embedded_source_matches(
+            dir.path(),
+            "u3_fixes",
+            &checksum,
+        );
+        assert!(auto_install_needed(
+            &files,
+            &digest(&own_bundle("u3_fixes").unwrap()),
+            false,
+            false,
+            source_verified
+        )
+        .unwrap());
+        let mut foreign = files;
+        foreign.insert("unknown.hnmod".into(), "b".repeat(64));
+        assert!(auto_install_needed(
+            &foreign,
+            "new",
+            false,
+            false,
+            source_verified
+        )
+        .is_err());
+        std::fs::write(path, legacy_fixture("u3_fixes", "modified")).unwrap();
+        assert!(!installed_embedded_source_matches(
+            dir.path(),
+            "u3_fixes",
+            &checksum
+        ));
+    }
     #[test]
     fn embedded_bundle_is_deterministic_source_only() {
         let bytes = embedded().unwrap();

@@ -52,7 +52,10 @@ impl Health{fn dead_or_dying(&self)->bool{self.dead}}
 struct Player{position:Vec3,velocity:Vec3,health:Health}
 #[derive(Default)] struct Weather{raining:bool,thundering:bool,rain_time:i32,thunder_time:i32}
 impl Weather{fn levels(&self,_:f32)->(f32,f32){(0.,0.)}}
-#[derive(Default)] struct World{block_entities:HashMap<(i32,i32,i32),BlockEntity>,day_time:i64,weather:Weather,removed:bool}
+#[derive(Default)] struct BlockEntities(HashMap<(i32,i32,i32),BlockEntity>);
+impl std::ops::Deref for BlockEntities{type Target=HashMap<(i32,i32,i32),BlockEntity>;fn deref(&self)->&Self::Target{&self.0}}
+impl BlockEntities{fn insert(&mut self,k:(i32,i32,i32),v:BlockEntity){self.0.insert(k,v);}}
+#[derive(Default)] struct World{block_entities:BlockEntities,day_time:i64,weather:Weather,removed:bool}
 impl World{fn block(&self,_:i32,_:i32,_:i32)->usize{if self.removed{1}else{0}}}
 struct Facts{name:String}
 struct Res;

@@ -50,10 +50,11 @@ pub(super) fn open_ridden_chest(game: &mut Game<'_>) -> bool {
     let items = boat.items.clone();
     // An already open menu owns the latest slots. Do not overwrite them with
     // the vehicle's older snapshot if another player opens the same chest.
-    game.world
-        .block_entities
-        .entry(key)
-        .or_insert(BlockEntity::Chest(items));
+    if !game.world.block_entities.contains_key(&key) {
+        game.world
+            .block_entities
+            .insert(key, BlockEntity::Chest(items));
+    }
     game.station = None;
     game.craft_size = 2;
     game.container = Some(key);

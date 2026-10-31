@@ -1,34 +1,41 @@
 <template>
-  <div v-if="shown">
-    <div
-      :class="{ shown: actuallyShown }"
-      class="tauri-overlay"
-      data-tauri-drag-region
-      @click="() => (closable ? hide() : {})"
-    />
-    <div
-      :class="{
-        shown: actuallyShown,
-        noblur: props.noblur,
-      }"
-      class="modal-overlay"
-      @click="() => (closable ? hide() : {})"
-    />
-    <div class="modal-container" :class="{ shown: actuallyShown }">
-      <div class="modal-body">
-        <div v-if="props.header" class="header">
-          <h1>{{ props.header }}</h1>
-          <button v-if="closable" class="btn icon-only transparent" @click="hide">
-            <XIcon />
-          </button>
-        </div>
-        <div class="content">
-          <slot />
+  <Teleport to="body">
+    <div v-if="shown">
+      <div
+        :class="{ shown: actuallyShown }"
+        class="tauri-overlay"
+        data-tauri-drag-region
+        @click="() => (closable ? hide() : {})"
+      />
+      <div
+        :class="{
+          shown: actuallyShown,
+          noblur: props.noblur,
+        }"
+        class="modal-overlay"
+        @click="() => (closable ? hide() : {})"
+      />
+      <div class="modal-container" :class="{ shown: actuallyShown }">
+        <div
+          class="modal-body"
+          role="dialog"
+          :aria-modal="actuallyShown ? 'true' : undefined"
+          :aria-label="props.header || undefined"
+        >
+          <div v-if="props.header" class="header">
+            <h1>{{ props.header }}</h1>
+            <button v-if="closable" class="btn icon-only transparent" @click="hide">
+              <XIcon />
+            </button>
+          </div>
+          <div class="content">
+            <slot />
+          </div>
         </div>
       </div>
     </div>
-  </div>
-  <div v-else></div>
+    <div v-else></div>
+  </Teleport>
 </template>
 
 <script setup>
@@ -140,17 +147,17 @@ defineExpose({
     .modal-body {
       opacity: 1;
       visibility: visible;
-      transform: translateY(0);
+      transform: translateY(0) scale(1);
     }
   }
 
   .modal-body {
-    position: fixed;
+    position: relative;
     box-shadow: var(--shadow-raised), var(--shadow-inset);
     border-radius: var(--radius-lg);
     max-height: calc(100% - 2 * var(--gap-lg));
     overflow-y: auto;
-    width: 600px;
+    width: min(600px, calc(100vw - 2 * var(--gap-lg)));
     pointer-events: auto;
 
     .header {
@@ -170,10 +177,12 @@ defineExpose({
       background-color: var(--color-raised-bg);
     }
 
-    transform: translateY(50vh);
+    transform: translateY(24px) scale(0.96);
     visibility: hidden;
     opacity: 0;
-    transition: all 0.25s ease-in-out;
+    transition:
+      opacity 0.2s ease,
+      transform 0.42s cubic-bezier(0.18, 0.85, 0.25, 1.12);
 
     @media (prefers-reduced-motion) {
       transition: none !important;
@@ -183,5 +192,8 @@ defineExpose({
       width: calc(100% - 2 * var(--gap-lg));
     }
   }
+}
+:global(html[data-jelly='off']) .modal-body {
+  transition: none;
 }
 </style>

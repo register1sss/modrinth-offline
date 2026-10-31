@@ -101,7 +101,7 @@ onUnmounted(() => {
 
 <template>
   <div class="page-container">
-    <StudioWelcome :profiles="recentInstances.length" />
+    <StudioWelcome />
     <RowDisplay
       v-if="total > 0"
       :instances="[

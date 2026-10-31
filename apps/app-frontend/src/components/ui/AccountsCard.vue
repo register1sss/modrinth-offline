@@ -29,7 +29,7 @@
             }
           "
         >
-          <ClientIcon /> {{ $u3t('Offline') }}
+          <ClientIcon /> {{ tr('Офлайн-аккаунт', 'Offline account') }}
         </Button>
       </div>
     </div>
@@ -91,6 +91,7 @@
 </template>
 
 <script setup>
+import { tr } from '@/i18n/index.js'
 import { PlusIcon, TrashIcon, LogInIcon, SSOMicrosoftIcon, ClientIcon } from '@modrinth/assets'
 import { Avatar, Button, Card, Modal } from '@modrinth/ui'
 import { ref, computed, onMounted, onBeforeUnmount, onUnmounted } from 'vue'

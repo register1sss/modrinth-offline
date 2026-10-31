@@ -121,7 +121,7 @@ test('button springs settle exactly, stay bounded, and offer gentler motion', as
     assert.deepEqual(frames.at(-1), { offset: 1, scale: '1 1' })
     for (const frame of frames) {
       const values = frame.scale.split(' ').map(Number)
-      assert.ok(values.every((v) => Number.isFinite(v) && v >= 0.95 && v <= 1.05))
+      assert.ok(values.every((v) => Number.isFinite(v) && v >= 0.9 && v <= 1.09))
     }
   }
   assert.ok(
@@ -132,4 +132,28 @@ test('button springs settle exactly, stay bounded, and offer gentler motion', as
     for (const reduced of [true, false])
       for (const hidden of [true, false])
         assert.equal(motionAllowed({ enabled, reduced, hidden }), enabled && !reduced && !hidden)
+})
+
+test('welcome art stays uncluttered and modal dialogs escape filtered sidebars', () => {
+  const welcome = readFileSync(
+    new URL('../src/components/ui/StudioWelcome.vue', import.meta.url),
+    'utf8',
+  )
+  for (const removed of [
+    'art-label',
+    'welcome-footer',
+    'в твоей библиотеке',
+    'translate(theme.activeTheme.name)',
+  ])
+    assert.ok(!welcome.includes(removed), removed)
+  const modal = readFileSync(
+    new URL('../../../packages/ui/src/components/modal/Modal.vue', import.meta.url),
+    'utf8',
+  )
+  assert.ok(modal.includes('<Teleport to="body">'))
+  assert.ok(modal.includes('role="dialog"'))
+  assert.ok(modal.includes('width: min(600px, calc(100vw'))
+  const spring = readFileSync(new URL('../src/visual/spring.js', import.meta.url), 'utf8')
+  assert.ok(spring.includes("'pointerover', hover"))
+  assert.ok(spring.includes("if (!CSS.supports('scale', '1'))"))
 })

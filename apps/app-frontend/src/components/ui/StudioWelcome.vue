@@ -1,9 +1,8 @@
 <script setup>
-import { useTheming } from '@/store/theme.js'
-import { tr, translate } from '@/i18n/index.js'
+import { getCurrentInstance } from 'vue'
+import { tr } from '@/i18n/index.js'
 import { LibraryIcon, SearchIcon, RightArrowIcon } from '@modrinth/assets'
-defineProps({ profiles: { type: Number, default: 0 } })
-const theme = useTheming()
+const cubeId = `u3-cube-${getCurrentInstance().uid}`
 </script>
 <template>
   <section class="studio-welcome" aria-labelledby="studio-welcome-title">
@@ -35,40 +34,119 @@ const theme = useTheming()
       <div class="art-grid" />
       <div class="art-orbit first" />
       <div class="art-orbit second" />
-      <svg class="welcome-cube" viewBox="0 0 240 240" fill="none">
+      <svg class="welcome-cube" viewBox="0 0 320 306" fill="none">
+        <defs>
+          <linearGradient
+            :id="`${cubeId}-top`"
+            x1="78"
+            y1="66"
+            x2="225"
+            y2="155"
+            gradientUnits="userSpaceOnUse"
+          >
+            <stop stop-color="var(--color-brand)" stop-opacity=".48" />
+            <stop offset="1" stop-color="var(--color-brand)" stop-opacity=".08" />
+          </linearGradient>
+          <linearGradient
+            :id="`${cubeId}-left`"
+            x1="50"
+            y1="115"
+            x2="170"
+            y2="252"
+            gradientUnits="userSpaceOnUse"
+          >
+            <stop stop-color="var(--color-brand)" stop-opacity=".24" />
+            <stop offset="1" stop-color="var(--color-bg)" stop-opacity=".7" />
+          </linearGradient>
+          <linearGradient
+            :id="`${cubeId}-right`"
+            x1="263"
+            y1="111"
+            x2="165"
+            y2="267"
+            gradientUnits="userSpaceOnUse"
+          >
+            <stop stop-color="var(--color-bg)" stop-opacity=".75" />
+            <stop offset="1" stop-color="var(--color-brand)" stop-opacity=".16" />
+          </linearGradient>
+          <linearGradient
+            :id="`${cubeId}-edge`"
+            x1="80"
+            y1="56"
+            x2="252"
+            y2="257"
+            gradientUnits="userSpaceOnUse"
+          >
+            <stop stop-color="var(--color-brand)" stop-opacity=".95" />
+            <stop offset=".5" stop-color="var(--color-brand)" stop-opacity=".38" />
+            <stop offset="1" stop-color="var(--color-brand)" stop-opacity=".12" />
+          </linearGradient>
+        </defs>
+        <ellipse cx="160" cy="283" rx="77" ry="9" fill="var(--color-bg)" opacity=".45" />
+        <path d="m160 38 110 63v106l-110 65-110-65V101Z" fill="var(--color-raised-bg)" />
+        <path d="m160 38 110 63-110 65L50 101Z" :fill="`url(#${cubeId}-top)`" />
+        <path d="m50 101 110 65v106L50 207Z" :fill="`url(#${cubeId}-left)`" />
+        <path d="m160 166 110-65v106l-110 65Z" :fill="`url(#${cubeId}-right)`" />
         <path
-          d="M120 32 202 78v88l-82 46-82-46V78Z"
-          fill="var(--color-raised-bg)"
+          d="m160 46 97 56-97 57-97-57Z"
+          fill="var(--color-bg)"
+          fill-opacity=".16"
           stroke="var(--color-brand)"
-          stroke-width="2"
+          stroke-opacity=".3"
         />
-        <path d="m38 78 82 47 82-47M120 125v87" stroke="var(--color-brand)" stroke-width="2" />
-        <path d="m120 32 82 46-82 47-82-47Z" fill="var(--color-brand-highlight)" />
-        <path d="m120 125 82-47v88l-82 46Z" fill="var(--u3-highlight)" />
         <path
-          d="m64 95 30 18v45c0 20-30 4-30-14V95ZM148 132l25-14v19l-17 9 17 1v19l-25 14"
+          d="m57 114 96 57v87l-96-56Z"
+          fill="var(--color-bg)"
+          fill-opacity=".2"
           stroke="var(--color-brand)"
-          stroke-width="7"
-          stroke-linecap="round"
+          stroke-opacity=".12"
+        />
+        <path
+          d="m167 171 96-57v88l-96 56Z"
+          fill="var(--color-bg)"
+          fill-opacity=".18"
+          stroke="var(--color-brand)"
+          stroke-opacity=".12"
+        />
+        <path
+          d="m160 38 110 63v106l-110 65-110-65V101Zm-110 63 110 65 110-65M160 166v106"
+          :stroke="`url(#${cubeId}-edge)`"
+          stroke-width="2"
           stroke-linejoin="round"
         />
         <path
-          d="m85 72 34-19 35 19-34 19Z"
-          stroke="var(--theme-secondary, var(--color-brand))"
+          d="m55 101 105-60 105 60M55 105l101 60"
+          stroke="white"
+          stroke-opacity=".24"
+          stroke-linecap="round"
+        />
+        <g
+          transform="matrix(1.1 .65 0 1.06 50 101)"
+          stroke="var(--color-brand)"
+          stroke-width="9"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M27 23v33q0 21 23 21t23-21V23" />
+        </g>
+        <g
+          transform="matrix(1.1 -.65 0 1.06 160 166)"
+          stroke="var(--color-brand)"
+          stroke-width="8"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M27 24h28q19 0 19 13t-19 13H43m12 0q21 0 21 14T55 78H27" />
+        </g>
+        <path
+          d="m160 71 47 27-47 28-47-28Z"
+          stroke="var(--color-brand)"
+          stroke-opacity=".7"
           stroke-width="1.5"
         />
+        <path d="m160 84 24 14-24 14-24-14Z" fill="var(--color-brand)" fill-opacity=".28" />
+        <circle cx="160" cy="98" r="3" fill="var(--color-brand)" />
       </svg>
-      <div class="art-label top-label"><i />{{ translate(theme.activeTheme.name) }}</div>
-      <div class="art-label bottom-label">
-        <strong>{{ String(profiles).padStart(2, '0') }}</strong
-        ><span>{{ tr('в твоей библиотеке', 'in your library') }}</span>
-      </div>
-    </div>
-    <div class="welcome-footer">
-      <span>01 / {{ tr('ТВОЁ ПРОСТРАНСТВО', 'YOUR SPACE') }}</span
-      ><RouterLink to="/themes"
-        >{{ tr('Изменить атмосферу', 'Change atmosphere') }} <span>↗</span></RouterLink
-      >
     </div>
   </section>
 </template>
@@ -81,7 +159,7 @@ const theme = useTheming()
   width: calc(100% - 48px);
   max-width: 1440px;
   margin: 24px auto 12px;
-  padding: 32px 36px 0;
+  padding: 32px 36px;
   overflow: hidden;
   border: 1px solid var(--u3-outline);
   border-radius: 24px;
@@ -93,7 +171,7 @@ const theme = useTheming()
 }
 .welcome-copy {
   z-index: 1;
-  padding-bottom: 24px;
+  padding-bottom: 0;
 }
 .welcome-kicker {
   display: flex;
@@ -166,7 +244,7 @@ h1 span {
 }
 .welcome-art {
   position: relative;
-  min-height: 235px;
+  min-height: 274px;
   display: grid;
   place-items: center;
 }
@@ -179,84 +257,30 @@ h1 span {
   mask-image: radial-gradient(ellipse, #000, transparent 72%);
 }
 .welcome-cube {
-  width: 210px;
-  height: 210px;
-  transform: rotate(-7deg);
+  width: 286px;
+  height: 274px;
+  transform: translateY(-2px);
   filter: drop-shadow(0 16px 18px var(--u3-shadow));
 }
 .art-orbit {
   position: absolute;
-  width: 265px;
-  height: 110px;
+  width: 300px;
+  height: 126px;
+  opacity: 0.6;
   border: 1px solid var(--u3-outline);
   border-radius: 50%;
   transform: rotate(-22deg);
 }
 .art-orbit.second {
-  width: 250px;
-  height: 180px;
+  width: 280px;
+  height: 212px;
   transform: rotate(48deg);
   border-style: dashed;
-}
-.art-label {
-  position: absolute;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 9px 12px;
-  font-size: 11px;
-  border: 1px solid var(--u3-outline);
-  border-radius: 11px;
-  background: var(--color-raised-bg);
-  box-shadow: 0 8px 20px var(--u3-shadow);
-}
-.top-label {
-  top: 8px;
-  right: 0;
-  transform: rotate(5deg);
-}
-.top-label i {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--color-brand);
-}
-.bottom-label {
-  bottom: 19px;
-  left: 0;
-  transform: rotate(-4deg);
-}
-.bottom-label strong {
-  font-size: 23px;
-  color: var(--color-brand);
-}
-.bottom-label span {
-  max-width: 85px;
-  color: var(--color-secondary);
-  line-height: 1.35;
-}
-.welcome-footer {
-  grid-column: 1 / -1;
-  border-top: 1px solid var(--u3-outline);
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 13px 0;
-  font-size: 10px;
-  letter-spacing: 0.08em;
-  color: var(--color-secondary);
-}
-.welcome-footer a {
-  color: var(--color-secondary);
-}
-.welcome-footer a span {
-  color: var(--color-brand);
-  margin-left: 8px;
 }
 @media (max-width: 800px) {
   .studio-welcome {
     grid-template-columns: 1fr;
-    padding: 26px 24px 0;
+    padding: 26px 24px;
   }
   .welcome-art {
     display: none;
@@ -266,16 +290,12 @@ h1 span {
   .studio-welcome {
     width: calc(100% - 24px);
     margin: 12px auto;
-    padding: 22px 18px 0;
+    padding: 22px 18px;
     border-radius: 18px;
     gap: 0;
   }
   h1 {
     font-size: 31px;
-  }
-  .welcome-footer {
-    font-size: 9px;
-    flex-wrap: wrap;
   }
   .studio-action {
     width: 100%;

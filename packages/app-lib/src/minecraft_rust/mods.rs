@@ -111,6 +111,26 @@ fn own_bundle(project: &str) -> Result<Vec<u8>> {
         ),
         ("mixins/u3_fixes/tick.rs", include_str!("u3_fixes/tick.rs")),
         ("mixins/u3_fixes/list.rs", include_str!("u3_fixes/list.rs")),
+        (
+            "mixins/u3_fixes/gameplay.rs",
+            include_str!("u3_fixes/gameplay.rs"),
+        ),
+        (
+            "mixins/u3_fixes/input.rs",
+            include_str!("u3_fixes/input.rs"),
+        ),
+        (
+            "mixins/u3_fixes/boat_menu.rs",
+            include_str!("u3_fixes/boat_menu.rs"),
+        ),
+        (
+            "mixins/u3_fixes/boat_detect.rs",
+            include_str!("u3_fixes/boat_detect.rs"),
+        ),
+        (
+            "mixins/u3_fixes/sleep.rs",
+            include_str!("u3_fixes/sleep.rs"),
+        ),
     ] {
         z.start_file(name, opt).map_err(|e| e.to_string())?;
         z.write_all(content.as_bytes()).map_err(|e| e.to_string())?;
@@ -417,7 +437,7 @@ async fn make_catalog(
     };
     let bytes = embedded()?;
     let own = json!({"id":"u3_edit","name":"U3 Edit","authors":["U3"],"source":"https://github.com/register1sss/modrinth-offline/tree/main/packages/app-lib/src/minecraft_rust/u3_edit","summary":"Выделение, заливка, замена блоков и стены. До 32768 блоков. Без отмены изменений.","version":"0.1.0","checksum":digest(&bytes),"available":true,"native":true});
-    let mut fixes = json!({"id":"u3_fixes","name":"U3 Fixes","authors":["U3"],"source":"https://github.com/register1sss/modrinth-offline/tree/main/packages/app-lib/src/minecraft_rust/u3_fixes","summary":"Client trident state fixes: resume server motion and fall after supporting blocks disappear. Installed and enabled automatically on Play. First launch may build Horizon. Not a fix for every issue in the video.","version":"0.1.0","checksum":digest(&own_bundle("u3_fixes")?),"available":true,"native":true,"automatic":true});
+    let mut fixes = json!({"id":"u3_fixes","name":"U3 Fixes","authors":["U3"],"source":"https://github.com/register1sss/modrinth-offline/tree/main/packages/app-lib/src/minecraft_rust/u3_fixes","summary":"Исправление багов в майнкрафт на Rust","version":"0.2.0","checksum":digest(&own_bundle("u3_fixes")?),"available":true,"native":true,"automatic":true});
     let selected = if profile.is_empty() {
         "horizon"
     } else {
@@ -720,7 +740,7 @@ fn automatic_installed(
     files.get("u3_fixes.hnmod").map(String::as_str) == Some(checksum)
         && check_build(root, instances, profile).is_ok()
         && enabled_inputs(&home, &files).ok().is_some_and(|m| {
-            m.get("u3_fixes").map(String::as_str) == Some("0.1.0")
+            m.get("u3_fixes").map(String::as_str) == Some("0.2.0")
         })
 }
 fn build_result_profile(target: &str, automatic: bool) -> &str {
@@ -765,7 +785,7 @@ pub(super) async fn ensure_fixes(root: &Path, profile: &str) -> Result<()> {
     let ready =
         !files.is_empty() && check_build(root, &instances, profile).is_ok();
     let enabled = enabled_inputs(&home, &files).ok().is_some_and(|m| {
-        m.get("u3_fixes").map(String::as_str) == Some("0.1.0")
+        m.get("u3_fixes").map(String::as_str) == Some("0.2.0")
     });
     let exact_embedded = files.get("u3_fixes.hnmod") == Some(&checksum);
     let own_receipt = exact_embedded
@@ -967,7 +987,7 @@ mod tests {
         let bytes = own_bundle("u3_fixes").unwrap();
         assert_eq!(bytes, own_bundle("u3_fixes").unwrap());
         let mut z = zip::ZipArchive::new(Cursor::new(bytes)).unwrap();
-        assert_eq!(z.len(), 6);
+        assert_eq!(z.len(), 11);
         let mut text = String::new();
         std::io::Read::read_to_string(
             &mut z.by_name("horizon-native.json").unwrap(),

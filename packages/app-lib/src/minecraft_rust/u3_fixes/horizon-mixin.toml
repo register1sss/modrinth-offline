@@ -1,6 +1,6 @@
 [mod]
 id = "u3_fixes"
-version = "0.1.0"
+version = "0.2.0"
 priority = 110
 [compatibility]
 horizon_revision = "3132240f21141518391d7d34d41a4f7b916c3c5a"
@@ -31,3 +31,40 @@ kind = "HEAD"
 target = "horizon_client::game::native_hooks::Game<'_>::native_mods"
 helper = "list.rs"
 bindings = [{name="mods", ty="&mut Vec<crate::game::native_hooks::NativeMod>", value="&mut *mods"}]
+
+[[module]]
+id = "gameplay"
+file = "crates/horizon-client/src/game.rs"
+name = "u3_gameplay"
+source = "gameplay.rs"
+
+[[injection]]
+id = "menu_use"
+kind = "HEAD"
+target = "horizon_client::game::remote::Game<'_>::remote_handle_input"
+helper = "input.rs"
+bindings = [{name="game", ty="&mut crate::game::Game<'_>", value="&mut *self"}]
+
+[[injection]]
+id = "boat_menu"
+kind = "HEAD"
+cancellable = true
+target = "horizon_client::game::mount_menu::Game<'_>::open_ridden_mount_menu"
+helper = "boat_menu.rs"
+bindings = [{name="game", ty="&mut crate::game::Game<'_>", value="&mut *self"}]
+
+[[injection]]
+id = "boat_detect"
+kind = "HEAD"
+cancellable = true
+target = "horizon_client::game::mount_menu::Game<'_>::riding_mount_with_menu"
+helper = "boat_detect.rs"
+bindings = [{name="game", ty="&crate::game::Game<'_>", value="&*self"}]
+
+[[injection]]
+id = "sleep"
+kind = "HEAD"
+cancellable = true
+target = "horizon_client::game::Game<'_>::tick_sleep"
+helper = "sleep.rs"
+bindings = [{name="game", ty="&mut crate::game::Game<'_>", value="&mut *self"}]

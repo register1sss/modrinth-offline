@@ -1,6 +1,6 @@
 [mod]
 id = "u3_fixes"
-version = "0.2.0"
+version = "0.3.0"
 priority = 110
 [compatibility]
 horizon_revision = "3132240f21141518391d7d34d41a4f7b916c3c5a"
@@ -68,3 +68,68 @@ cancellable = true
 target = "horizon_client::game::Game<'_>::tick_sleep"
 helper = "sleep.rs"
 bindings = [{name="game", ty="&mut crate::game::Game<'_>", value="&mut *self"}]
+
+[[module]]
+id = "horn"
+file = "crates/horizon-client/src/game.rs"
+name = "u3_horn"
+source = "horn.rs"
+
+[[module]]
+id = "instruments"
+file = "crates/horizon-client/src/lan/data.rs"
+name = "u3_instruments"
+source = "instrument_registry.rs"
+visibility = "pub"
+
+[[module]]
+id = "tnt"
+file = "crates/horizon-client/src/game/tnt.rs"
+name = "u3_tnt"
+source = "tnt_runtime.rs"
+
+[[injection]]
+id = "horn_use"
+kind = "HEAD"
+cancellable = true
+target = "horizon_client::game::creatures::Game<'_>::throw_item"
+helper = "horn_use.rs"
+bindings = [{name="game", ty="&mut crate::game::Game<'_>", value="&mut *self"}, {name="stack", ty="&horizon_client::items::ItemStack", value="stack"}]
+
+[[injection]]
+id = "horn_remote"
+kind = "HEAD"
+cancellable = true
+target = "horizon_client::game::remote::Game<'_>::remote_start_held_use"
+helper = "horn_remote.rs"
+bindings = [{name="game", ty="&mut crate::game::Game<'_>", value="&mut *self"}, {name="held", ty="&horizon_client::items::ItemStack", value="held"}]
+
+[[injection]]
+id = "horn_tick"
+kind = "HEAD"
+cancellable = true
+target = "horizon_client::game::Game<'_>::tick_using"
+helper = "horn_tick.rs"
+bindings = [{name="game", ty="&mut crate::game::Game<'_>", value="&mut *self"}]
+
+[[injection]]
+id = "horn_tick_remote"
+kind = "HEAD"
+cancellable = true
+target = "horizon_client::game::remote::Game<'_>::remote_tick_using"
+helper = "horn_tick.rs"
+bindings = [{name="game", ty="&mut crate::game::Game<'_>", value="&mut *self"}]
+
+[[injection]]
+id = "tnt_tick"
+kind = "HEAD"
+cancellable = true
+target = "horizon_client::game::tnt::PrimedTnt::tick"
+helper = "tnt_tick.rs"
+bindings = [
+ {name="tnt", ty="&mut crate::game::tnt::PrimedTnt", value="&mut *self"},
+ {name="world", ty="&horizon_client::world::World", value="world"},
+ {name="collision", ty="&horizon_world::block_collision::BlockCollisionRegistry<'_>", value="collision"},
+ {name="assets", ty="&horizon_client::assets::Assets", value="assets"},
+ {name="facts", ty="&horizon_client::blocks::BlockFacts", value="facts"}
+]

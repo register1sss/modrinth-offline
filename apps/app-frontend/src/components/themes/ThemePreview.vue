@@ -51,9 +51,48 @@ const previewStyle = computed(() => {
   background: radial-gradient(ellipse at 12% 80%, var(--preview-glow), transparent 65%),
     linear-gradient(130deg, transparent 25%, var(--preview-tint), transparent 75%);
 }
+[data-scene='aurora'] .preview-landscape {
+  background: linear-gradient(172deg, transparent 18%, var(--preview-tint) 42%, transparent 68%),
+    radial-gradient(ellipse at 30% -10%, var(--preview-glow), transparent 60%);
+}
 [data-scene='rain'] .preview-landscape {
   background: repeating-linear-gradient(115deg, transparent 0 24px, var(--preview-grid) 25px 26px),
     linear-gradient(15deg, var(--preview-bg), var(--preview-glow));
+}
+[data-scene='ember'] .preview-landscape {
+  background: radial-gradient(ellipse at 50% 120%, var(--preview-glow), transparent 70%),
+    radial-gradient(ellipse at 90% 110%, var(--preview-tint), transparent 50%);
+}
+[data-scene='petal'] .preview-landscape {
+  background: radial-gradient(circle at 86% 12%, var(--preview-glow), transparent 45%),
+    radial-gradient(ellipse at 8% 100%, var(--preview-tint), transparent 60%);
+}
+[data-scene='bubble'] .preview-landscape {
+  background: radial-gradient(ellipse at 15% -30%, var(--preview-glow), transparent 70%),
+    radial-gradient(ellipse at 100% 100%, var(--preview-tint), transparent 65%);
+}
+[data-scene='orbit'] .preview-landscape {
+  background: repeating-radial-gradient(
+      ellipse at 50% 55%,
+      transparent 0 28px,
+      var(--preview-grid) 29px 30px
+    ),
+    radial-gradient(circle at 50% 55%, var(--preview-glow), transparent 40%);
+}
+[data-scene='firefly'] .preview-landscape {
+  background: radial-gradient(ellipse at 50% 125%, var(--preview-tint), transparent 65%),
+    radial-gradient(circle at 82% 28%, var(--preview-glow), transparent 38%);
+}
+[data-scene='snow'] .preview-landscape {
+  background: linear-gradient(180deg, transparent 58%, var(--preview-tint)),
+    radial-gradient(ellipse at 50% -20%, var(--preview-glow), transparent 60%);
+}
+[data-scene='sand'] .preview-landscape {
+  background: repeating-radial-gradient(
+    ellipse at 10% 180%,
+    transparent 0 22px,
+    var(--preview-grid) 23px 24px
+  );
 }
 [data-scene='crystal'] .preview-landscape {
   background: conic-gradient(
@@ -65,25 +104,101 @@ const previewStyle = computed(() => {
     var(--preview-tint)
   );
 }
-[data-scene='bubble'] .preview-landscape,
+[data-scene='corona'] .preview-landscape {
+  background: radial-gradient(
+      circle at 78% 30%,
+      transparent 0 17px,
+      var(--preview-glow) 19px,
+      transparent 48px
+    ),
+    radial-gradient(ellipse at 10% 100%, var(--preview-tint), transparent 55%);
+}
+[data-scene='goldleaf'] .preview-landscape {
+  background: repeating-linear-gradient(90deg, transparent 0 38px, var(--preview-grid) 39px 40px),
+    radial-gradient(ellipse at 50% 120%, var(--preview-glow), transparent 60%);
+}
 [data-scene='plankton'] .preview-landscape {
-  background: radial-gradient(ellipse at 15% -30%, var(--preview-glow), transparent 70%),
-    radial-gradient(ellipse at 100% 100%, var(--preview-tint), transparent 65%);
+  background: radial-gradient(ellipse at 50% 115%, var(--preview-glow), transparent 60%),
+    repeating-linear-gradient(172deg, transparent 0 18px, var(--preview-grid) 19px 20px);
 }
-[data-scene='sand'] .preview-landscape {
-  background: repeating-radial-gradient(
-    ellipse at 10% 180%,
-    transparent 0 22px,
-    var(--preview-grid) 23px 24px
-  );
+[data-scene='geometry'] .preview-landscape {
+  background:
+    linear-gradient(var(--preview-grid) 1px, transparent 1px) 0 0 / 16px 16px,
+    linear-gradient(90deg, var(--preview-grid) 1px, transparent 1px) 0 0 / 16px 16px;
 }
-[data-scene='star'] .preview-landscape,
+[data-scene='heart'] .preview-landscape {
+  background: radial-gradient(circle at 18% 82%, var(--preview-glow), transparent 45%),
+    radial-gradient(circle at 86% 18%, var(--preview-tint), transparent 45%);
+}
+[data-scene='wave'] .preview-landscape {
+  background: radial-gradient(circle at 50% 64%, var(--preview-glow) 0 22px, transparent 23px),
+    repeating-linear-gradient(180deg, transparent 0 9px, var(--preview-grid) 10px 11px);
+}
+[data-scene='tea'] .preview-landscape {
+  background: repeating-linear-gradient(90deg, transparent 0 46px, var(--preview-grid) 47px 50px),
+    radial-gradient(ellipse at 80% 0%, var(--preview-glow), transparent 55%);
+}
+[data-scene='berry'] .preview-landscape {
+  background: radial-gradient(circle at 14% 24%, var(--preview-glow), transparent 40%),
+    radial-gradient(circle at 90% 90%, var(--preview-tint), transparent 50%);
+}
+[data-scene='cloud'] .preview-landscape {
+  background: radial-gradient(ellipse at 18% 100%, #ffffff99, transparent 55%),
+    radial-gradient(ellipse at 82% 0%, var(--preview-glow), transparent 55%);
+}
+[data-scene='coffee'] .preview-landscape {
+  background: radial-gradient(ellipse at 85% 110%, var(--preview-tint), transparent 55%),
+    repeating-linear-gradient(115deg, transparent 0 30px, var(--preview-grid) 31px 32px);
+}
+[data-scene='lavender'] .preview-landscape {
+  background: linear-gradient(0deg, var(--preview-tint), transparent 45%),
+    radial-gradient(ellipse at 80% -10%, var(--preview-glow), transparent 55%);
+}
+[data-scene='ginkgo'] .preview-landscape {
+  background: radial-gradient(circle at 86% 20%, var(--preview-glow), transparent 45%),
+    linear-gradient(160deg, transparent 50%, var(--preview-tint));
+}
 [data-scene='comet'] .preview-landscape {
   background: radial-gradient(ellipse at 25% 75%, var(--preview-glow), transparent 55%),
     linear-gradient(25deg, transparent 35%, var(--preview-tint), transparent 70%);
 }
-[data-scene='ember'] .preview-landscape {
-  background: radial-gradient(ellipse at 50% 120%, var(--preview-glow), transparent 70%);
+[data-scene='bokeh'] .preview-landscape {
+  background: radial-gradient(circle at 20% 30%, var(--preview-glow) 0 14px, transparent 15px),
+    radial-gradient(circle at 76% 70%, var(--preview-tint) 0 22px, transparent 23px),
+    radial-gradient(circle at 56% 20%, var(--preview-tint) 0 9px, transparent 10px);
+}
+[data-scene='honeycomb'] .preview-landscape {
+  background:
+    radial-gradient(circle, var(--preview-grid) 0 32%, transparent 34%) 0 0 / 18px 16px,
+    radial-gradient(ellipse at 85% 0%, var(--preview-glow), transparent 55%);
+}
+[data-scene='diamond'] .preview-landscape {
+  background: radial-gradient(ellipse at 50% -20%, var(--preview-glow), transparent 60%),
+    linear-gradient(180deg, var(--preview-tint), transparent 30%);
+}
+[data-scene='code'] .preview-landscape {
+  background: repeating-linear-gradient(180deg, transparent 0 2px, var(--preview-grid) 3px 3px),
+    radial-gradient(ellipse at 50% 50%, var(--preview-tint), transparent 70%);
+}
+[data-scene='moon'] .preview-landscape {
+  background: radial-gradient(circle at 82% 26%, var(--preview-glow) 0 16px, transparent 34px),
+    linear-gradient(200deg, transparent 50%, var(--preview-tint));
+}
+[data-scene='fish'] .preview-landscape {
+  background: linear-gradient(180deg, var(--preview-tint), transparent 40%),
+    radial-gradient(ellipse at 50% 125%, var(--preview-glow), transparent 55%);
+}
+[data-scene='plasma'] .preview-landscape {
+  background: radial-gradient(circle at 70% 40%, var(--preview-glow), transparent 35%),
+    radial-gradient(circle at 20% 80%, var(--preview-tint), transparent 40%);
+}
+[data-scene='gear'] .preview-landscape {
+  background: repeating-linear-gradient(90deg, transparent 0 3px, var(--preview-grid) 4px 4px),
+    radial-gradient(ellipse at 15% 100%, var(--preview-glow), transparent 55%);
+}
+[data-scene='lantern'] .preview-landscape {
+  background: linear-gradient(0deg, var(--preview-glow), transparent 55%),
+    radial-gradient(ellipse at 80% 100%, var(--preview-tint), transparent 50%);
 }
 [data-material='velvet'] .mini-window {
   box-shadow:

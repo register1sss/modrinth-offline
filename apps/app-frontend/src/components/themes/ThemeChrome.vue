@@ -55,7 +55,8 @@ function resize() {
   panel.height = Math.round(h * d)
   panelCtx.setTransform(d, 0, 0, d, 0, 0)
   nodes = panelScene(store.activeTheme, props.vertical)
-  particles = createParticles(store.activeTheme, w, h, store.effectsQuality).slice(
+  // Bars are narrow, so their particles are smaller than the background ones.
+  particles = createParticles(store.activeTheme, w, h, store.effectsQuality, false, 0.75).slice(
     0,
     store.effectsQuality === 'low' ? 8 : 16,
   )

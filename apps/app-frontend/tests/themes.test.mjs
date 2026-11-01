@@ -8,7 +8,46 @@ import {
   getTheme,
   themeVariables,
 } from '../src/themes/catalog.js'
-import { createParticles, advanceParticles, drawParticles } from '../src/themes/particles.js'
+import {
+  createParticles,
+  advanceParticles,
+  drawParticles,
+  createBurst,
+  drawBurst,
+  PARTICLE_PROFILES,
+  particleProfile,
+} from '../src/themes/particles.js'
+import { PARTICLE_KINDS } from '../src/themes/particle-art.js'
+import { PANEL_KINDS, drawPanel, panelScene } from '../src/themes/panel-art.js'
+import { en } from '../src/i18n/messages.js'
+
+// A canvas stand-in that records every call; gradients are recorded too.
+function recorder() {
+  const calls = []
+  const ctx = new Proxy(
+    {},
+    {
+      get:
+        (_, method) =>
+        (...args) => {
+          calls.push([method, ...args])
+          if (String(method).startsWith('create'))
+            return { addColorStop: (...a) => calls.push(['stop', ...a]) }
+        },
+      set: () => true,
+    },
+  )
+  return { ctx, calls }
+}
+const balanced = (calls) => {
+  let depth = 0
+  for (const [method] of calls) {
+    if (method === 'save') depth++
+    if (method === 'restore') depth--
+    if (depth < 0) return false
+  }
+  return depth === 0
+}
 
 const luminance = (hex) => {
   const c = hex
@@ -27,7 +66,7 @@ const contrast = (a, b) => {
 test('32 custom palettes include 19 Studio additions and preserve three legacy themes', () => {
   assert.equal(CUSTOM_THEMES.length, 32)
   assert.equal(CUSTOM_THEMES.filter((t) => t.collection === 'studio').length, 19)
-  assert.equal(new Set(CUSTOM_THEMES.map((t) => t.particle)).size, 13)
+  assert.equal(new Set(CUSTOM_THEMES.map((t) => t.particle)).size, 32)
   assert.equal(new Set(THEME_IDS).size, 35)
   assert.equal(new Set(CUSTOM_THEMES.map((t) => t.palette.bg)).size, 32)
   assert.deepEqual(
@@ -53,20 +92,34 @@ test('stable frontend IDs are accepted by the native theme schema', () => {
   for (const id of THEME_IDS) assert.ok(native.includes(`"${id}" => Theme::`), id)
   assert.equal(getTheme('missing').id, 'dark')
 })
+test('every custom theme owns a unique particle kind with art, motion, frame and a label', () => {
+  const kinds = CUSTOM_THEMES.map((t) => t.particle)
+  assert.equal(new Set(kinds).size, CUSTOM_THEMES.length)
+  assert.equal(new Set(CUSTOM_THEMES.map((t) => t.effect)).size, CUSTOM_THEMES.length)
+  for (const theme of CUSTOM_THEMES) {
+    assert.ok(PARTICLE_KINDS.includes(theme.particle), theme.particle)
+    assert.ok(PARTICLE_PROFILES[theme.particle], theme.particle)
+    assert.ok(PANEL_KINDS.includes(theme.particle), theme.particle)
+    assert.ok(en[theme.effect], `English label for ${theme.effect}`)
+  }
+})
 test('preview particles are deterministic and static scenes stay small', () => {
   for (const theme of CUSTOM_THEMES) {
     const first = createParticles(theme, 300, 140, 'low', true)
     assert.deepEqual(first, createParticles(theme, 300, 140, 'low', true))
-    assert.equal(first.length, 16)
+    const density = PARTICLE_PROFILES[theme.particle].density
+    assert.equal(first.length, Math.min(24, Math.max(5, Math.round(16 * density))))
   }
 })
 test('particle budgets are bounded, scale down with viewport, and respect quality', () => {
-  const t = CUSTOM_THEMES[0]
-  const count = (q, w = 1280, h = 800) => createParticles(t, w, h, q).length
-  assert.equal(count('low'), 28)
-  assert.equal(count('balanced'), 52)
-  assert.equal(count('high'), 84)
-  assert.ok(count('high', 390, 800) < count('high'))
+  for (const t of CUSTOM_THEMES) {
+    const density = PARTICLE_PROFILES[t.particle].density
+    const count = (q, w = 1280, h = 800) => createParticles(t, w, h, q).length
+    assert.equal(count('balanced'), Math.round(52 * density), t.id)
+    assert.ok(count('low') <= count('balanced') && count('balanced') < count('high'), t.id)
+    assert.ok(count('high') <= 84 * 1.3, t.id)
+    assert.ok(count('high', 390, 800) < count('high'), t.id)
+  }
   assert.equal(createParticles(BASE_THEMES[0], 1280, 800).length, 0)
 })
 test('all motion models stay finite, clamp long frame deltas, and wrap within bounds', () => {
@@ -83,34 +136,80 @@ test('all motion models stay finite, clamp long frame deltas, and wrap within bo
       )
     for (const p of particles) {
       assert.ok(Number.isFinite(p.x) && Number.isFinite(p.y) && Number.isFinite(p.rotation))
-      assert.ok(p.x >= -28 && p.x <= 628 && p.y >= -28 && p.y <= 428)
+      const m = p.size * particleProfile(theme.particle, p.variant).extent + 8
+      assert.ok(p.x >= -m && p.x <= 600 + m && p.y >= -m && p.y <= 400 + m, theme.id)
     }
   }
 })
-test('all thirteen drawing paths execute independently without leaking canvas state', () => {
+test('directional particles point where they travel and orbits stay around the centre', () => {
+  const neon = CUSTOM_THEMES.find((t) => t.particle === 'rain')
+  const rain = createParticles(neon, 800, 600)
+  advanceParticles(rain, 'rain', 800, 600, 1 / 30, 1)
+  for (const p of rain) {
+    // Rain art is drawn along +y, so after rotation +y must follow the velocity.
+    const dir = [-Math.sin(p.rotation), Math.cos(p.rotation)]
+    const speed = Math.hypot(p.vx, p.vy)
+    assert.ok(Math.abs(dir[0] - p.vx / speed) < 1e-9 && Math.abs(dir[1] - p.vy / speed) < 1e-9)
+  }
+  const fish = createParticles(
+    CUSTOM_THEMES.find((t) => t.particle === 'fish'),
+    800,
+    600,
+  )
+  assert.ok(fish.some((p) => p.dir === 1) && fish.some((p) => p.dir === -1))
+  for (const p of fish) assert.equal(Math.sign(p.vx), p.dir)
+  const orbit = createParticles(
+    CUSTOM_THEMES.find((t) => t.particle === 'orbit'),
+    800,
+    600,
+  )
+  for (let i = 0; i < 300; i++) advanceParticles(orbit, 'orbit', 800, 600, 1 / 30, i)
+  for (const p of orbit) assert.ok(p.x >= 0 && p.x <= 800 && p.y >= 0 && p.y <= 600)
+  // Petals tumble (3D flip) while code columns stay upright.
+  const petals = createParticles(
+    CUSTOM_THEMES.find((t) => t.particle === 'petal'),
+    800,
+    600,
+  )
+  advanceParticles(petals, 'petal', 800, 600, 1 / 30, 3)
+  assert.ok(petals.some((p) => Math.abs(p.flip) < 0.99))
+  const code = createParticles(
+    CUSTOM_THEMES.find((t) => t.particle === 'code'),
+    800,
+    600,
+  )
+  advanceParticles(code, 'code', 800, 600, 1 / 30, 3)
+  assert.ok(code.every((p) => p.rotation === 0 && p.vy > 0))
+})
+test('all 32 drawing paths execute independently without leaking canvas state', () => {
   const signatures = new Set()
   for (const theme of CUSTOM_THEMES) {
-    const calls = []
-    const ctx = new Proxy(
-      {},
-      {
-        get:
-          (_, method) =>
-          (...args) => {
-            calls.push([method, ...args])
-            if (String(method).startsWith('create'))
-              return { addColorStop: (...a) => calls.push(['stop', ...a]) }
-          },
-        set: () => true,
-      },
-    )
+    const { ctx, calls } = recorder()
     const p = { x: 10, y: 10, size: 3, rotation: 0.5, phase: 1, alpha: 0.5, color: '#ffffff' }
     drawParticles(ctx, [p], theme.particle, 600, 400)
-    assert.equal(calls.filter((c) => c[0] === 'save').length, 1)
-    assert.equal(calls.filter((c) => c[0] === 'restore').length, 1)
+    assert.ok(calls.some((c) => c[0] === 'save'))
+    assert.ok(balanced(calls), theme.particle)
     signatures.add(JSON.stringify(calls))
   }
-  assert.equal(signatures.size, 13)
+  assert.equal(signatures.size, 32)
+})
+test('click bursts and bar ornaments draw every kind with balanced canvas state', () => {
+  for (const theme of CUSTOM_THEMES) {
+    const burst = createBurst(theme, 100, 100, 12, () => 0.42)
+    assert.equal(burst.length, 12)
+    const { ctx, calls } = recorder()
+    for (const t of [0, 0.4, 1]) drawBurst(ctx, burst, theme.particle, t)
+    assert.ok(balanced(calls), theme.particle)
+    for (const vertical of [false, true]) {
+      const panel = recorder()
+      const w = vertical ? 72 : 1200,
+        h = vertical ? 800 : 48
+      drawPanel(panel.ctx, theme, w, h, vertical, 2.5, panelScene(theme, vertical))
+      assert.ok(panel.calls.length > 20, theme.id)
+      assert.ok(balanced(panel.calls), `${theme.id} ${vertical}`)
+    }
+  }
+  assert.deepEqual(createBurst(BASE_THEMES[0], 0, 0, 5), [])
 })
 
 test('button springs settle exactly, stay bounded, and offer gentler motion', async () => {

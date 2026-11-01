@@ -1,12 +1,13 @@
 <script setup>
 import { onMounted, onBeforeUnmount, ref } from 'vue'
 import { useTheming } from '@/store/theme.js'
-import { particleArt } from '@/themes/particle-art.js'
+import { BURST_DURATION, createBurst, drawBurst } from '@/themes/particles.js'
 const canvas = ref(null),
   store = useTheming()
 let ctx,
   frame = 0,
   started = 0,
+  kind = null,
   particles = []
 function stop() {
   cancelAnimationFrame(frame)
@@ -17,22 +18,12 @@ function stop() {
 function tick(now) {
   const t = (now - started) / 1000
   ctx.clearRect(0, 0, innerWidth, innerHeight)
-  if (t > 1.05 || store.reducedMotion || !store.effectsEnabled || document.hidden) {
+  if (t > BURST_DURATION || store.reducedMotion || !store.effectsEnabled || document.hidden) {
     stop()
     return
   }
-  for (const p of particles) {
-    const fall = ['petal', 'snow', 'leaf', 'sand'].includes(p.kind)
-    const x = p.x + p.vx * t + (fall ? Math.sin(t * 5 + p.phase) * 18 : 0)
-    const y = p.y + p.vy * t + (fall ? 95 : 30) * t * t
-    ctx.save()
-    ctx.translate(x, y)
-    ctx.rotate(p.phase + t * p.spin)
-    ctx.scale(p.size, p.size)
-    ctx.globalAlpha = Math.min(1, (1.05 - t) * 2) * 0.92
-    particleArt(ctx, p.kind, p.color, p.phase, t)
-    ctx.restore()
-  }
+  // Same art, motion style and orientation rules as the theme's background particles.
+  drawBurst(ctx, particles, kind, t)
   frame = requestAnimationFrame(tick)
 }
 function click(e) {
@@ -61,26 +52,9 @@ function click(e) {
   canvas.value.width = innerWidth * d
   canvas.value.height = innerHeight * d
   ctx.setTransform(d, 0, 0, d, 0, 0)
-  const count = store.effectsQuality === 'low' ? 22 : store.effectsQuality === 'high' ? 56 : 38
-  particles = Array.from({ length: count }, () => {
-    const angle = Math.random() * Math.PI * 2,
-      speed = 35 + Math.random() * 125
-    return {
-      x,
-      y,
-      kind: theme.particle,
-      vx: Math.cos(angle) * speed,
-      vy: ['petal', 'leaf', 'snow', 'sand'].includes(theme.particle)
-        ? 25 + Math.random() * 100
-        : ['ember', 'bubble', 'firefly', 'plankton'].includes(theme.particle)
-          ? -50 - Math.random() * 140
-          : Math.sin(angle) * speed - 15,
-      size: 1.5 + Math.random() * 2.2,
-      phase: Math.random() * 6.28,
-      spin: (Math.random() - 0.5) * 4,
-      color: Math.random() > 0.25 ? theme.palette.accent : theme.palette.secondary,
-    }
-  })
+  const count = store.effectsQuality === 'low' ? 14 : store.effectsQuality === 'high' ? 34 : 24
+  kind = theme.particle
+  particles = createBurst(theme, x, y, count)
   started = performance.now()
   frame = requestAnimationFrame(tick)
   // Decoration must never intercept navigation or delay an action.

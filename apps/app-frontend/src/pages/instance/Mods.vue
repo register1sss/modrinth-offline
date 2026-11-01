@@ -516,8 +516,9 @@ const needsManifest = (m) =>
   /\.jar(\.disabled)?$/i.test(m.path) &&
   !manifestInfo.has(manifestKey(m.path))
 let manifestRequest = null
+let manifestFailed = false
 function loadManifestInfo() {
-  if (manifestRequest) return manifestRequest
+  if (manifestRequest || manifestFailed) return manifestRequest
   manifestRequest = health('inventory', props.instance.path)
     .then((list) => {
       for (const m of list || []) {
@@ -538,8 +539,10 @@ function loadManifestInfo() {
         if (info.version && !project.version) project.version = info.version
       }
     })
-    // Names are a convenience: on failure the list keeps file names.
-    .catch(() => {})
+    // Names are a convenience: on failure the list keeps file names and does not retry.
+    .catch(() => {
+      manifestFailed = true
+    })
     .finally(() => {
       manifestRequest = null
     })

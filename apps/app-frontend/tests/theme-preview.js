@@ -336,6 +336,43 @@ mockIPC(async (cmd, args) => {
     await new Promise((resolve) => setTimeout(resolve, 100))
     return null
   }
+  if (cmd === 'plugin:profile|profile_get') return structuredClone(window.__mockProfile)
+  if (cmd === 'plugin:process|process_get_by_profile_path') return []
+  if (cmd === 'plugin:logs|logs_get_logs')
+    return [
+      { filename: 'latest.log', log_type: 'InfoLog', stdout: 'cleared' },
+      {
+        filename: 'crash-2025-01-01_12.00.00-client.txt',
+        log_type: 'CrashReport',
+        stdout: 'cleared',
+      },
+    ]
+  if (cmd === 'plugin:logs|logs_get_output_by_filename')
+    return [
+      '[12:00:00] [main/INFO]: Loading Minecraft 1.20.1 with Fabric Loader 0.15.11',
+      '[12:00:01] [main/WARN]: Mod sodium-extra requires reeses-sodium-options (optional)',
+      '[12:00:02] [main/ERROR]: Incompatible mods found!',
+      '# This is a comment line',
+    ].join('\n')
+  if (cmd === 'plugin:profile|profile_get_projects')
+    return Object.fromEntries(
+      window.__mockInventory.map((m) => [
+        m.path,
+        { file_name: m.path.split('/').pop(), project_type: 'mod', metadata: null },
+      ]),
+    )
+  if (cmd === 'plugin:profile|profile_remove_project') {
+    window.__mockInventory = window.__mockInventory.filter((m) => m.path !== args.projectPath)
+    return null
+  }
+  if (/^plugin:cache\|get_(project|version|team|organization)_many$/.test(cmd)) return []
+  if (cmd === 'plugin:profile|profile_get_optimal_jre_key')
+    return { path: 'C:/Program Files/Java/jdk-17/bin/javaw.exe', major_version: 17 }
+  if (cmd === 'plugin:profile|profile_get_pack_export_candidates')
+    return ['mods', 'config', 'resourcepacks', 'options.txt']
+  if (cmd === 'plugin:instance_health|inventory') return structuredClone(window.__mockInventory)
+  if (cmd === 'plugin:instance_health|antivirus')
+    return { status: args.path.includes('free-op') ? 'review' : 'no_detection' }
   if (cmd === 'plugin:settings|settings_get') return structuredClone(window.__nativeSettings)
   if (cmd === 'plugin:settings|settings_set') {
     if (window.__failThemeSave) throw 'Intentional test failure'
@@ -343,7 +380,13 @@ mockIPC(async (cmd, args) => {
     localStorage.setItem('theme-test:native-settings', JSON.stringify(args.settings))
     return null
   }
-  if (cmd === 'plugin:metadata|metadata_get_loader_versions') return { gameVersions: [] }
+  if (cmd === 'plugin:metadata|metadata_get_loader_versions')
+    return {
+      gameVersions: [
+        { id: '1.20.1', stable: true, loaders: [{ id: '0.15.11', stable: true }] },
+        { id: '1.19.2', stable: true, loaders: [{ id: '0.15.11', stable: true }] },
+      ],
+    }
   if (cmd === 'plugin:metadata|metadata_get_game_versions') return { versions: [] }
   if (cmd === 'plugin:tags|tags_get_loaders') return []
   if (cmd === 'plugin:profile|profile_get_many' || cmd === 'plugin:profile|profile_list') {
@@ -363,5 +406,138 @@ mockIPC(async (cmd, args) => {
   }
   return null
 })
-history.replaceState(null, '', '/themes')
+// Diagnostics fixture: one profile with typical dependency problems.
+const jar = (file, name, version, extra = {}) => ({
+  path: `mods/${file}`,
+  name,
+  version,
+  ids: [extra.id ?? name.toLowerCase().replace(/[^a-z0-9]+/g, '-')],
+  dependencies: [],
+  conflicts: [],
+  bundled: [],
+  loaders: ['fabric'],
+  disabled: file.endsWith('.disabled'),
+  sha256: 'a3f1'.repeat(16),
+  bytes: 1_250_000,
+  warnings: [],
+  metadata_complete: true,
+  ...extra,
+})
+const need = (id, version = '*', required = true) => ({ id, version, required })
+const base = [need('fabricloader', '>=0.14.21'), need('minecraft', '1.20.1')]
+const modules = ['fabric-api-base', 'fabric-resource-loader-v0', 'fabric-key-binding-api-v1']
+  .concat(['fabric-rendering-v1', 'fabric-screen-api-v1', 'fabric-lifecycle-events-v1'])
+  .concat(['fabric-rendering-data-attachment-v1', 'fabric-block-view-api-v2'])
+window.__mockProfile = {
+  path: 'survival-plus',
+  name: 'Survival+',
+  loader: 'fabric',
+  game_version: '1.20.1',
+  loader_version: '0.15.11',
+  install_stage: 'installed',
+  groups: [],
+  linked_data: null,
+  icon_path: null,
+  java_path: null,
+  memory: null,
+  game_resolution: null,
+  force_fullscreen: null,
+  extra_launch_args: null,
+  custom_env_vars: null,
+  hooks: { pre_launch: null, wrapper: null, post_exit: null },
+}
+window.__mockInventory = [
+  jar('fabric-api-0.92.2+1.20.1.jar', 'Fabric API', '0.92.2+1.20.1', {
+    id: 'fabric-api',
+    bundled: modules.map((id) => ({ id, name: null, version: '1.0.0' })),
+    dependencies: [need('fabricloader', '>=0.14.22')],
+  }),
+  jar('sodium-fabric-0.5.11+mc1.20.1.jar', 'Sodium', '0.5.11+mc1.20.1', {
+    dependencies: [
+      ...base,
+      need('fabric-rendering-data-attachment-v1'),
+      need('fabric-block-view-api-v2'),
+    ],
+  }),
+  jar('iris-1.7.2+mc1.20.1.jar', 'Iris', '1.7.2+mc1.20.1', {
+    dependencies: [...base, need('sodium', '0.5.11+mc1.20.1')],
+  }),
+  jar('sodium-extra-0.5.4+mc1.20.1.jar', 'Sodium Extra', '0.5.4+mc1.20.1', {
+    dependencies: [
+      ...base,
+      need('sodium', '>=0.5.4'),
+      need('fabric-api'),
+      need('reeses-sodium-options', '*', false),
+    ],
+  }),
+  jar('modmenu-7.2.2.jar', 'Mod Menu', '7.2.2', {
+    id: 'modmenu',
+    dependencies: [...base, need('fabric-screen-api-v1'), need('fabric-key-binding-api-v1')],
+  }),
+  jar('BetterThirdPerson-Fabric-1.9.0.jar', 'Better Third Person', '1.9.0', {
+    dependencies: [...base, need('cloth-config', '>=11.0.0'), need('modmenu', '*', false)],
+  }),
+  jar('zoomify-2.11.2.jar', 'Zoomify', '2.11.2', {
+    dependencies: [...base, need('yet_another_config_lib_v3', '>=3.2.0'), need('fabric-api')],
+  }),
+  jar('yet-another-config-lib-3.2.1.jar.disabled', 'YetAnotherConfigLib', '3.2.1+1.20', {
+    id: 'yet_another_config_lib_v3',
+  }),
+  jar('lithium-fabric-mc1.20.1-0.11.2.jar', 'Lithium', '0.11.2', { dependencies: base }),
+  jar('lithium-fabric-mc1.20.1-0.11.1.jar', 'Lithium', '0.11.1', { dependencies: base }),
+  jar('jei-1.20.1-forge-15.2.0.27.jar', 'Just Enough Items', '15.2.0.27', {
+    id: 'jei',
+    loaders: ['forge'],
+    dependencies: [need('forge', '[47.1.3,)'), need('minecraft', '[1.20.1,1.21)')],
+  }),
+  jar('appleskin-fabric-mc1.19-2.4.1.jar', 'AppleSkin', '2.4.1+mc1.19', {
+    dependencies: [need('fabricloader', '>=0.14'), need('minecraft', '1.19.x')],
+  }),
+  jar('continuity-3.0.0+1.20.1.jar', 'Continuity', '3.0.0+1.20.1', {
+    dependencies: [...base, need('fabric-api', '>=0.95.0')],
+  }),
+  jar('free-op-mod.jar', 'Free OP', '1.0', {
+    warnings: ['Contains executable/script: payload/run.bat (not proof of malware)'],
+  }),
+  jar('readme.txt', 'mods/readme.txt', null, {
+    ids: [],
+    loaders: [],
+    sha256: 'b7c2'.repeat(16),
+    bytes: 2048,
+    metadata_complete: false,
+    warnings: ['Not a readable JAR/ZIP; format was not inspected'],
+  }),
+]
+const previewParams = new URLSearchParams(location.search)
+const requestedRoute = previewParams.get('route')
+// A deep link must not be replaced by the landing page from settings.
+if (requestedRoute) window.__nativeSettings.default_page = 'Home'
+history.replaceState(null, '', requestedRoute || '/themes')
 await import('../src/main.js')
+// ?crash=1 shows the crash dialog with a typical Fabric dependency failure.
+if (previewParams.get('crash')) {
+  const { crashAlerts } = await import('../src/instance-health/monitor.js')
+  setTimeout(
+    () =>
+      crashAlerts.push({
+        profileId: 'survival-plus',
+        report: {
+          crashed: true,
+          exit_code: 1,
+          findings: ['dependencies'],
+          evidence: [
+            {
+              kind: 'dependencies',
+              line: '[main/ERROR]: Incompatible mods found!',
+            },
+          ],
+          details: [
+            '- Install cloth-config, version 11.0.0 or later.',
+            "- Mod 'Better Third Person' (betterthirdperson) 1.9.0 requires version 11.0.0 or later of cloth-config, which is missing!",
+            "- Mod 'Iris' (iris) 1.6.4 requires version 0.5.0 or later of mod 'Sodium' (sodium), but only the wrong version is present: 0.4.10!",
+          ],
+        },
+      }),
+    1200,
+  )
+}

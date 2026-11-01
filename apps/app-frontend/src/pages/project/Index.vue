@@ -50,7 +50,9 @@
           >
             <DownloadIcon v-if="!installed && !installing" />
             <CheckIcon v-else-if="installed" />
-            {{ installing ? 'Installing...' : installed ? 'Installed' : 'Install' }}
+            {{
+              installing ? $u3t('Installing...') : installed ? $u3t('Installed') : $u3t('Install')
+            }}
           </Button>
           <a
             :href="`https://modrinth.com/${data.project_type}/${data.slug}`"
@@ -58,7 +60,7 @@
             class="btn"
           >
             <ExternalIcon />
-            Site
+            {{ $u3t('Site') }}
           </a>
         </div>
         <hr class="card-divider" />
@@ -67,20 +69,25 @@
             <DownloadIcon aria-hidden="true" />
             <p>
               <strong>{{ formatNumber(data.downloads) }}</strong>
-              <span class="stat-label"> download<span v-if="data.downloads !== '1'">s</span></span>
+              <span class="stat-label">
+                {{ data.downloads !== '1' ? $u3t('downloads') : $u3t('download') }}</span
+              >
             </p>
           </div>
           <div class="stat">
             <HeartIcon aria-hidden="true" />
             <p>
               <strong>{{ formatNumber(data.followers) }}</strong>
-              <span class="stat-label"> follower<span v-if="data.followers !== '1'">s</span></span>
+              <span class="stat-label">
+                {{ data.followers !== '1' ? $u3t('followers') : $u3t('follower') }}</span
+              >
             </p>
           </div>
           <div class="stat date">
             <CalendarIcon aria-hidden="true" />
             <span
-              ><span class="date-label">Created </span> {{ dayjs(data.published).fromNow() }}</span
+              ><span class="date-label">{{ $u3t('Created') }} </span>
+              {{ dayjs(data.published).fromNow() }}</span
             >
           </div>
           <div class="stat date">
@@ -95,11 +102,11 @@
         <div class="button-group">
           <Button class="instance-button" disabled>
             <ReportIcon />
-            Report
+            {{ $u3t('Report') }}
           </Button>
           <Button class="instance-button" disabled>
             <HeartIcon />
-            Follow
+            {{ $u3t('Follow') }}
           </Button>
         </div>
         <hr class="card-divider" />
@@ -111,7 +118,7 @@
             rel="noopener nofollow ugc external"
           >
             <IssuesIcon aria-hidden="true" />
-            <span>Issues</span>
+            <span>{{ $u3t('Issues') }}</span>
           </a>
           <a
             v-if="data.source_url"
@@ -120,7 +127,7 @@
             rel="noopener nofollow ugc external"
           >
             <CodeIcon aria-hidden="true" />
-            <span>Source</span>
+            <span>{{ $u3t('Source') }}</span>
           </a>
           <a
             v-if="data.wiki_url"
@@ -129,7 +136,7 @@
             rel="noopener nofollow ugc external"
           >
             <WikiIcon aria-hidden="true" />
-            <span>Wiki</span>
+            <span>{{ $u3t('Wiki') }}</span>
           </a>
           <a
             v-if="data.discord_url"
@@ -158,7 +165,7 @@
             <span v-else-if="donation.id === 'paypal'">PayPal</span>
             <span v-else-if="donation.id === 'ko-fi'">Ko-fi</span>
             <span v-else-if="donation.id === 'github'">GitHub Sponsors</span>
-            <span v-else>Donate</span>
+            <span v-else>{{ $u3t('Donate') }}</span>
           </a>
         </div>
       </Card>
@@ -169,15 +176,15 @@
           v-if="data.gallery.length > 0"
           :links="[
             {
-              label: 'Description',
+              label: $u3t('Description'),
               href: `/project/${$route.params.id}/`,
             },
             {
-              label: 'Versions',
+              label: $u3t('Versions'),
               href: `/project/${$route.params.id}/versions`,
             },
             {
-              label: 'Gallery',
+              label: $u3t('Gallery'),
               href: `/project/${$route.params.id}/gallery`,
             },
           ]"
@@ -186,11 +193,11 @@
           v-else
           :links="[
             {
-              label: 'Description',
+              label: $u3t('Description'),
               href: `/project/${$route.params.id}/`,
             },
             {
-              label: 'Versions',
+              label: $u3t('Versions'),
               href: `/project/${$route.params.id}/versions`,
             },
           ]"
@@ -211,7 +218,7 @@
   <ContextMenu ref="options" @option-clicked="handleOptionsClick">
     <template #install> <DownloadIcon /> {{ $u3t('Install') }} </template>
     <template #open_link> <GlobeIcon /> {{ $u3t('Open in Modrinth') }} <ExternalIcon /> </template>
-    <template #copy_link> <ClipboardCopyIcon /> Copy link </template>
+    <template #copy_link> <ClipboardCopyIcon /> {{ $u3t('Copy link') }} </template>
   </ContextMenu>
 </template>
 

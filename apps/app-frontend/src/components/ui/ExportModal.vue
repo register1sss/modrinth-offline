@@ -106,20 +106,25 @@ const exportPack = async () => {
 </script>
 
 <template>
-  <Modal ref="exportModal" header="Export modpack" :noblur="!themeStore.advancedRendering">
+  <Modal ref="exportModal" :header="$u3t('Export modpack')" :noblur="!themeStore.advancedRendering">
     <div class="modal-body">
       <div class="labeled_input">
-        <p>Modpack Name</p>
+        <p>{{ $u3t('Modpack Name') }}</p>
         <div class="iconified-input">
           <PackageIcon />
-          <input v-model="nameInput" type="text" placeholder="Modpack name" class="input" />
+          <input
+            v-model="nameInput"
+            type="text"
+            :placeholder="$u3t('Modpack name')"
+            class="input"
+          />
           <Button class="r-btn" @click="nameInput = ''">
             <XIcon />
           </Button>
         </div>
       </div>
       <div class="labeled_input">
-        <p>Version number</p>
+        <p>{{ $u3t('Version number') }}</p>
         <div class="iconified-input">
           <VersionIcon />
           <input v-model="versionInput" type="text" placeholder="1.0.0" class="input" />
@@ -133,7 +138,10 @@ const exportPack = async () => {
           <p>{{ $u3t('Description') }}</p>
 
           <div class="textarea-wrapper">
-            <textarea v-model="exportDescription" placeholder="Enter modpack description..." />
+            <textarea
+              v-model="exportDescription"
+              :placeholder="$u3t('Enter modpack description...')"
+            />
           </div>
         </div>
       </div>
@@ -141,7 +149,7 @@ const exportPack = async () => {
       <div class="table">
         <div class="table-head">
           <div class="table-cell row-wise">
-            Select files and folders to include in pack
+            {{ $u3t('Select files and folders to include in pack') }}
             <Button
               class="sleek-primary collapsed-button"
               icon-only

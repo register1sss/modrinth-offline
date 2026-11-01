@@ -43,18 +43,21 @@ async function login() {
     <img
       src="https://launcher-files.modrinth.com/assets/default_profile.png"
       class="logo"
-      alt="Minecraft art"
+      :alt="$u3t('Minecraft art')"
     />
     <Card class="logging-in">
-      <h2>Sign into Minecraft</h2>
+      <h2>{{ $u3t('Sign into Minecraft') }}</h2>
       <p>
-        Sign in with your Microsoft account to launch Minecraft with your mods and modpacks. If you
-        don't have a Minecraft account, you can purchase the game on the
+        {{
+          $u3t(
+            "Sign in with your Microsoft account to launch Minecraft with your mods and modpacks. If you don't have a Minecraft account, you can purchase the game on the",
+          )
+        }}
         <a
           href="https://www.minecraft.net/en-us/store/minecraft-java-bedrock-edition-pc"
           class="link"
         >
-          Minecraft website
+          {{ $u3t('Minecraft website') }}
         </a>
       </p>
       <div class="action-row">
@@ -62,14 +65,16 @@ async function login() {
         <div class="sign-in-pair">
           <Button color="primary" large :disabled="loading" @click="login">
             <LogInIcon />
-            {{ loading ? 'Loading...' : 'Sign in' }}
+            {{ loading ? $u3t('Loading...') : $u3t('Sign in') }}
           </Button>
         </div>
-        <Button class="transparent" large @click="nextPage()"> Finish</Button>
+        <Button class="transparent" large @click="nextPage()"> {{ $u3t('Finish') }}</Button>
       </div>
     </Card>
   </div>
-  <div class="offline-hint">Press Finish if you want to use offline account instead</div>
+  <div class="offline-hint">
+    {{ $u3t('Press Finish if you want to use offline account instead') }}
+  </div>
 </template>
 
 <style scoped lang="scss">

@@ -1,3 +1,4 @@
+import { translate } from '@/i18n/index.js'
 import { defineStore } from 'pinia'
 
 export const useNotifications = defineStore('notificationsStore', {
@@ -17,7 +18,7 @@ export const useNotifications = defineStore('notificationsStore', {
 export const handleError = (err) => {
   const notifs = useNotifications()
   notifs.addNotification({
-    title: 'An error occurred',
+    title: translate('An error occurred'),
     text: err.message ?? err,
     type: 'error',
   })

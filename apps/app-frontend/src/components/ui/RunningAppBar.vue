@@ -38,14 +38,14 @@
         </div>
       </div>
       <Button
-        v-tooltip="'Stop instance'"
+        v-tooltip="$u3t('Stop instance')"
         icon-only
         class="icon-button stop"
         @click="stop(selectedProcess)"
       >
         <StopCircleIcon />
       </Button>
-      <Button v-tooltip="'View logs'" icon-only class="icon-button" @click="goToTerminal()">
+      <Button v-tooltip="$u3t('View logs')" icon-only class="icon-button" @click="goToTerminal()">
         <TerminalSquareIcon />
       </Button>
       <Button
@@ -93,7 +93,7 @@
       >
         <div class="text"><span class="circle running" /> {{ process.profile.name }}</div>
         <Button
-          v-tooltip="'Stop instance'"
+          v-tooltip="$u3t('Stop instance')"
           icon-only
           class="icon-button stop"
           @click.stop="stop(process)"
@@ -101,7 +101,7 @@
           <StopCircleIcon />
         </Button>
         <Button
-          v-tooltip="'View logs'"
+          v-tooltip="$u3t('View logs')"
           icon-only
           class="icon-button"
           @click.stop="goToTerminal(process.profile.path)"

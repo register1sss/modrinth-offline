@@ -12,8 +12,8 @@ export function diagnose(text, language = 'ru') {
     ],
     [
       /ModResolutionException|Incompatible mods found|requires .*version|Missing.*dependency/i,
-      'Вероятно, отсутствует зависимость или установлены несовместимые версии модов. Проверь список required dependencies.',
-      'A dependency may be missing or mod versions may conflict. Check required dependencies.',
+      'Вероятно, отсутствует зависимость или установлены несовместимые версии модов. Открой «Диагностику» профиля: там видно, какого мода не хватает.',
+      'A dependency may be missing or mod versions may conflict. Open the profile Diagnostics to see which mod is missing.',
     ],
     [
       /MixinApplyError|Mixin.*failed|InjectionError/i,

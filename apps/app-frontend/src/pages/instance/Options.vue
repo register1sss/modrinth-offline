@@ -1,23 +1,29 @@
 <template>
   <ConfirmModal
     ref="modal_confirm"
-    title="Are you sure you want to delete this instance?"
-    description="If you proceed, all data for your instance will be removed. You will not be able to recover it."
+    :title="$u3t('Are you sure you want to delete this instance?')"
+    :description="
+      $u3t(
+        'If you proceed, all data for your instance will be removed. You will not be able to recover it.',
+      )
+    "
     :has-to-type="false"
-    proceed-label="Delete"
+    :proceed-label="$u3t('Delete')"
     :noblur="!themeStore.advancedRendering"
     @proceed="removeProfile"
   />
   <Modal
     ref="modalConfirmUnlock"
-    header="Are you sure you want to unlock this instance?"
+    :header="$u3t('Are you sure you want to unlock this instance?')"
     :noblur="!themeStore.advancedRendering"
   >
     <div class="modal-delete">
       <div
         class="markdown-body"
         v-html="
-          'If you proceed, you will not be able to re-lock it without using the `Reinstall modpack` button.'
+          $u3t(
+            'If you proceed, you will not be able to re-lock it without using the `Reinstall modpack` button.',
+          )
         "
       />
       <div class="input-group push-right">
@@ -26,7 +32,7 @@
         </button>
         <button class="btn btn-danger" @click="unlockProfile">
           <LockIcon />
-          Unlock
+          {{ $u3t('Unlock') }}
         </button>
       </div>
     </div>
@@ -34,14 +40,16 @@
 
   <Modal
     ref="modalConfirmUnpair"
-    header="Are you sure you want to unpair this instance?"
+    :header="$u3t('Are you sure you want to unpair this instance?')"
     :noblur="!themeStore.advancedRendering"
   >
     <div class="modal-delete">
       <div
         class="markdown-body"
         v-html="
-          'If you proceed, you will not be able to re-pair it without creating an entirely new instance.'
+          $u3t(
+            'If you proceed, you will not be able to re-pair it without creating an entirely new instance.',
+          )
         "
       />
       <div class="input-group push-right">
@@ -50,7 +58,7 @@
         </button>
         <button class="btn btn-danger" @click="unpairProfile">
           <XIcon />
-          Unpair
+          {{ $u3t('Unpair') }}
         </button>
       </div>
     </div>
@@ -58,7 +66,7 @@
 
   <Modal
     ref="changeVersionsModal"
-    header="Change instance versions"
+    :header="$u3t('Change instance versions')"
     :noblur="!themeStore.advancedRendering"
   >
     <div class="change-versions-modal universal-body">
@@ -75,11 +83,15 @@
             name="Game Version Dropdown"
             render-up
           />
-          <Checkbox v-model="showSnapshots" class="filter-checkbox" label="Include snapshots" />
+          <Checkbox
+            v-model="showSnapshots"
+            class="filter-checkbox"
+            :label="$u3t('Include snapshots')"
+          />
         </div>
       </div>
       <div v-if="loader !== 'vanilla'" class="input-row">
-        <p class="input-label">Loader Version</p>
+        <p class="input-label">{{ $u3t('Loader Version') }}</p>
         <DropdownSelect
           :model-value="selectableLoaderVersions[loaderVersionIndex]"
           :options="selectableLoaderVersions"
@@ -99,7 +111,7 @@
           @click="saveGvLoaderEdits()"
         >
           <SaveIcon />
-          {{ editing ? 'Saving...' : 'Save changes' }}
+          {{ editing ? $u3t('Saving...') : $u3t('Save changes') }}
         </button>
       </div>
     </div>
@@ -107,11 +119,11 @@
   <section class="card">
     <div class="label">
       <h3>
-        <span class="label__title size-card-header">Instance</span>
+        <span class="label__title size-card-header">{{ $u3t('Instance') }}</span>
       </h3>
     </div>
     <label for="instance-icon">
-      <span class="label__title">Icon</span>
+      <span class="label__title">{{ $u3t('Icon') }}</span>
     </label>
     <div class="input-group">
       <Avatar :src="icon ? convertFileSrc(icon) : icon" size="md" class="project__icon" />
@@ -139,9 +151,13 @@
 
     <div class="adjacent-input">
       <label for="edit-versions">
-        <span class="label__title">Edit mod loader/game versions</span>
+        <span class="label__title">{{ $u3t('Edit mod loader/game versions') }}</span>
         <span class="label__description">
-          Allows you to change the mod loader, loader version, or game version of the instance.
+          {{
+            $u3t(
+              'Allows you to change the mod loader, loader version, or game version of the instance.',
+            )
+          }}
         </span>
       </label>
       <button
@@ -151,7 +167,7 @@
         @click="$refs.changeVersionsModal.show()"
       >
         <EditIcon />
-        Edit versions
+        {{ $u3t('Edit versions') }}
       </button>
     </div>
 
@@ -159,8 +175,11 @@
       <label>
         <span class="label__title"> {{ $u3t('Categories') }} </span>
         <span class="label__description">
-          Set the categories of this instance, for display in the library page. This is purely
-          cosmetic.
+          {{
+            $u3t(
+              'Set the categories of this instance, for display in the library page. This is purely cosmetic.',
+            )
+          }}
         </span>
       </label>
       <multiselect
@@ -174,7 +193,7 @@
         :show-labels="false"
         :taggable="true"
         tag-placeholder="Add new category"
-        placeholder="Select categories..."
+        :placeholder="$u3t('Select categories...')"
         @tag="
           (newTag) => {
             groups.push(newTag.trim().substring(0, 32))
@@ -192,13 +211,13 @@
     </div>
     <div class="settings-group">
       <h3>{{ $u3t('Installation') }}</h3>
-      <Checkbox v-model="overrideJavaInstall" label="Override global java installations" />
+      <Checkbox v-model="overrideJavaInstall" :label="$u3t('Override global java installations')" />
       <JavaSelector v-model="javaInstall" :disabled="!overrideJavaInstall" />
     </div>
     <hr class="card-divider" />
     <div class="settings-group">
       <h3>{{ $u3t('Java arguments') }}</h3>
-      <Checkbox v-model="overrideJavaArgs" label="Override global java arguments" />
+      <Checkbox v-model="overrideJavaArgs" :label="$u3t('Override global java arguments')" />
       <input
         id="java-args"
         v-model="javaArgs"
@@ -206,49 +225,49 @@
         :disabled="!overrideJavaArgs"
         type="text"
         class="installation-input"
-        placeholder="Enter java arguments..."
+        :placeholder="$u3t('Enter java arguments...')"
       />
     </div>
     <div class="settings-group">
       <h3>{{ $u3t('Environment variables') }}</h3>
-      <Checkbox v-model="overrideEnvVars" label="Override global environment variables" />
+      <Checkbox v-model="overrideEnvVars" :label="$u3t('Override global environment variables')" />
       <input
         v-model="envVars"
         autocomplete="off"
         :disabled="!overrideEnvVars"
         type="text"
         class="installation-input"
-        placeholder="Enter environment variables..."
+        :placeholder="$u3t('Enter environment variables...')"
       />
     </div>
     <hr class="card-divider" />
     <div class="settings-group">
       <h3>{{ $u3t('Java memory') }}</h3>
-      <Checkbox v-model="overrideMemorySettings" label="Override global memory settings" />
+      <Checkbox v-model="overrideMemorySettings" :label="$u3t('Override global memory settings')" />
       <Slider
         v-model="memory.maximum"
         :disabled="!overrideMemorySettings"
         :min="8"
         :max="maxMemory"
         :step="64"
-        unit="mb"
+        :unit="$u3t('mb')"
       />
     </div>
   </Card>
   <Card>
     <div class="label">
       <h3>
-        <span class="label__title size-card-header">Window</span>
+        <span class="label__title size-card-header">{{ $u3t('Window') }}</span>
       </h3>
     </div>
     <div class="adjacent-input">
-      <Checkbox v-model="overrideWindowSettings" label="Override global window settings" />
+      <Checkbox v-model="overrideWindowSettings" :label="$u3t('Override global window settings')" />
     </div>
     <div class="adjacent-input">
       <label for="fullscreen">
         <span class="label__title"> {{ $u3t('Fullscreen') }} </span>
         <span class="label__description">
-          Make the game start in full screen when launched (using options.txt).
+          {{ $u3t('Make the game start in full screen when launched (using options.txt).') }}
         </span>
       </label>
       <Toggle
@@ -304,7 +323,7 @@
       </h3>
     </div>
     <div class="adjacent-input">
-      <Checkbox v-model="overrideHooks" label="Override global hooks" />
+      <Checkbox v-model="overrideHooks" :label="$u3t('Override global hooks')" />
     </div>
     <div class="adjacent-input">
       <label for="pre-launch">
@@ -354,14 +373,16 @@
   <Card v-if="instance.linked_data">
     <div class="label">
       <h3>
-        <span class="label__title size-card-header">Modpack</span>
+        <span class="label__title size-card-header">{{ $u3t('Modpack') }}</span>
       </h3>
     </div>
     <div class="adjacent-input">
       <label for="general-modpack-info">
-        <span class="label__description"> <strong>Modpack: </strong> {{ instance.name }} </span>
         <span class="label__description">
-          <strong>Version: </strong>
+          <strong>{{ $u3t('Modpack:') }} </strong> {{ instance.name }}
+        </span>
+        <span class="label__description">
+          <strong>{{ $u3t('Version:') }} </strong>
           {{
             installedVersionData?.name != null
               ? installedVersionData.name.charAt(0).toUpperCase() +
@@ -373,44 +394,54 @@
     </div>
     <div v-if="!isPackLocked" class="adjacent-input">
       <Card class="unlocked-instance">
-        This is an unlocked instance. There may be unexpected behaviour unintended by the modpack
-        creator.
+        {{
+          $u3t(
+            'This is an unlocked instance. There may be unexpected behaviour unintended by the modpack creator.',
+          )
+        }}
       </Card>
     </div>
     <div v-else class="adjacent-input">
       <label for="unlock-profile">
-        <span class="label__title">Unlock instance</span>
+        <span class="label__title">{{ $u3t('Unlock instance') }}</span>
         <span class="label__description">
-          Allows modifications to the instance, which allows you to add projects to the modpack. The
-          pack will remain linked, and you can still change versions. Only mods listed in the
-          modpack will be modified on version changes.
+          {{
+            $u3t(
+              'Allows modifications to the instance, which allows you to add projects to the modpack. The pack will remain linked, and you can still change versions. Only mods listed in the modpack will be modified on version changes.',
+            )
+          }}
         </span>
       </label>
       <Button id="unlock-profile" @click="$refs.modalConfirmUnlock.show()">
-        <LockIcon /> Unlock
+        <LockIcon /> {{ $u3t('Unlock') }}
       </Button>
     </div>
 
     <div class="adjacent-input">
       <label for="unpair-profile">
-        <span class="label__title">Unpair instance</span>
+        <span class="label__title">{{ $u3t('Unpair instance') }}</span>
         <span class="label__description">
-          Removes the link to an external Modrinth modpack on the instance. This allows you to edit
-          modpacks you download through the browse page but you will not be able to update the
-          instance from a new version of a modpack if you do this.
+          {{
+            $u3t(
+              'Removes the link to an external Modrinth modpack on the instance. This allows you to edit modpacks you download through the browse page but you will not be able to update the instance from a new version of a modpack if you do this.',
+            )
+          }}
         </span>
       </label>
       <Button id="unpair-profile" @click="$refs.modalConfirmUnpair.show()">
-        <XIcon /> Unpair
+        <XIcon /> {{ $u3t('Unpair') }}
       </Button>
     </div>
 
     <div v-if="instance.linked_data.project_id" class="adjacent-input">
       <label for="change-modpack-version">
-        <span class="label__title">Change modpack version</span>
+        <span class="label__title">{{ $u3t('Change modpack version') }}</span>
         <span class="label__description">
-          Changes to another version of the modpack, allowing upgrading or downgrading. This will
-          replace all files marked as relevant to the modpack.
+          {{
+            $u3t(
+              'Changes to another version of the modpack, allowing upgrading or downgrading. This will replace all files marked as relevant to the modpack.',
+            )
+          }}
         </span>
       </label>
 
@@ -420,33 +451,40 @@
         @click="modpackVersionModal.show()"
       >
         <SwapIcon />
-        Change modpack version
+        {{ $u3t('Change modpack version') }}
       </Button>
     </div>
     <div class="adjacent-input">
       <label for="repair-modpack">
-        <span class="label__title">Reinstall modpack</span>
+        <span class="label__title">{{ $u3t('Reinstall modpack') }}</span>
         <span class="label__description">
-          Removes all projects and reinstalls Modrinth modpack. Use this to fix unexpected behaviour
-          if your instance is diverging from the Modrinth modpack. This also re-locks the instance.
+          {{
+            $u3t(
+              'Removes all projects and reinstalls Modrinth modpack. Use this to fix unexpected behaviour if your instance is diverging from the Modrinth modpack. This also re-locks the instance.',
+            )
+          }}
         </span>
       </label>
       <Button id="repair-modpack" color="highlight" :disabled="offline" @click="repairModpack">
-        <DownloadIcon /> Reinstall
+        <DownloadIcon /> {{ $u3t('Reinstall') }}
       </Button>
     </div>
   </Card>
   <Card>
     <div class="label">
       <h3>
-        <span class="label__title size-card-header">Instance management</span>
+        <span class="label__title size-card-header">{{ $u3t('Instance management') }}</span>
       </h3>
     </div>
     <div v-if="instance.install_stage == 'installed'" class="adjacent-input">
       <label for="duplicate-profile">
-        <span class="label__title">Duplicate instance</span>
+        <span class="label__title">{{ $u3t('Duplicate instance') }}</span>
         <span class="label__description">
-          Creates another copy of the instance, including saves, configs, mods, and everything.
+          {{
+            $u3t(
+              'Creates another copy of the instance, including saves, configs, mods, and everything.',
+            )
+          }}
         </span>
       </label>
       <Button
@@ -461,8 +499,11 @@
       <label for="repair-profile">
         <span class="label__title"> {{ $u3t('Repair instance') }} </span>
         <span class="label__description">
-          Reinstalls Minecraft dependencies and checks for corruption. Use this if your game is not
-          launching due to launcher-related errors.
+          {{
+            $u3t(
+              'Reinstalls Minecraft dependencies and checks for corruption. Use this if your game is not launching due to launcher-related errors.',
+            )
+          }}
         </span>
       </label>
       <Button
@@ -476,10 +517,13 @@
     </div>
     <div class="adjacent-input">
       <label for="delete-profile">
-        <span class="label__title">Delete instance</span>
+        <span class="label__title">{{ $u3t('Delete instance') }}</span>
         <span class="label__description">
-          Fully removes a instance from the disk. Be careful, as once you delete a instance there is
-          no way to recover it.
+          {{
+            $u3t(
+              'Fully removes an instance from the disk. Be careful: once you delete an instance, there is no way to recover it.',
+            )
+          }}
         </span>
       </label>
       <Button

@@ -19,6 +19,16 @@ const activeNumber = computed(() => {
     ? tr('БАЗОВАЯ', 'BASE')
     : `${String(index + 1).padStart(2, '0')} / ${CUSTOM_THEMES.length}`
 })
+const MATERIALS = {
+  glass: ['стекло', 'glass'],
+  paper: ['бумага', 'paper'],
+  velvet: ['бархат', 'velvet'],
+  obsidian: ['обсидиан', 'obsidian'],
+}
+const materialName = (theme) => {
+  const id = theme.material || (theme.palette.light ? 'paper' : 'glass')
+  return MATERIALS[id] ? tr(...MATERIALS[id]) : id
+}
 const query = ref('')
 const filter = ref('all')
 const studioCount = CUSTOM_THEMES.filter((t) => t.collection === 'studio').length
@@ -77,7 +87,7 @@ async function selectTheme(theme) {
   <main class="themes-page">
     <header class="themes-heading">
       <div>
-        <p class="studio-eyebrow">U3 STUDIO / APPEARANCE</p>
+        <p class="studio-eyebrow">U3 STUDIO / {{ tr('ОФОРМЛЕНИЕ', 'APPEARANCE') }}</p>
         <div class="title-line">
           <h1>{{ $u3t('Темы') }}</h1>
           <span class="collection-count">
@@ -213,7 +223,7 @@ async function selectTheme(theme) {
 
     <section class="collection" aria-labelledby="collection-heading">
       <div class="collection-heading">
-        <h2 id="collection-heading">{{ tr('Все темы', 'All themes') }}</h2>
+        <h2 id="collection-heading">{{ tr('Авторские темы', 'Custom themes') }}</h2>
         <span> {{ filteredThemes.length }} / {{ CUSTOM_THEMES.length }} </span>
       </div>
       <div class="collection-toolbar">
@@ -267,9 +277,7 @@ async function selectTheme(theme) {
           >
             <div class="card-preview-wrap">
               <ThemePreview :theme="theme" />
-              <span class="theme-material">{{
-                theme.material || (theme.palette.light ? 'paper' : 'glass')
-              }}</span>
+              <span class="theme-material">{{ materialName(theme) }}</span>
               <span class="theme-index">{{
                 String(CUSTOM_THEMES.indexOf(theme) + 1).padStart(2, '0')
               }}</span>

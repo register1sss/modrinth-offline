@@ -167,7 +167,7 @@ export default createRouter({
           component: Instance.Health,
           meta: {
             useRootContext: true,
-            breadcrumb: [{ name: '?Instance', link: '/instance/{id}/' }, { name: 'Диагностика' }],
+            breadcrumb: [{ name: '?Instance', link: '/instance/{id}/' }, { name: 'Diagnostics' }],
           },
         },
         {

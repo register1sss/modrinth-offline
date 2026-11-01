@@ -1,26 +1,51 @@
 // Pure logic shared by the dependency dialog, diagnostics and regression tests.
+import { isFabricApiModule, modTitle } from './dependencies.js'
+
 export const normalizePath = (path) => String(path).replaceAll('\\', '/')
+const FABRIC_API = ['fabric-api', 'fabric', 'quilted_fabric_api']
+/** Mods that supply an id: by their own ids or a JAR bundled inside them. */
+function providersOf(active, id) {
+  const direct = active.filter(
+    (p) => p.ids.includes(id) || (p.bundled || []).some((b) => b.id === id),
+  )
+  if (direct.length || !isFabricApiModule(id)) return direct
+  // Older inventories do not list Fabric API's inner modules; assume the host provides them.
+  return active.filter(
+    (p) => p.ids.some((i) => FABRIC_API.includes(i)) && !(p.bundled || []).length,
+  )
+}
+/** What stops working after removing the given files, following required chains. */
 export function removalImpact(mods, paths) {
   const removed = new Set(paths.map(normalizePath))
   const active = mods.filter((m) => !m.disabled)
   const unavailable = new Set(
     active.filter((m) => removed.has(normalizePath(m.path))).map((m) => m.path),
   )
+  const lost = (id) => {
+    const providers = providersOf(active, id)
+    return providers.length > 0 && providers.every((p) => unavailable.has(p.path))
+      ? providers
+      : null
+  }
+  const describe = (m, d, providers) => ({
+    path: m.path,
+    name: modTitle(m),
+    dependency: d.id,
+    dependencyName: providers.length ? modTitle(providers[0]) : d.id,
+  })
   const affected = []
   let changed = true
   while (changed) {
     changed = false
     for (const m of active) {
       if (unavailable.has(m.path)) continue
-      const cause = m.dependencies.find((d) => {
-        if (!d.required) return false
-        const providers = active.filter((p) => p.ids.includes(d.id))
-        return providers.length > 0 && providers.every((p) => unavailable.has(p.path))
-      })
-      if (cause) {
+      for (const d of m.dependencies) {
+        const providers = d.required && !(m.ids || []).includes(d.id) ? lost(d.id) : null
+        if (!providers) continue
         unavailable.add(m.path)
-        affected.push({ path: m.path, name: m.name, dependency: cause.id })
+        affected.push(describe(m, d, providers))
         changed = true
+        break
       }
     }
   }
@@ -28,13 +53,10 @@ export function removalImpact(mods, paths) {
     .filter((m) => !unavailable.has(m.path))
     .flatMap((m) =>
       m.dependencies
-        .filter((d) => {
-          const providers = active.filter((p) => p.ids.includes(d.id))
-          return (
-            !d.required && providers.length > 0 && providers.every((p) => unavailable.has(p.path))
-          )
-        })
-        .map((d) => ({ path: m.path, name: m.name, dependency: d.id })),
+        .filter((d) => !d.required)
+        .map((d) => [d, lost(d.id)])
+        .filter(([, providers]) => providers)
+        .map(([d, providers]) => describe(m, d, providers)),
     )
   return {
     affected,

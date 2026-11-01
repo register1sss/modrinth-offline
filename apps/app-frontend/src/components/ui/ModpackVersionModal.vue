@@ -46,7 +46,7 @@ const switchVersion = async (versionId) => {
   <Modal
     ref="modpackVersionModal"
     class="modpack-version-modal"
-    header="Change modpack version"
+    :header="$u3t('Change modpack version')"
     :noblur="!themeStore.advancedRendering"
   >
     <div class="modal-body">
@@ -55,7 +55,7 @@ const switchVersion = async (versionId) => {
           <div class="table-row with-columns table-head">
             <div class="table-cell table-text download-cell" />
             <div class="name-cell table-cell table-text">{{ $u3t('Name') }}</div>
-            <div class="table-cell table-text">Supports</div>
+            <div class="table-cell table-text">{{ $u3t('Supports') }}</div>
           </div>
           <div class="scrollable">
             <div

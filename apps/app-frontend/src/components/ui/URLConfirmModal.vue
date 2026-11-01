@@ -36,7 +36,7 @@ async function install() {
 </script>
 
 <template>
-  <Modal ref="confirmModal" :header="`Install ${project?.title}`">
+  <Modal ref="confirmModal" :header="`${$u3t('Install')} ${project?.title}`">
     <div class="modal-body">
       <SearchCard
         :project="project"
@@ -47,7 +47,7 @@ async function install() {
       <div class="button-row">
         <div class="markdown-body">
           <p>
-            {{ $u3t('Installing') }} <code>{{ version.id }}</code> from Modrinth
+            {{ $u3t('Installing') }} <code>{{ version.id }}</code> {{ $u3t('from Modrinth') }}
           </p>
         </div>
         <div class="button-group">

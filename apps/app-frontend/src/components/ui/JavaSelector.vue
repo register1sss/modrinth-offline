@@ -24,26 +24,26 @@
         @click="reinstallJava"
       >
         <DownloadIcon />
-        {{ installingJava ? 'Installing...' : 'Install recommended' }}
+        {{ installingJava ? $u3t('Installing...') : $u3t('Install recommended') }}
       </Button>
       <Button :disabled="props.disabled" @click="autoDetect">
         <SearchIcon />
-        Auto detect
+        {{ $u3t('Auto detect') }}
       </Button>
       <Button :disabled="props.disabled" @click="handleJavaFileInput()">
         <FolderSearchIcon /> {{ $u3t('Browse') }}
       </Button>
-      <Button v-if="testingJava" disabled> Testing... </Button>
+      <Button v-if="testingJava" disabled> {{ $u3t('Testing...') }} </Button>
       <Button v-else-if="testingJavaSuccess === true">
         <CheckIcon class="test-success" /> {{ $u3t('Success') }}
       </Button>
       <Button v-else-if="testingJavaSuccess === false">
         <XIcon class="test-fail" />
-        Failed
+        {{ $u3t('Failed') }}
       </Button>
       <Button v-else :disabled="props.disabled" @click="testJava">
         <PlayIcon />
-        Test
+        {{ $u3t('Test') }}
       </Button>
     </span>
   </div>

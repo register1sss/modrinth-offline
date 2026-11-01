@@ -1,15 +1,21 @@
 <template>
   <Modal
     ref="incompatibleModal"
-    header="Incompatibility warning"
+    :header="$u3t('Incompatibility warning')"
     :noblur="!themeStore.advancedRendering"
     :on-hide="onInstall"
   >
     <div class="modal-body">
       <p>
-        This {{ versions?.length > 0 ? 'project' : 'version' }} is not compatible with the instance
-        you're trying to install it on. Are you sure you want to continue? Dependencies will not be
-        installed.
+        {{
+          versions?.length > 0
+            ? $u3t(
+                "This project is not compatible with the instance you're trying to install it on. Are you sure you want to continue? Dependencies will not be installed.",
+              )
+            : $u3t(
+                "This version is not compatible with the instance you're trying to install it on. Are you sure you want to continue? Dependencies will not be installed.",
+              )
+        }}
       </p>
       <table>
         <tr class="header">
@@ -17,7 +23,7 @@
           <th>{{ project.title }}</th>
         </tr>
         <tr class="content">
-          <td class="data">{{ instance?.loader }} {{ instance?.game_version }}</td>
+          <td class="data">{{ loaderName(instance?.loader) }} {{ instance?.game_version }}</td>
           <td>
             <DropdownSelect
               v-if="versions?.length > 1"
@@ -47,7 +53,7 @@
       <div class="button-group">
         <Button @click="() => incompatibleModal.hide()"><XIcon /> {{ $u3t('Cancel') }} </Button>
         <Button color="primary" :disabled="installing" @click="install()">
-          <DownloadIcon /> {{ installing ? 'Installing' : 'Install' }}
+          <DownloadIcon /> {{ installing ? $u3t('Installing') : $u3t('Install') }}
         </Button>
       </div>
     </div>
@@ -55,6 +61,7 @@
 </template>
 
 <script setup>
+import { loaderName } from '@/instance-health/names.js'
 import { XIcon, DownloadIcon } from '@modrinth/assets'
 import { Button, Modal, DropdownSelect } from '@modrinth/ui'
 import { formatCategory } from '@modrinth/utils'

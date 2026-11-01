@@ -15,7 +15,7 @@
         :clear-search-on-select="false"
         :show-labels="false"
         :selectable="() => versions.length <= 6"
-        placeholder="Filter loader..."
+        :placeholder="$u3t('Filter loader...')"
         :custom-label="(option) => option.charAt(0).toUpperCase() + option.slice(1)"
       />
       <multiselect
@@ -32,7 +32,7 @@
         :clear-search-on-select="false"
         :show-labels="false"
         :selectable="() => versions.length <= 6"
-        placeholder="Filter versions..."
+        :placeholder="$u3t('Filter versions...')"
         :custom-label="(option) => option.charAt(0).toUpperCase() + option.slice(1)"
       />
       <multiselect
@@ -49,7 +49,7 @@
         :clear-search-on-select="false"
         :show-labels="false"
         :selectable="() => versions.length <= 6"
-        placeholder="Filter release channel..."
+        :placeholder="$u3t('Filter release channel...')"
         :custom-label="(option) => option.charAt(0).toUpperCase() + option.slice(1)"
       />
     </div>
@@ -75,8 +75,8 @@
       <div class="table-row table-head">
         <div class="table-cell table-text download-cell" />
         <div class="name-cell table-cell table-text">{{ $u3t('Name') }}</div>
-        <div class="table-cell table-text">Supports</div>
-        <div class="table-cell table-text">Stats</div>
+        <div class="table-cell table-text">{{ $u3t('Supports') }}</div>
+        <div class="table-cell table-text">{{ $u3t('Stats') }}</div>
       </div>
       <div
         v-for="version in filteredVersions.slice((currentPage - 1) * 20, currentPage * 20)"
@@ -126,10 +126,10 @@
         </div>
         <div class="table-cell table-text stacked-text">
           <div>
-            <span> Published on </span>
+            <span> {{ $u3t('Published on') }} </span>
             <strong>
               {{
-                new Date(version.date_published).toLocaleDateString('en-US', {
+                new Date(version.date_published).toLocaleDateString($u3locale(), {
                   year: 'numeric',
                   month: 'short',
                   day: 'numeric',

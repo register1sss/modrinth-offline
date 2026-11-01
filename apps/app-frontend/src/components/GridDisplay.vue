@@ -232,10 +232,14 @@ const filteredResults = computed(() => {
 <template>
   <ConfirmModal
     ref="confirmModal"
-    title="Are you sure you want to delete this instance?"
-    description="If you proceed, all data for your instance will be removed. You will not be able to recover it."
+    :title="$u3t('Are you sure you want to delete this instance?')"
+    :description="
+      $u3t(
+        'If you proceed, all data for your instance will be removed. You will not be able to recover it.',
+      )
+    "
     :has-to-type="false"
-    proceed-label="Delete"
+    :proceed-label="$u3t('Delete')"
     :noblur="!themeStore.advancedRendering"
     @proceed="deleteProfile"
   />
@@ -254,27 +258,30 @@ const filteredResults = computed(() => {
         class="sort-dropdown"
         name="Sort Dropdown"
         :options="['Name', 'Last played', 'Date created', 'Date modified', 'Game version']"
-        placeholder="Select..."
+        :placeholder="$u3t('Select...')"
+        :display-name="$u3t"
       />
     </div>
     <div class="labeled_button">
-      <span>Filter by</span>
+      <span>{{ $u3t('Filter by') }}</span>
       <DropdownSelect
         v-model="filters"
         class="filter-dropdown"
         name="Filter Dropdown"
         :options="['All profiles', 'Custom instances', 'Downloaded modpacks']"
-        placeholder="Select..."
+        :placeholder="$u3t('Select...')"
+        :display-name="$u3t"
       />
     </div>
     <div class="labeled_button">
-      <span>Group by</span>
+      <span>{{ $u3t('Group by') }}</span>
       <DropdownSelect
         v-model="group"
         class="group-dropdown"
         name="Group Dropdown"
         :options="['Category', 'Loader', 'Game version', 'None']"
-        placeholder="Select..."
+        :placeholder="$u3t('Select...')"
+        :display-name="$u3t"
       />
     </div>
   </Card>
@@ -304,11 +311,11 @@ const filteredResults = computed(() => {
     <template #play> <PlayIcon /> {{ $u3t('Play') }} </template>
     <template #stop> <StopCircleIcon /> {{ $u3t('Stop') }} </template>
     <template #add_content> <PlusIcon /> {{ $u3t('Add content') }} </template>
-    <template #edit> <EyeIcon /> View instance </template>
-    <template #duplicate> <ClipboardCopyIcon /> Duplicate instance</template>
+    <template #edit> <EyeIcon /> {{ $u3t('View instance') }} </template>
+    <template #duplicate> <ClipboardCopyIcon /> {{ $u3t('Duplicate instance') }}</template>
     <template #delete> <TrashIcon /> {{ $u3t('Delete') }} </template>
     <template #open> <FolderOpenIcon /> {{ $u3t('Open folder') }} </template>
-    <template #copy> <ClipboardCopyIcon /> Copy path </template>
+    <template #copy> <ClipboardCopyIcon /> {{ $u3t('Copy path') }} </template>
   </ContextMenu>
 </template>
 <style lang="scss" scoped>

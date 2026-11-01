@@ -1,4 +1,6 @@
 import { ref } from 'vue'
+import dayjs from 'dayjs'
+import 'dayjs/locale/ru'
 import { ru, en } from './messages.js'
 const KEY = 'u3drinth:language:v1'
 let saved
@@ -12,6 +14,7 @@ export function setLanguage(value) {
   if (!['ru', 'en'].includes(value)) return
   language.value = value
   document.documentElement.lang = value
+  dayjs.locale(value)
   try {
     localStorage.setItem(KEY, value)
   } catch {
@@ -20,6 +23,8 @@ export function setLanguage(value) {
 }
 const simple = (value) => String(value).replace(/[\u2013\u2014]/g, '-')
 export const tr = (russian, english) => simple(language.value === 'ru' ? russian : english)
+/** BCP 47 locale for dates and numbers in the current language. */
+export const locale = () => (language.value === 'en' ? 'en-US' : 'ru-RU')
 export function translate(text) {
   const key = String(text).replace(/\s+/g, ' ').trim()
   return simple((language.value === 'ru' ? ru[key] : en[key]) ?? text)
@@ -27,6 +32,7 @@ export function translate(text) {
 export const localization = {
   install(app) {
     app.config.globalProperties.$u3t = translate
+    app.config.globalProperties.$u3locale = locale
   },
 }
 setLanguage(language.value)

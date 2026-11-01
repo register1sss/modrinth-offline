@@ -107,7 +107,7 @@ const install = async (e) => {
         <div class="title-text">
           {{ project.title }}
         </div>
-        <div class="author">by {{ project.author }}</div>
+        <div class="author">{{ $u3t('by') }} {{ project.author }}</div>
       </div>
       <div class="description">
         {{ project.description }}
@@ -115,7 +115,7 @@ const install = async (e) => {
     </Card>
     <Button color="primary" class="install" :disabled="installing" @click="install">
       <DownloadIcon />
-      {{ installing ? 'Installing' : 'Install' }}
+      {{ installing ? $u3t('Installing') : $u3t('Install') }}
     </Button>
   </div>
 </template>

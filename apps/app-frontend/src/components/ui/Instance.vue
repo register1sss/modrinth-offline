@@ -1,4 +1,5 @@
 <script setup>
+import { loaderName } from '@/instance-health/names.js'
 import { onUnmounted, ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { StopCircleIcon, PlayIcon } from '@modrinth/assets'
@@ -96,13 +97,13 @@ onUnmounted(() => unlisten())
       <Avatar
         size="lg"
         :src="props.instance.icon_path ? convertFileSrc(props.instance.icon_path) : null"
-        alt="Mod card"
+        :alt="$u3t('Mod card')"
         class="mod-image"
       />
       <div class="project-info">
         <p class="title">{{ props.instance.name }}</p>
         <p class="description">
-          {{ props.instance.loader }}
+          {{ loaderName(props.instance.loader) }}
           {{ props.instance.game_version }}
         </p>
       </div>

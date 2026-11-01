@@ -107,14 +107,14 @@
         :format-label="(profile) => profile?.name"
       />
       <div class="path-selection">
-        <h3>{{ selectedProfileType.name }} path</h3>
+        <h3>{{ $u3t('Path to') }} {{ selectedProfileType.name }}</h3>
         <div class="path-input">
           <div class="iconified-input">
             <FolderOpenIcon />
             <input
               v-model="selectedProfileType.path"
               type="text"
-              placeholder="Path to launcher"
+              :placeholder="$u3t('Path to launcher')"
               @change="setPath"
             />
             <Button class="r-btn" @click="() => (selectedLauncherPath = '')">
@@ -182,16 +182,16 @@
         >
           {{
             loading
-              ? 'Importing...'
+              ? $u3t('Importing...')
               : Array.from(profiles.values())
                     .flatMap((e) => e)
                     .some((e) => e.selected)
-                ? `Import ${
+                ? `${$u3t('Import')} (${
                     Array.from(profiles.values())
                       .flatMap((e) => e)
                       .filter((e) => e.selected).length
-                  } profiles`
-                : 'Select profiles to import'
+                  })`
+                : $u3t('Select profiles to import')
           }}
         </Button>
         <ProgressBar

@@ -58,7 +58,7 @@ const handleSearchContent = async () => {
       </template>
       <template #from_file>
         <FolderOpenIcon />
-        <span class="no-wrap"> Add from file </span>
+        <span class="no-wrap"> {{ $u3t('Add from file') }} </span>
       </template>
     </OverflowMenu>
   </div>

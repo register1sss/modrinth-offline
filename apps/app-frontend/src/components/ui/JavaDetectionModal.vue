@@ -1,11 +1,15 @@
 <template>
-  <Modal ref="detectJavaModal" header="Select java version" :noblur="!themeStore.advancedRendering">
+  <Modal
+    ref="detectJavaModal"
+    :header="$u3t('Select java version')"
+    :noblur="!themeStore.advancedRendering"
+  >
     <div class="auto-detect-modal">
       <div class="table">
         <div class="table-row table-head">
           <div class="table-cell table-text">{{ $u3t('Version') }}</div>
-          <div class="table-cell table-text">Path</div>
-          <div class="table-cell table-text">Actions</div>
+          <div class="table-cell table-text">{{ $u3t('Path') }}</div>
+          <div class="table-cell table-text">{{ $u3t('Actions') }}</div>
         </div>
         <div v-for="javaInstall in chosenInstallOptions" :key="javaInstall.path" class="table-row">
           <div class="table-cell table-text">
@@ -24,7 +28,7 @@
           </div>
         </div>
         <div v-if="chosenInstallOptions.length === 0" class="table-row entire-row">
-          <div class="table-cell table-text">No java installations found!</div>
+          <div class="table-cell table-text">{{ $u3t('No java installations found!') }}</div>
         </div>
       </div>
       <div class="input-group push-right">

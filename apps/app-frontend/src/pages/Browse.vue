@@ -1,5 +1,5 @@
 <script setup>
-import { computed, nextTick, ref, readonly, shallowRef, watch, onUnmounted } from 'vue'
+import { computed, nextTick, ref, readonly, shallowRef, watch } from 'vue'
 import { ClearIcon, SearchIcon, ClientIcon, ServerIcon, XIcon } from '@modrinth/assets'
 import {
   Pagination,
@@ -549,21 +549,21 @@ const isModProject = computed(() => ['modpack', 'mod'].includes(projectType.valu
         </router-link>
         <Checkbox
           v-model="ignoreInstanceGameVersions"
-          label="Override game versions"
+          :label="$u3t('Override game versions')"
           class="filter-checkbox"
           @update:model-value="onSearchChangeToTop(1)"
           @click.prevent.stop
         />
         <Checkbox
           v-model="ignoreInstanceLoaders"
-          label="Override loaders"
+          :label="$u3t('Override loaders')"
           class="filter-checkbox"
           @update:model-value="onSearchChangeToTop(1)"
           @click.prevent.stop
         />
         <Checkbox
           v-model="hideAlreadyInstalled"
-          label="Hide already installed"
+          :label="$u3t('Hide already installed')"
           class="filter-checkbox"
           @update:model-value="onSearchChangeToTop(1)"
           @click.prevent.stop
@@ -587,7 +587,7 @@ const isModProject = computed(() => ['modpack', 'mod'].includes(projectType.valu
           v-if="(isModProject && ignoreInstanceLoaders) || projectType === 'shader'"
           class="loaders"
         >
-          <h2>Loaders</h2>
+          <h2>{{ $u3t('Loaders') }}</h2>
           <div v-for="loader in filteredLoaders" :key="loader">
             <SearchFilter
               :active-filters="orFacets"
@@ -600,8 +600,12 @@ const isModProject = computed(() => ['modpack', 'mod'].includes(projectType.valu
           </div>
         </div>
         <div v-if="showVersions" class="versions">
-          <h2>Minecraft versions</h2>
-          <Checkbox v-model="showSnapshots" class="filter-checkbox" label="Include snapshots" />
+          <h2>{{ $u3t('Minecraft versions') }}</h2>
+          <Checkbox
+            v-model="showSnapshots"
+            class="filter-checkbox"
+            :label="$u3t('Include snapshots')"
+          />
           <multiselect
             v-model="selectedVersions"
             :options="
@@ -617,7 +621,7 @@ const isModProject = computed(() => ['modpack', 'mod'].includes(projectType.valu
             :close-on-select="false"
             :clear-search-on-select="false"
             :show-labels="false"
-            placeholder="Choose versions..."
+            :placeholder="$u3t('Choose versions...')"
             @update:model-value="onSearchChangeToTop(1)"
           />
         </div>
@@ -639,7 +643,7 @@ const isModProject = computed(() => ['modpack', 'mod'].includes(projectType.valu
           </div>
         </div>
         <div v-if="isModProject" class="environment">
-          <h2>Environments</h2>
+          <h2>{{ $u3t('Environments') }}</h2>
           <SearchFilter
             :active-filters="selectedEnvironments"
             display-name="Client"
@@ -660,10 +664,10 @@ const isModProject = computed(() => ['modpack', 'mod'].includes(projectType.valu
           </SearchFilter>
         </div>
         <div class="open-source">
-          <h2>Open source</h2>
+          <h2>{{ $u3t('Open source') }}</h2>
           <Checkbox
             v-model="onlyOpenSource"
-            label="Open source only"
+            :label="$u3t('Open source only')"
             class="filter-checkbox"
             @update:model-value="onSearchChangeToTop(1)"
           />
@@ -682,7 +686,7 @@ const isModProject = computed(() => ['modpack', 'mod'].includes(projectType.valu
             autocomplete="off"
             spellcheck="false"
             type="text"
-            :placeholder="`Search ${projectType}s...`"
+            :placeholder="$u3t('Search...')"
             @input="debouncedSearchChange()"
           />
           <Button class="r-btn" @click="() => clearSearch()">
@@ -700,7 +704,7 @@ const isModProject = computed(() => ['modpack', 'mod'].includes(projectType.valu
           />
         </div>
         <div class="inline-option">
-          <span>Show per page</span>
+          <span>{{ $u3t('Show per page') }}</span>
           <DropdownSelect
             v-model="maxResults"
             name="Max results"

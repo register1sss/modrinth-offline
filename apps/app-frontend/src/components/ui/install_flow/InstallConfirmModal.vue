@@ -54,16 +54,22 @@ async function install() {
 <template>
   <Modal
     ref="confirmModal"
-    header="Are you sure?"
+    :header="$u3t('Are you sure?')"
     :noblur="!themeStore.advancedRendering"
     :on-hide="onInstall"
   >
     <div class="modal-body">
-      <p>You already have this modpack installed. Are you sure you want to install it again?</p>
+      <p>
+        {{
+          $u3t(
+            'You already have this modpack installed. Are you sure you want to install it again?',
+          )
+        }}
+      </p>
       <div class="input-group push-right">
         <Button @click="() => $refs.confirmModal.hide()"><XIcon /> {{ $u3t('Cancel') }} </Button>
         <Button color="primary" :disabled="installing" @click="install()"
-          ><DownloadIcon /> {{ installing ? 'Installing' : 'Install' }}</Button
+          ><DownloadIcon /> {{ installing ? $u3t('Installing') : $u3t('Install') }}</Button
         >
       </div>
     </div>

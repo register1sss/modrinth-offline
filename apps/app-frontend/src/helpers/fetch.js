@@ -1,3 +1,4 @@
+import { tr } from '@/i18n/index.js'
 import { ofetch } from 'ofetch'
 import { handleError } from '@/store/state.js'
 import { getVersion } from '@tauri-apps/api/app'
@@ -11,7 +12,7 @@ export const useFetch = async (url, item, isSilent) => {
     })
   } catch (err) {
     if (!isSilent) {
-      handleError({ message: `Error fetching ${item}` })
+      handleError({ message: tr(`Не удалось загрузить: ${item}`, `Error fetching ${item}`) })
     }
     console.error(err)
   }

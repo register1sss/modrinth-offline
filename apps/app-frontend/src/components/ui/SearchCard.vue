@@ -17,7 +17,7 @@
     <div class="content-wrapper">
       <div class="title joined-text">
         <h2>{{ project.title }}</h2>
-        <span v-if="project.author">by {{ project.author }}</span>
+        <span v-if="project.author">{{ $u3t('by') }} {{ project.author }}</span>
       </div>
       <div class="description">
         {{ project.description }}
@@ -37,7 +37,7 @@
     <div class="stats button-group">
       <div v-if="featured" class="badge">
         <StarIcon />
-        Featured
+        {{ $u3t('Featured') }}
       </div>
       <div class="badge">
         <DownloadIcon />
@@ -56,7 +56,7 @@
       <Button color="primary" :disabled="installed || installing" @click.stop="install()">
         <DownloadIcon v-if="!installed" />
         <CheckIcon v-else />
-        {{ installing ? 'Installing' : installed ? 'Installed' : 'Install' }}
+        {{ installing ? $u3t('Installing') : installed ? $u3t('Installed') : $u3t('Install') }}
       </Button>
     </div>
   </Card>

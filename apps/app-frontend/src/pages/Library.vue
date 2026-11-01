@@ -71,7 +71,7 @@ onUnmounted(() => {
     </details>
     <Button :disabled="refreshing" @click="refresh">{{ tr('Повторить', 'Retry') }}</Button>
   </section>
-  <GridDisplay v-if="instances.length > 0" label="Instances" :instances="instances" />
+  <GridDisplay v-if="instances.length > 0" :label="$u3t('Instances')" :instances="instances" />
   <div v-else-if="!error" class="no-instance">
     <div class="icon">
       <NewInstanceImage />

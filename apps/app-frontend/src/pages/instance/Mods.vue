@@ -7,16 +7,14 @@
         default-value="All"
         name="project-type-dropdown"
         color="primary"
+        :display-name="$u3t"
       />
       <div class="iconified-input">
         <SearchIcon />
         <input
           v-model="searchFilter"
           type="text"
-          :placeholder="`Search ${search.length} ${(['All', 'Other'].includes(selectedProjectType)
-            ? 'projects'
-            : selectedProjectType.toLowerCase()
-          ).slice(0, search.length === 1 ? -1 : 64)}...`"
+          :placeholder="searchPlaceholder"
           class="text-input"
           autocomplete="off"
         />
@@ -32,11 +30,11 @@
       @click="modpackVersionModal.show()"
     >
       <UpdatedIcon />
-      {{ installing ? 'Updating' : 'Update modpack' }}
+      {{ installing ? $u3t('Updating') : $u3t('Update modpack') }}
     </Button>
     <Button v-else-if="!isPackLocked" @click="exportModal.show()">
       <PackageIcon />
-      Export modpack
+      {{ $u3t('Export modpack') }}
     </Button>
     <Button v-if="!isPackLocked && projects.some((m) => m.outdated)" @click="updateAll">
       <UpdatedIcon /> {{ $u3t('Update all') }}
@@ -71,7 +69,7 @@
         </div>
         <div v-if="selected.length === 0" class="table-cell table-text actions-cell">
           <Button class="transparent" @click="sortProjects('Enabled')">
-            Actions
+            {{ $u3t('Actions') }}
             <DropdownIcon v-if="sortColumn === 'Enabled'" :class="{ down: ascending }" />
           </Button>
         </div>
@@ -92,17 +90,17 @@
           >
             <ShareIcon /> {{ $u3t('Share') }}
           </Button>
-          <div v-tooltip="isPackLocked ? 'Unlock this instance to remove mods' : ''">
+          <div v-tooltip="isPackLocked ? $u3t('Unlock this instance to remove mods') : ''">
             <Button
               :disabled="isPackLocked"
               class="transparent trash"
-              @click="deleteWarning.show()"
+              @click="deleteSelected"
               @mouseover="selectedOption = 'Delete'"
             >
               <TrashIcon /> {{ $u3t('Delete') }}
             </Button>
           </div>
-          <div v-tooltip="isPackLocked ? 'Unlock this instance to update mods' : ''">
+          <div v-tooltip="isPackLocked ? $u3t('Unlock this instance to update mods') : ''">
             <Button
               :disabled="isPackLocked || offline"
               class="transparent update"
@@ -112,7 +110,7 @@
               <UpdatedIcon /> {{ $u3t('Update') }}
             </Button>
           </div>
-          <div v-tooltip="isPackLocked ? 'Unlock this instance to toggle mods' : ''">
+          <div v-tooltip="isPackLocked ? $u3t('Unlock this instance to toggle mods') : ''">
             <Button
               :disabled="isPackLocked"
               class="transparent"
@@ -120,7 +118,7 @@
               @mouseover="selectedOption = 'Toggle'"
             >
               <ToggleIcon />
-              Toggle
+              {{ $u3t('Toggle') }}
             </Button>
           </div>
         </div>
@@ -129,29 +127,29 @@
         <section v-if="selectedOption === 'Share'" class="options">
           <Button class="transparent" @click="shareNames()">
             <TextInputIcon />
-            Share names
+            {{ $u3t('Share names') }}
           </Button>
           <Button class="transparent" @click="shareUrls()">
             <GlobeIcon />
-            Share URLs
+            {{ $u3t('Share URLs') }}
           </Button>
           <Button class="transparent" @click="shareFileNames()">
             <FileIcon />
-            Share file names
+            {{ $u3t('Share file names') }}
           </Button>
           <Button class="transparent" @click="shareMarkdown()">
             <CodeIcon />
-            Share as markdown
+            {{ $u3t('Share as markdown') }}
           </Button>
         </section>
         <section v-if="selectedOption === 'Delete'" class="options">
-          <Button class="transparent" @click="deleteWarning.show()">
+          <Button class="transparent" @click="deleteSelected">
             <TrashIcon />
-            Delete selected
+            {{ $u3t('Delete selected') }}
           </Button>
-          <Button class="transparent" @click="deleteDisabledWarning.show()">
+          <Button class="transparent" @click="deleteDisabled">
             <ToggleIcon />
-            Delete disabled
+            {{ $u3t('Delete disabled') }}
           </Button>
         </section>
         <section v-if="selectedOption === 'Update'" class="options">
@@ -160,22 +158,22 @@
           </Button>
           <Button class="transparent" @click="selectUpdatable()">
             <CheckIcon />
-            Select updatable
+            {{ $u3t('Select updatable') }}
           </Button>
         </section>
         <section v-if="selectedOption === 'Toggle'" class="options">
           <Button class="transparent" @click="enableAll()">
             <CheckIcon />
-            Toggle on
+            {{ $u3t('Toggle on') }}
           </Button>
           <Button class="transparent" @click="disableAll()">
             <XIcon />
-            Toggle off
+            {{ $u3t('Toggle off') }}
           </Button>
           <Button class="transparent" @click="hideShowAll()">
             <EyeIcon v-if="hideNonSelected" />
             <EyeOffIcon v-else />
-            {{ hideNonSelected ? 'Show' : 'Hide' }} untoggled
+            {{ hideNonSelected ? $u3t('Show unselected') : $u3t('Hide unselected') }}
           </Button>
         </section>
       </div>
@@ -200,21 +198,29 @@
             class="mod-content"
           >
             <Avatar :src="mod.icon" />
-            <div v-tooltip="`${mod.name} by ${mod.author}`" class="mod-text">
+            <div v-tooltip="mod.author ? `${mod.name} (${mod.author})` : mod.name" class="mod-text">
               <div class="title">{{ mod.name }}</div>
-              <span class="no-wrap">by {{ mod.author }}</span>
+              <span class="no-wrap">{{ $u3t('by') }} {{ mod.author }}</span>
             </div>
           </router-link>
           <div v-else class="mod-content">
             <Avatar :src="mod.icon" />
-            <span v-tooltip="`${mod.name}`" class="title">{{ mod.name }}</span>
+            <div v-if="mod.manifest" v-tooltip="mod.file_name" class="mod-text">
+              <div class="title">{{ mod.name }}</div>
+              <span class="no-wrap file-line">{{ mod.file_name }}</span>
+            </div>
+            <span v-else v-tooltip="`${mod.name}`" class="title">{{ mod.name }}</span>
           </div>
         </div>
         <div class="table-cell table-text version">
-          <span v-tooltip="`${mod.version}`">{{ mod.version }}</span>
+          <span v-tooltip="mod.version || ''">{{ mod.version }}</span>
         </div>
         <div class="table-cell table-text manage">
-          <div v-tooltip="isPackLocked ? 'Unlock this instance to remove mods.' : 'Remove project'">
+          <div
+            v-tooltip="
+              isPackLocked ? $u3t('Unlock this instance to remove mods.') : $u3t('Remove project')
+            "
+          >
             <Button :disabled="isPackLocked" icon-only @click="removeMod(mod)">
               <TrashIcon />
             </Button>
@@ -222,7 +228,9 @@
           <AnimatedLogo v-if="mod.updating" class="btn icon-only updating-indicator" />
           <div
             v-else
-            v-tooltip="isPackLocked ? 'Unlock this instance to update mods.' : 'Update project'"
+            v-tooltip="
+              isPackLocked ? $u3t('Unlock this instance to update mods.') : $u3t('Update project')
+            "
           >
             <Button
               :disabled="!mod.outdated || offline || isPackLocked"
@@ -233,7 +241,7 @@
               <CheckIcon v-else />
             </Button>
           </div>
-          <div v-tooltip="isPackLocked ? 'Unlock this instance to toggle mods.' : ''">
+          <div v-tooltip="isPackLocked ? $u3t('Unlock this instance to toggle mods.') : ''">
             <input
               id="switch-1"
               :disabled="isPackLocked"
@@ -245,7 +253,7 @@
             />
           </div>
           <Button
-            v-tooltip="`Show ${mod.file_name}`"
+            v-tooltip="`${$u3t('Show in folder')}: ${mod.file_name}`"
             icon-only
             @click="highlightModInProfile(instance.path, mod.path)"
           >
@@ -259,8 +267,8 @@
     <div class="empty-icon">
       <AddProjectImage />
     </div>
-    <h3>No projects found</h3>
-    <p class="empty-subtitle">Add a project to get started</p>
+    <h3>{{ $u3t('No projects found') }}</h3>
+    <p class="empty-subtitle">{{ $u3t('Add a project to get started') }}</p>
     <AddContentButton :instance="instance" />
   </div>
   <Pagination
@@ -271,93 +279,114 @@
     :link-function="(page) => `?page=${page}`"
     @switch-page="switchPage"
   />
-  <Modal ref="deleteWarning" header="Are you sure?">
-    <div class="modal-body">
-      <div class="markdown-body">
-        <p>
-          Are you sure you want to remove
-          <strong>{{ functionValues.length }} project(s)</strong> from {{ instance.name }}?
-          <br />
-          This action <strong>cannot</strong> be undone.
-        </p>
-      </div>
-      <div class="button-group push-right">
-        <Button @click="deleteWarning.hide()"> {{ $u3t('Cancel') }} </Button>
-        <Button color="danger" @click="deleteSelected"> <TrashIcon /> {{ $u3t('Remove') }} </Button>
-      </div>
-    </div>
-  </Modal>
-  <Modal ref="deleteDisabledWarning" header="Are you sure?">
-    <div class="modal-body">
-      <div class="markdown-body">
-        <p>
-          Are you sure you want to remove
-          <strong
-            >{{ Array.from(projects.values()).filter((x) => x.disabled).length }} disabled
-            project(s)</strong
-          >
-          from {{ instance.name }}?
-          <br />
-          This action <strong>cannot</strong> be undone.
-        </p>
-      </div>
-      <div class="button-group push-right">
-        <Button @click="deleteDisabledWarning.hide()"> {{ $u3t('Cancel') }} </Button>
-        <Button color="danger" @click="deleteDisabled"> <TrashIcon /> {{ $u3t('Remove') }} </Button>
-      </div>
-    </div>
-  </Modal>
-  <Modal ref="removalDialog" header="Последствия удаления">
-    <div class="universal-modal">
-      <p>Будут удалены: {{ pendingRemoval.map((m) => m.name).join(', ') }}.</p>
+  <Modal ref="removalDialog" :header="tr('Удаление файлов', 'Remove files')">
+    <div class="universal-modal removal-dialog">
       <p>
-        Дерево строится по локальным манифестам. Проверка не гарантирует совместимость версий и не
-        учитывает все динамические зависимости.
+        {{
+          pendingRemoval.length > 1
+            ? tr(
+                `Будут удалены (${pendingRemoval.length}):`,
+                `Will be removed (${pendingRemoval.length}):`,
+              )
+            : tr('Будет удалён:', 'Will be removed:')
+        }}
+        <strong>{{ pendingRemoval.map((m) => quoteName(removalTitle(m))).join(', ') }}</strong>
       </p>
-      <h4>Могут перестать запускаться</h4>
-      <ul>
-        <li v-for="m in impact.affected" :key="m.path">
-          {{ m.name }} → обязательная зависимость {{ m.dependency }}
-        </li>
-      </ul>
-      <p v-if="!impact.affected.length">
-        По известным обязательным зависимостям затронутых модов не найдено.
-      </p>
-      <h4 v-if="impact.optional.length">Необязательные функции могут пропасть</h4>
-      <ul>
-        <li v-for="(m, i) in impact.optional" :key="i">{{ m.name }} → {{ m.dependency }}</li>
-      </ul>
-      <details v-if="impact.incomplete.length">
-        <summary>Есть неполные сведения о зависимостях</summary>
+      <template v-if="impact.affected.length">
+        <h4 class="removal-danger">
+          {{ tr('Эти моды перестанут запускаться:', 'These mods will stop working:') }}
+        </h4>
         <ul>
-          <li v-for="path in impact.incomplete" :key="path">{{ path }}</li>
+          <li v-for="m in impact.affected" :key="m.path">
+            {{
+              tr(
+                `${quoteName(m.name)}: нужен ${quoteName(m.dependencyName)}`,
+                `${quoteName(m.name)}: needs ${quoteName(m.dependencyName)}`,
+              )
+            }}
+          </li>
+        </ul>
+      </template>
+      <p v-else-if="removalGraph.length" class="removal-ok">
+        {{
+          tr(
+            'Другие установленные моды от этих файлов не зависят.',
+            'No other installed mod depends on these files.',
+          )
+        }}
+      </p>
+      <template v-if="impact.optional.length">
+        <h4>
+          {{
+            tr('Запустятся, но потеряют часть функций:', 'Will still work, but lose some features:')
+          }}
+        </h4>
+        <ul>
+          <li v-for="(m, i) in impact.optional" :key="i">
+            {{
+              tr(
+                `${quoteName(m.name)}: работает вместе с ${quoteName(m.dependencyName)}`,
+                `${quoteName(m.name)}: works together with ${quoteName(m.dependencyName)}`,
+              )
+            }}
+          </li>
+        </ul>
+      </template>
+      <details v-if="impact.incomplete.length" class="removal-unknown">
+        <summary>
+          {{
+            tr(
+              `У ${impact.incomplete.length} ${pluralFiles(impact.incomplete.length)} не удалось прочитать зависимости`,
+              `Dependencies of ${impact.incomplete.length} ${impact.incomplete.length === 1 ? 'file' : 'files'} could not be read`,
+            )
+          }}
+        </summary>
+        <ul>
+          <li v-for="path in impact.incomplete" :key="path">{{ path.split('/').pop() }}</li>
         </ul>
       </details>
-      <Checkbox
-        v-if="impact.affected.length"
-        v-model="removeDependents"
-        label="Также удалить перечисленные зависимые моды"
-      />
-      <Checkbox
-        v-model="removalAcknowledged"
-        label="Понимаю последствия и подтверждаю удаление файлов"
-      />
-      <p v-if="removalError" role="alert">{{ removalError }}</p>
+      <p v-if="removalGraph.length" class="removal-note">
+        {{
+          tr(
+            'Связи взяты из описаний внутри файлов модов. Часть зависимостей загрузчик проверяет только при запуске игры.',
+            'Links come from the descriptions inside mod files. The loader checks some dependencies only when the game starts.',
+          )
+        }}
+      </p>
+      <template v-if="impact.affected.length">
+        <Checkbox
+          v-model="removeDependents"
+          :label="tr('Удалить и эти моды тоже', 'Remove these mods too')"
+        />
+        <Checkbox
+          v-model="removalAcknowledged"
+          :label="
+            tr(
+              'Понимаю, что часть модов перестанет работать',
+              'I understand that some mods will stop working',
+            )
+          "
+        />
+      </template>
+      <p v-if="removalError" role="alert" class="removal-danger">{{ removalError }}</p>
       <div class="button-group">
-        <Button :disabled="removalBusy" @click="removalDialog.hide()">Отмена</Button>
+        <Button :disabled="removalBusy" @click="removalDialog.hide()">{{
+          tr('Отмена', 'Cancel')
+        }}</Button>
         <Button
           color="danger"
-          :disabled="removalBusy || !removalAcknowledged || playing"
+          :disabled="removalBusy || (needsAcknowledge && !removalAcknowledged) || playing"
           @click="confirmRemoval"
-          >{{ removalBusy ? 'Удаление...' : 'Удалить' }}</Button
+          ><TrashIcon />
+          {{ removalBusy ? tr('Удаление...', 'Removing...') : tr('Удалить', 'Remove') }}</Button
         >
       </div>
     </div>
   </Modal>
   <ShareModal
     ref="shareModal"
-    share-title="Sharing modpack content"
-    share-text="Check out the projects I'm using in my modpack!"
+    :share-title="$u3t('Sharing modpack content')"
+    :share-text="$u3t('Check out the projects I\'m using in my modpack!')"
     :open-in-new-tab="false"
   />
   <ExportModal v-if="projects.length > 0" ref="exportModal" :instance="instance" />
@@ -423,6 +452,8 @@ import {
 import { profile_listener } from '@/helpers/events.js'
 import { health } from '@/instance-health/api.js'
 import { removalImpact, normalizePath } from '@/instance-health/model.js'
+import { modTitle } from '@/instance-health/dependencies.js'
+import { language, tr } from '@/i18n/index.js'
 
 const props = defineProps({
   playing: Boolean,
@@ -476,6 +507,44 @@ const exportModal = ref(null)
 
 const projects = ref([])
 const selectionMap = ref(new Map())
+// Names and versions from mod manifests, for files that are not Modrinth projects.
+const manifestInfo = new Map()
+const manifestKey = (path) => normalizePath(path).replace(/\.disabled$/i, '')
+const needsManifest = (m) =>
+  !m.slug &&
+  normalizePath(m.path).startsWith('mods/') &&
+  /\.jar(\.disabled)?$/i.test(m.path) &&
+  !manifestInfo.has(manifestKey(m.path))
+let manifestRequest = null
+function loadManifestInfo() {
+  if (manifestRequest) return manifestRequest
+  manifestRequest = health('inventory', props.instance.path)
+    .then((list) => {
+      for (const m of list || []) {
+        const raw = String(m.name ?? '').trim()
+        const real = raw && !/[\\/]/.test(raw) && !/\.(jar|disabled|zip|txt)$/i.test(raw)
+        manifestInfo.set(manifestKey(m.path), {
+          name: real ? modTitle(m) : null,
+          version: m.version || null,
+        })
+      }
+      for (const project of projects.value) {
+        const info = !project.slug && manifestInfo.get(manifestKey(project.path))
+        if (!info) continue
+        if (info.name) {
+          project.name = info.name
+          project.manifest = true
+        }
+        if (info.version && !project.version) project.version = info.version
+      }
+    })
+    // Names are a convenience: on failure the list keeps file names.
+    .catch(() => {})
+    .finally(() => {
+      manifestRequest = null
+    })
+  return manifestRequest
+}
 
 const initProjects = async () => {
   const newProjects = []
@@ -530,11 +599,13 @@ const initProjects = async () => {
         id: project.id,
       })
     } else {
+      const info = manifestInfo.get(manifestKey(path))
       newProjects.push({
         path,
-        name: file.file_name.replace('.disabled', ''),
+        name: info?.name || file.file_name.replace('.disabled', ''),
+        manifest: !!info?.name,
         author: '',
-        version: null,
+        version: info?.version || null,
         file_name: file.file_name,
         icon: null,
         disabled: file.file_name.endsWith('.disabled'),
@@ -545,6 +616,7 @@ const initProjects = async () => {
   }
 
   projects.value = newProjects
+  if (newProjects.some((m) => needsManifest(m))) loadManifestInfo()
 
   const newSelectionMap = new Map()
   for (const project of projects.value) {
@@ -566,8 +638,6 @@ const installing = computed(() => props.instance.install_stage !== 'installed')
 const searchFilter = ref('')
 const selectAll = ref(false)
 const selectedProjectType = ref('All')
-const deleteWarning = ref(null)
-const deleteDisabledWarning = ref(null)
 const hideNonSelected = ref(false)
 const selectedOption = ref('Share')
 const shareModal = ref(null)
@@ -606,8 +676,12 @@ const search = computed(() => {
   const projectType = selectableProjectTypes.value[selectedProjectType.value]
   const filtered = projects.value
     .filter((mod) => {
+      const needle = searchFilter.value.toLowerCase()
       return (
-        mod.name.toLowerCase().includes(searchFilter.value.toLowerCase()) &&
+        (mod.name.toLowerCase().includes(needle) ||
+          String(mod.file_name ?? '')
+            .toLowerCase()
+            .includes(needle)) &&
         (projectType === 'all' || mod.project_type === projectType)
       )
     })
@@ -655,13 +729,11 @@ const updateSort = (projects) => {
       })
     default:
       return projects.slice().sort((a, b) => {
-        if (a.name < b.name) {
-          return ascending.value ? -1 : 1
-        }
-        if (a.name > b.name) {
-          return ascending.value ? 1 : -1
-        }
-        return 0
+        const order = String(a.name).localeCompare(String(b.name), undefined, {
+          sensitivity: 'base',
+          numeric: true,
+        })
+        return ascending.value ? order : -order
       })
   }
 }
@@ -778,11 +850,34 @@ const removeDependents = ref(false)
 const removalAcknowledged = ref(false)
 const removalBusy = ref(false)
 const removalError = ref('')
+const needsAcknowledge = computed(() => impact.value.affected.length > 0)
+const searchPlaceholder = computed(() => {
+  const n = search.value.length
+  if (language.value !== 'en') {
+    const one = n % 10 === 1 && n % 100 !== 11
+    return `Поиск среди ${n} ${one ? 'проекта' : 'проектов'}...`
+  }
+  const type = ['All', 'Other'].includes(selectedProjectType.value)
+    ? 'projects'
+    : selectedProjectType.value.toLowerCase()
+  return `Search ${n} ${n === 1 ? type.replace(/s$/, '') : type}...`
+})
+const pluralFiles = (n) => (n % 10 === 1 && n % 100 !== 11 ? 'файла' : 'файлов')
+/** Manifest name from the inventory when the file is not a Modrinth project. */
+const removalTitle = (item) => {
+  const entry = removalGraph.value.find((m) => normalizePath(m.path) === normalizePath(item.path))
+  return entry && !item.slug ? modTitle(entry) : item.name
+}
+const quoteName = (value) => (language.value === 'en' ? `"${value}"` : `«${value}»`)
 async function requestRemoval(items) {
   if (!items.length || removalBusy.value) return
   removalError.value = ''
   if (props.playing) {
-    handleError(new Error('Останови экземпляр перед удалением файлов.'))
+    handleError(
+      new Error(
+        tr('Сначала закрой игру, потом удаляй файлы.', 'Close the game before removing files.'),
+      ),
+    )
     return
   }
   pendingRemoval.value = [...items]
@@ -797,8 +892,6 @@ async function requestRemoval(items) {
       removalGraph.value,
       items.map((m) => m.path),
     )
-    deleteWarning.value.hide()
-    deleteDisabledWarning.value.hide()
     removalDialog.value.show()
   } catch (e) {
     handleError(e)
@@ -807,7 +900,8 @@ async function requestRemoval(items) {
   }
 }
 async function confirmRemoval() {
-  if (removalBusy.value || !removalAcknowledged.value || props.playing) return
+  if (removalBusy.value || (needsAcknowledge.value && !removalAcknowledged.value) || props.playing)
+    return
   removalBusy.value = true
   removalError.value = ''
   try {
@@ -821,7 +915,10 @@ async function confirmRemoval() {
         )
         removalAcknowledged.value = false
         throw new Error(
-          'Список файлов изменился. Проверь обновлённые последствия и подтверди ещё раз.',
+          tr(
+            'Пока окно было открыто, файлы изменились. Проверь список ещё раз.',
+            'Files changed while this window was open. Check the list again.',
+          ),
         )
       }
     }
@@ -832,8 +929,6 @@ async function confirmRemoval() {
     // Remove one at a time and refresh even after a partial failure. No hidden success.
     for (const path of paths) await remove_project(props.instance.path, path)
     removalDialog.value.hide()
-    deleteWarning.value.hide()
-    deleteDisabledWarning.value.hide()
   } catch (e) {
     removalError.value = String(e?.message || e)
   } finally {
@@ -947,6 +1042,39 @@ onUnmounted(() => {
 </script>
 
 <style scoped lang="scss">
+.removal-dialog {
+  display: grid;
+  gap: 0.6rem;
+  padding: var(--gap-lg);
+  p,
+  h4,
+  ul {
+    margin: 0;
+  }
+  ul {
+    padding-left: 1.2rem;
+  }
+  .removal-danger {
+    color: var(--color-red);
+  }
+  .removal-ok {
+    color: var(--color-green);
+  }
+  .removal-note,
+  .removal-unknown summary {
+    color: var(--color-secondary);
+    font-size: 0.9rem;
+  }
+  .removal-unknown summary {
+    cursor: pointer;
+  }
+  .button-group {
+    display: flex;
+    gap: 0.6rem;
+    justify-content: flex-end;
+    margin-top: 0.4rem;
+  }
+}
 .text-input {
   width: 100%;
 }
@@ -1130,11 +1258,19 @@ onUnmounted(() => {
   .mod-text {
     display: flex;
     flex-direction: column;
+    min-width: 0;
   }
 
   .title {
     color: var(--color-contrast);
     font-weight: bolder;
+  }
+
+  .file-line {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--color-secondary);
+    font-size: 0.85rem;
   }
 }
 

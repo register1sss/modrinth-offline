@@ -5,11 +5,13 @@
         <Avatar size="lg" :src="instance.icon_path ? convertFileSrc(instance.icon_path) : null" />
         <div class="instance-info">
           <h2 class="name">{{ instance.name }}</h2>
-          <span class="metadata"> {{ instance.loader }} {{ instance.game_version }} </span>
+          <span class="metadata">
+            {{ loaderName(instance.loader) }} {{ instance.game_version }}
+          </span>
         </div>
         <span class="button-group">
           <Button v-if="instance.install_stage !== 'installed'" disabled class="instance-button">
-            Installing...
+            {{ $u3t('Installing...') }}
           </Button>
           <Button
             v-else-if="playing === true"
@@ -35,24 +37,24 @@
             {{ $u3t('Loading...') }}
           </Button>
           <Button
-            v-tooltip="'Open instance folder'"
+            v-tooltip="$u3t('Open instance folder')"
             class="instance-button"
             @click="showProfileInFolder(instance.path)"
           >
             <FolderOpenIcon />
-            Folder
+            {{ $u3t('Folder') }}
           </Button>
         </span>
         <hr class="card-divider" />
         <div class="pages-list">
-          <RouterLink :to="`/instance/${encodeURIComponent($route.params.id)}/health`" class="btn"
-            ><SettingsIcon /> Диагностика</RouterLink
-          >
           <RouterLink :to="`/instance/${encodeURIComponent($route.params.id)}/`" class="btn">
             <BoxIcon /> {{ $u3t('Content') }}
           </RouterLink>
           <RouterLink :to="`/instance/${encodeURIComponent($route.params.id)}/logs`" class="btn">
             <FileIcon /> {{ $u3t('Logs') }}
+          </RouterLink>
+          <RouterLink :to="`/instance/${encodeURIComponent($route.params.id)}/health`" class="btn">
+            <ShieldIcon /> {{ $u3t('Diagnostics') }}
           </RouterLink>
           <RouterLink :to="`/instance/${encodeURIComponent($route.params.id)}/options`" class="btn">
             <SettingsIcon /> {{ $u3t('Options') }}
@@ -83,23 +85,24 @@
     <template #stop> <StopCircleIcon /> {{ $u3t('Stop') }} </template>
     <template #add_content> <PlusIcon /> {{ $u3t('Add Content') }} </template>
     <template #edit> <EditIcon /> {{ $u3t('Edit') }} </template>
-    <template #copy_path> <ClipboardCopyIcon /> Copy Path </template>
+    <template #copy_path> <ClipboardCopyIcon /> {{ $u3t('Copy Path') }} </template>
     <template #open_folder> <ClipboardCopyIcon /> {{ $u3t('Open Folder') }} </template>
-    <template #copy_link> <ClipboardCopyIcon /> Copy Link </template>
+    <template #copy_link> <ClipboardCopyIcon /> {{ $u3t('Copy Link') }} </template>
     <template #open_link>
       <ClipboardCopyIcon /> {{ $u3t('Open In Modrinth') }} <ExternalIcon />
     </template>
-    <template #copy_names><EditIcon />Copy names</template>
-    <template #copy_slugs><HashIcon />Copy slugs</template>
-    <template #copy_links><GlobeIcon />Copy Links</template>
-    <template #toggle><EditIcon />Toggle selected</template>
-    <template #disable><XIcon />Disable selected</template>
-    <template #enable><CheckCircleIcon />Enable selected</template>
-    <template #hide_show><EyeIcon />Show/Hide unselected</template>
+    <template #copy_names><EditIcon />{{ $u3t('Copy names') }}</template>
+    <template #copy_slugs><HashIcon />{{ $u3t('Copy slugs') }}</template>
+    <template #copy_links><GlobeIcon />{{ $u3t('Copy Links') }}</template>
+    <template #toggle><EditIcon />{{ $u3t('Toggle selected') }}</template>
+    <template #disable><XIcon />{{ $u3t('Disable selected') }}</template>
+    <template #enable><CheckCircleIcon />{{ $u3t('Enable selected') }}</template>
+    <template #hide_show><EyeIcon />{{ $u3t('Show/Hide unselected') }}</template>
     <template #update_all
-      ><UpdatedIcon /> {{ $u3t('Update') }} {{ selected.length > 0 ? 'selected' : 'all' }}</template
+      ><UpdatedIcon />
+      {{ selected.length > 0 ? $u3t('Update selected') : $u3t('Update all') }}</template
     >
-    <template #filter_update><UpdatedIcon />Select Updatable</template>
+    <template #filter_update><UpdatedIcon />{{ $u3t('Select Updatable') }}</template>
   </ContextMenu>
 </template>
 <script setup>
@@ -121,6 +124,7 @@ import {
   XIcon,
   CheckCircleIcon,
   UpdatedIcon,
+  ShieldIcon,
 } from '@modrinth/assets'
 import { get, kill, run } from '@/helpers/profile'
 import { get_by_profile_path } from '@/helpers/process'
@@ -132,7 +136,7 @@ import { showProfileInFolder } from '@/helpers/utils.js'
 import ContextMenu from '@/components/ui/ContextMenu.vue'
 import { mixpanel_track } from '@/helpers/mixpanel'
 import { convertFileSrc } from '@tauri-apps/api/tauri'
-import { useFetch } from '@/helpers/fetch'
+import { loaderName } from '@/instance-health/names.js'
 import { handleSevereError } from '@/store/error.js'
 import { get_project, get_version_many } from '@/helpers/cache.js'
 import dayjs from 'dayjs'

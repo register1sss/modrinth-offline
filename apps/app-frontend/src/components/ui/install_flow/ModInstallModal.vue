@@ -215,7 +215,7 @@ const createInstance = async () => {
 <template>
   <Modal
     ref="installModal"
-    header="Install project to instance"
+    :header="$u3t('Install project to instance')"
     :noblur="!themeStore.advancedRendering"
     :on-hide="onInstall"
   >
@@ -225,7 +225,7 @@ const createInstance = async () => {
         autocomplete="off"
         type="text"
         class="search"
-        placeholder="Search for an instance"
+        :placeholder="$u3t('Search for an instance')"
       />
       <div class="profiles" :class="{ 'hide-creation': !showCreation }">
         <div v-for="profile in shownProfiles" :key="profile.name" class="option">
@@ -243,7 +243,7 @@ const createInstance = async () => {
           <div
             v-tooltip="
               profile.linked_data?.locked && !profile.installedMod
-                ? 'Unpair or unlock an instance to add mods.'
+                ? $u3t('Unpair or unlock an instance to add mods.')
                 : ''
             "
           >
@@ -255,12 +255,12 @@ const createInstance = async () => {
               <CheckIcon v-else-if="profile.installedMod" />
               {{
                 profile.installing
-                  ? 'Installing...'
+                  ? $u3t('Installing...')
                   : profile.installedMod
-                    ? 'Installed'
+                    ? $u3t('Installed')
                     : profile.linked_data && profile.linked_data.locked
-                      ? 'Paired'
-                      : 'Install'
+                      ? $u3t('Paired')
+                      : $u3t('Install')
               }}
             </Button>
           </div>
@@ -291,7 +291,7 @@ const createInstance = async () => {
             />
             <Button :disabled="creatingInstance === true || !name" @click="createInstance()">
               <RightArrowIcon />
-              {{ creatingInstance ? 'Creating...' : 'Create' }}
+              {{ creatingInstance ? $u3t('Creating...') : $u3t('Create') }}
             </Button>
           </div>
         </div>
@@ -299,7 +299,7 @@ const createInstance = async () => {
       <div class="input-group push-right">
         <Button :color="showCreation ? '' : 'primary'" @click="toggleCreation()">
           <PlusIcon />
-          {{ showCreation ? 'Hide New Instance' : 'Create new instance' }}
+          {{ showCreation ? $u3t('Hide New Instance') : $u3t('Create new instance') }}
         </Button>
         <Button @click="installModal.hide()"> {{ $u3t('Cancel') }} </Button>
       </div>

@@ -204,17 +204,21 @@ onUnmounted(() => {
 <template>
   <ConfirmModal
     ref="deleteConfirmModal"
-    title="Are you sure you want to delete this instance?"
-    description="If you proceed, all data for your instance will be removed. You will not be able to recover it."
+    :title="$u3t('Are you sure you want to delete this instance?')"
+    :description="
+      $u3t(
+        'If you proceed, all data for your instance will be removed. You will not be able to recover it.',
+      )
+    "
     :has-to-type="false"
-    proceed-label="Delete"
+    :proceed-label="$u3t('Delete')"
     :noblur="!themeStore.advancedRendering"
     @proceed="deleteProfile"
   />
   <div class="content">
     <div v-for="row in actualInstances" ref="rows" :key="row.label" class="row">
       <div class="header">
-        <router-link :to="row.route">{{ row.label }}</router-link>
+        <router-link :to="row.route">{{ $u3t(row.label) }}</router-link>
         <ChevronRightIcon />
       </div>
       <section v-if="row.instance" ref="modsRow" class="instances">
@@ -241,14 +245,14 @@ onUnmounted(() => {
     <template #play> <PlayIcon /> {{ $u3t('Play') }} </template>
     <template #stop> <StopCircleIcon /> {{ $u3t('Stop') }} </template>
     <template #add_content> <PlusIcon /> {{ $u3t('Add content') }} </template>
-    <template #edit> <EyeIcon /> View instance </template>
+    <template #edit> <EyeIcon /> {{ $u3t('View instance') }} </template>
     <template #delete> <TrashIcon /> {{ $u3t('Delete') }} </template>
     <template #open_folder> <FolderOpenIcon /> {{ $u3t('Open folder') }} </template>
-    <template #duplicate> <ClipboardCopyIcon /> Duplicate instance</template>
-    <template #copy_path> <ClipboardCopyIcon /> Copy path </template>
+    <template #duplicate> <ClipboardCopyIcon /> {{ $u3t('Duplicate instance') }}</template>
+    <template #copy_path> <ClipboardCopyIcon /> {{ $u3t('Copy path') }} </template>
     <template #install> <DownloadIcon /> {{ $u3t('Install') }} </template>
     <template #open_link> <GlobeIcon /> {{ $u3t('Open in Modrinth') }} <ExternalIcon /> </template>
-    <template #copy_link> <ClipboardCopyIcon /> Copy link </template>
+    <template #copy_link> <ClipboardCopyIcon /> {{ $u3t('Copy link') }} </template>
   </ContextMenu>
 </template>
 <style lang="scss" scoped>

@@ -6,7 +6,7 @@
         :link-stack="[
           {
             href: `/project/${route.params.id}/versions`,
-            label: 'Versions',
+            label: $u3t('Versions'),
           },
         ]"
       />
@@ -24,15 +24,15 @@
           <CheckIcon v-else />
           {{
             installing
-              ? 'Installing...'
+              ? $u3t('Installing...')
               : installed && installedVersion === version.id
-                ? 'Installed'
-                : 'Install'
+                ? $u3t('Installed')
+                : $u3t('Install')
           }}
         </Button>
         <Button>
           <ReportIcon />
-          Report
+          {{ $u3t('Report') }}
         </Button>
         <a
           :href="`https://modrinth.com/mod/${route.params.id}/version/${route.params.version}`"
@@ -50,7 +50,7 @@
           <div class="markdown-body" v-html="renderString(version.changelog ?? '')" />
         </Card>
         <Card>
-          <h3 class="card-title">Files</h3>
+          <h3 class="card-title">{{ $u3t('Files') }}</h3>
           <Card
             v-for="file in version.files"
             :key="file.id"
@@ -64,7 +64,7 @@
                   {{ file.filename }}
                 </span>
                 ({{ formatBytes(file.size) }})
-                <span v-if="file.primary" class="primary-label"> Primary </span>
+                <span v-if="file.primary" class="primary-label"> {{ $u3t('Primary') }} </span>
               </span>
             </span>
             <Button
@@ -75,7 +75,7 @@
             >
               <DownloadIcon v-if="!installed" />
               <CheckIcon v-else />
-              {{ installed ? 'Installed' : 'Install' }}
+              {{ installed ? $u3t('Installed') : $u3t('Install') }}
             </Button>
           </Card>
         </Card>
@@ -100,10 +100,10 @@
         </Card>
       </div>
       <Card class="metadata-card">
-        <h3 class="card-title">Metadata</h3>
+        <h3 class="card-title">{{ $u3t('Metadata') }}</h3>
         <div class="metadata">
           <div class="metadata-item">
-            <span class="metadata-label">Release Channel</span>
+            <span class="metadata-label">{{ $u3t('Release Channel') }}</span>
             <span class="metadata-value"
               ><Badge
                 :color="releaseColor(version.version_type)"
@@ -113,11 +113,11 @@
             /></span>
           </div>
           <div class="metadata-item">
-            <span class="metadata-label">Version Number</span>
+            <span class="metadata-label">{{ $u3t('Version Number') }}</span>
             <span class="metadata-value">{{ version.version_number }}</span>
           </div>
           <div class="metadata-item">
-            <span class="metadata-label">Loaders</span>
+            <span class="metadata-label">{{ $u3t('Loaders') }}</span>
             <span class="metadata-value">{{
               version.loaders
                 .map((loader) => loader.charAt(0).toUpperCase() + loader.slice(1))
@@ -125,7 +125,7 @@
             }}</span>
           </div>
           <div class="metadata-item">
-            <span class="metadata-label">Game Versions</span>
+            <span class="metadata-label">{{ $u3t('Game Versions') }}</span>
             <span class="metadata-value"> {{ version.game_versions.join(', ') }} </span>
           </div>
           <div class="metadata-item">
@@ -133,22 +133,12 @@
             <span class="metadata-value">{{ version.downloads }}</span>
           </div>
           <div class="metadata-item">
-            <span class="metadata-label">Publication Date</span>
+            <span class="metadata-label">{{ $u3t('Publication Date') }}</span>
             <span class="metadata-value">
               {{
-                new Date(version.date_published).toLocaleString('en-US', {
-                  month: 'long',
-                  day: 'numeric',
-                  year: 'numeric',
-                })
-              }}
-              at
-              {{
-                new Date(version.date_published).toLocaleString('en-US', {
-                  hour: 'numeric',
-                  minute: 'numeric',
-                  second: 'numeric',
-                  hour12: true,
+                new Date(version.date_published).toLocaleString($u3locale(), {
+                  dateStyle: 'long',
+                  timeStyle: 'short',
                 })
               }}
             </span>
@@ -171,7 +161,7 @@
             </a>
           </div>
           <div class="metadata-item">
-            <span class="metadata-label">Version ID</span>
+            <span class="metadata-label">{{ $u3t('Version ID') }}</span>
             <span class="metadata-value"><CopyCode class="copycode" :text="version.id" /></span>
           </div>
         </div>

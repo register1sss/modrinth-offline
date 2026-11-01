@@ -2,7 +2,7 @@
   <button
     v-if="mode !== 'isolated'"
     ref="button"
-    v-tooltip.right="'Minecraft accounts'"
+    v-tooltip.right="$u3t('Minecraft accounts')"
     type="button"
     :aria-label="tr('Аккаунты Minecraft', 'Minecraft accounts')"
     :aria-expanded="showCard"
@@ -18,7 +18,7 @@
     />
   </button>
 
-  <Modal ref="chooseAccountTypeModal" header="Choose new account type">
+  <Modal ref="chooseAccountTypeModal" :header="$u3t('Choose new account type')">
     <div class="choose-account-modal">
       <div class="account-types">
         <Button @click="login()"> <SSOMicrosoftIcon />Microsoft </Button>
@@ -36,7 +36,10 @@
     </div>
   </Modal>
 
-  <Modal ref="chooseOfflineUsernameModal" header="Choose username for your offline account">
+  <Modal
+    ref="chooseOfflineUsernameModal"
+    :header="$u3t('Choose username for your offline account')"
+  >
     <div class="choose-offline-username-modal">
       <input v-model="offlineUsername" type="text" :placeholder="$u3t('Username')" />
       <Button icon-only color="primary" @click="offlineLogin(offlineUsername)">
@@ -58,14 +61,19 @@
           <h4>{{ selectedAccount.username }}</h4>
           <p>{{ $u3t('Selected') }}</p>
         </div>
-        <Button v-tooltip="'Log out'" icon-only color="raised" @click="logout(selectedAccount.id)">
+        <Button
+          v-tooltip="$u3t('Log out')"
+          icon-only
+          color="raised"
+          @click="logout(selectedAccount.id)"
+        >
           <TrashIcon />
         </Button>
       </div>
       <div v-else class="logged-out account">
         <h4>{{ $u3t('Not signed in') }}</h4>
         <Button
-          v-tooltip="'Log in'"
+          v-tooltip="$u3t('Log in')"
           icon-only
           color="primary"
           @click="$refs.chooseAccountTypeModal.show()"
@@ -79,7 +87,7 @@
             <Avatar :src="`https://mc-heads.net/avatar/${account.id}/128`" class="icon" />
             <p>{{ account.username }}</p>
           </Button>
-          <Button v-tooltip="'Log out'" icon-only @click="logout(account.id)">
+          <Button v-tooltip="$u3t('Log out')" icon-only @click="logout(account.id)">
             <TrashIcon />
           </Button>
         </div>

@@ -123,7 +123,7 @@ async function findLauncherDir() {
   const newDir = await open({
     multiple: false,
     directory: true,
-    title: 'Select a new app directory',
+    title: translate('Select a new app directory'),
   })
 
   if (newDir) {
@@ -218,7 +218,7 @@ async function findLauncherDir() {
           "
         />
       </div>
-      <RouterLink to="/themes" class="btn">
+      <RouterLink to="/themes" class="btn theme-gallery-link">
         {{ tr('Открыть галерею тем', 'Open theme gallery') }} · {{ themeStore.themeOptions.length }}
       </RouterLink>
       <div class="adjacent-input">
@@ -364,7 +364,7 @@ async function findLauncherDir() {
           <span class="label__description">
             {{
               tr(
-                'Включено - аналитика лаунчера не отправляется. Каталоги и авторизация по-прежнему используют сеть.',
+                'Если включено, аналитика лаунчера не отправляется. Каталоги и вход в аккаунт всё равно используют сеть.',
                 'When enabled, launcher analytics are not sent. Catalogs and sign-in still use the network.',
               )
             }}
@@ -407,7 +407,7 @@ async function findLauncherDir() {
       </div>
       <template v-for="version in [21, 17, 8]" :key="version">
         <label :for="'java-selector-' + version">
-          <span class="label__title"> {{ $u3t('Java') }} {{ version }} location</span>
+          <span class="label__title"> {{ $u3t('Path to') }} {{ $u3t('Java') }} {{ version }}</span>
         </label>
         <JavaSelector
           :id="'java-selector-' + version"
@@ -426,7 +426,7 @@ async function findLauncherDir() {
         autocomplete="off"
         type="text"
         class="installation-input"
-        placeholder="Enter java arguments..."
+        :placeholder="$u3t('Enter java arguments...')"
       />
       <label for="env-vars">
         <span class="label__title"> {{ $u3t('Environmental variables') }} </span>
@@ -437,7 +437,7 @@ async function findLauncherDir() {
         autocomplete="off"
         type="text"
         class="installation-input"
-        placeholder="Enter environmental variables..."
+        :placeholder="$u3t('Enter environmental variables...')"
       />
       <hr class="card-divider" />
       <div class="adjacent-input">
@@ -453,7 +453,7 @@ async function findLauncherDir() {
           :min="8"
           :max="maxMemory"
           :step="64"
-          unit="mb"
+          :unit="$u3t('mb')"
         />
       </div>
     </Card>
@@ -574,7 +574,7 @@ async function findLauncherDir() {
       <div>
         <label>
           <span class="label__title"> {{ $u3t('App version') }} </span>
-          <span class="label__description">U3drinth (custom modrinth) v1.0 </span>
+          <span class="label__description">U3drinth (custom modrinth) v1.0</span>
         </label>
       </div>
     </Card>
@@ -606,6 +606,11 @@ async function findLauncherDir() {
   flex-grow: 1;
 }
 
+.theme-gallery-link {
+  display: inline-flex;
+  width: fit-content;
+  margin: 0.15rem 0 1.1rem;
+}
 .theme-dropdown {
   text-transform: capitalize;
 }

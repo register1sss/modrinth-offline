@@ -269,22 +269,31 @@ command_listener(async (e) => {
       <Card class="error-text">
         <div class="label">
           <h3>
-            <span class="label__title size-card-header">Failed to initialize</span>
+            <span class="label__title size-card-header">{{ $u3t('Failed to initialize') }}</span>
           </h3>
         </div>
         <div class="error-div">
-          U3drinth failed to load correctly. This may be because of a corrupted file, or because the
-          app is missing crucial files.
+          {{
+            $u3t(
+              'U3drinth failed to load correctly. This may be because of a corrupted file, or because the app is missing crucial files.',
+            )
+          }}
         </div>
-        <div class="error-div">You may be able to fix it one of the following ways:</div>
+        <div class="error-div">
+          {{ $u3t('You may be able to fix it in one of the following ways:') }}
+        </div>
         <ul class="error-div">
-          <li>Ennsuring you are connected to the internet, then try restarting the app.</li>
-          <li>Redownloading the app.</li>
+          <li>{{ $u3t('Make sure you are connected to the internet, then restart the app.') }}</li>
+          <li>{{ $u3t('Download and reinstall the app.') }}</li>
         </ul>
         <div class="error-div">
-          Review the error and recent launcher logs below. U3 AI can help explain crash reports.
+          {{
+            $u3t(
+              'Review the error and recent launcher logs below. U3 AI can help explain crash reports.',
+            )
+          }}
         </div>
-        <div class="error-div">The following error was provided:</div>
+        <div class="error-div">{{ $u3t('The following error was provided:') }}</div>
 
         <Card class="error-message">
           {{ failureText.message }}
@@ -353,7 +362,7 @@ command_listener(async (e) => {
             ><AssistantIcon /><span
               v-if="aiSession.alerts.length"
               class="ai-nav-alert"
-              aria-label="Errors"
+              :aria-label="$u3t('Errors')"
               >!</span
             ></RouterLink
           >
@@ -371,7 +380,7 @@ command_listener(async (e) => {
       </div>
       <div class="settings pages-list">
         <Button
-          v-tooltip="'Create profile'"
+          v-tooltip="$u3t('Create profile')"
           class="sleek-primary collapsed-button"
           icon-only
           :disabled="offline"

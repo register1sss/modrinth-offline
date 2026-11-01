@@ -1,4 +1,5 @@
 <script setup>
+import { translate } from '@/i18n/index.js'
 import { UserIcon, LockIcon, MailIcon } from '@modrinth/assets'
 import { Button, Card, Checkbox, Modal } from '@modrinth/ui'
 import {
@@ -108,8 +109,8 @@ async function createAccount() {
   if (password.value !== confirmPassword.value) {
     const notifs = useNotifications()
     notifs.addNotification({
-      title: 'An error occurred',
-      text: 'Passwords do not match!',
+      title: translate('An error occurred'),
+      text: translate('Passwords do not match!'),
       type: 'error',
     })
     return
@@ -135,13 +136,18 @@ async function createAccount() {
   <Modal ref="modal" :on-hide="removeWidget">
     <Card>
       <template v-if="twoFactorFlow">
-        <h1>Enter two-factor code</h1>
-        <p>Please enter a two-factor code to proceed.</p>
-        <input v-model="twoFactorCode" maxlength="11" type="text" placeholder="Enter code..." />
+        <h1>{{ $u3t('Enter two-factor code') }}</h1>
+        <p>{{ $u3t('Please enter a two-factor code to proceed.') }}</p>
+        <input
+          v-model="twoFactorCode"
+          maxlength="11"
+          type="text"
+          :placeholder="$u3t('Enter code...')"
+        />
       </template>
       <template v-else>
         <h1 v-if="loggingIn">{{ $u3t('Login to Modrinth') }}</h1>
-        <h1 v-else>Create an account</h1>
+        <h1 v-else>{{ $u3t('Create an account') }}</h1>
         <div class="button-grid">
           <Button class="discord" large @click="signInOauth('discord')">
             <DiscordIcon />
@@ -149,7 +155,7 @@ async function createAccount() {
           </Button>
           <Button class="github" large @click="signInOauth('github')">
             <GithubIcon />
-            Github
+            GitHub
           </Button>
           <Button class="white" large @click="signInOauth('microsoft')">
             <MicrosoftIcon />
@@ -170,7 +176,7 @@ async function createAccount() {
         </div>
         <div class="divider">
           <hr />
-          <p>Or</p>
+          <p>{{ $u3t('Or') }}</p>
         </div>
         <div v-if="!loggingIn" class="iconified-input username">
           <MailIcon />
@@ -181,7 +187,7 @@ async function createAccount() {
           <input
             v-model="username"
             type="text"
-            :placeholder="loggingIn ? 'Email or username' : 'Username'"
+            :placeholder="loggingIn ? $u3t('Email or username') : $u3t('Username')"
           />
         </div>
         <div class="iconified-input" :class="{ username: !loggingIn }">
@@ -190,7 +196,11 @@ async function createAccount() {
         </div>
         <div v-if="!loggingIn" class="iconified-input username">
           <LockIcon />
-          <input v-model="confirmPassword" type="password" placeholder="Confirm password" />
+          <input
+            v-model="confirmPassword"
+            type="password"
+            :placeholder="$u3t('Confirm password')"
+          />
         </div>
         <div class="turnstile">
           <div id="turnstile-container"></div>
@@ -200,13 +210,15 @@ async function createAccount() {
           v-if="!loggingIn"
           v-model="subscribe"
           class="subscribe-btn"
-          label="Subscribe to updates about Modrinth"
+          :label="$u3t('Subscribe to updates about Modrinth')"
         />
         <div class="link-row">
-          <a v-if="loggingIn" class="button-base" @click="loggingIn = false"> Create account </a>
+          <a v-if="loggingIn" class="button-base" @click="loggingIn = false">
+            {{ $u3t('Create account') }}
+          </a>
           <a v-else class="button-base" @click="loggingIn = true"> {{ $u3t('Sign in') }} </a>
           <a class="button-base" href="https://modrinth.com/auth/reset-password">
-            Forgot password?
+            {{ $u3t('Forgot password?') }}
           </a>
         </div>
       </template>
@@ -219,13 +231,13 @@ async function createAccount() {
           v-else-if="loggingIn"
           color="primary"
           large
-          @click="signIn"
           :disabled="!turnstileToken"
+          @click="signIn"
         >
           {{ $u3t('Login') }}
         </Button>
-        <Button v-else color="primary" large @click="createAccount" :disabled="!turnstileToken">
-          Create account
+        <Button v-else color="primary" large :disabled="!turnstileToken" @click="createAccount">
+          {{ $u3t('Create account') }}
         </Button>
       </div>
     </Card>

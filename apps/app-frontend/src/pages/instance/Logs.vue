@@ -6,14 +6,14 @@
         :default-value="0"
         name="Log date"
         :options="logs.map((_, index) => index)"
-        :display-name="(option) => logs[option]?.name"
+        :display-name="(option) => (logs[option]?.live ? liveLogName() : logs[option]?.name)"
         :disabled="logs.length === 0"
       />
       <div class="button-group">
         <Button :disabled="!logs[selectedLogIndex]" @click="copyLog()">
           <ClipboardCopyIcon v-if="!copied" />
           <CheckIcon v-else />
-          {{ copied ? 'Copied' : 'Copy' }}
+          {{ copied ? $u3t('Copied') : $u3t('Copy') }}
         </Button>
         <Button color="primary" :disabled="offline || !logs[selectedLogIndex]" @click="share">
           <ShareIcon /> {{ $u3t('Share') }}
@@ -42,7 +42,7 @@
         autocomplete="off"
         type="text"
         class="text-filter"
-        placeholder="Type to filter logs..."
+        :placeholder="$u3t('Type to filter logs...')"
       />
       <div class="filter-group">
         <Checkbox
@@ -51,7 +51,7 @@
           v-model="levelFilters[level.toLowerCase()]"
           class="filter-checkbox"
         >
-          {{ level }}
+          {{ levelName(level) }}
         </Checkbox>
       </div>
     </div>
@@ -74,9 +74,9 @@
     </div>
     <ShareModal
       ref="shareModal"
-      header="Share Log"
-      share-title="Instance Log"
-      share-text="Check out this log from an instance on the U3drinth"
+      :header="$u3t('Share Log')"
+      :share-title="$u3t('Instance Log')"
+      :share-text="$u3t('Check out this log from an instance on the U3drinth')"
       :open-in-new-tab="false"
       link
     />
@@ -100,6 +100,7 @@ import { get_by_profile_path } from '@/helpers/process.js'
 import { useRoute } from 'vue-router'
 import { process_listener } from '@/helpers/events.js'
 import { handleError } from '@/store/notifications.js'
+import { tr } from '@/i18n/index.js'
 import { ofetch } from 'ofetch'
 import { createVirtualScroller } from 'vue-typed-virtual-list'
 
@@ -127,7 +128,20 @@ const props = defineProps({
 
 const currentLiveLog = ref(null)
 const currentLiveLogCursor = ref(0)
-const emptyText = ['No live game detected.', 'Start your game to proceed.']
+const emptyText = () => [
+  tr('Игра сейчас не запущена.', 'No live game detected.'),
+  tr('Запусти игру, чтобы увидеть её вывод здесь.', 'Start your game to proceed.'),
+]
+const liveLogName = () => tr('Текущий запуск', 'Live log')
+const LEVEL_NAMES = {
+  Comment: ['Комментарии', 'Comment'],
+  Error: ['Ошибки', 'Error'],
+  Warn: ['Предупреждения', 'Warn'],
+  Info: ['Инфо', 'Info'],
+  Debug: ['Отладка', 'Debug'],
+  Trace: ['Трассировка', 'Trace'],
+}
+const levelName = (level) => (LEVEL_NAMES[level] ? tr(...LEVEL_NAMES[level]) : level)
 
 const logs = ref([])
 await setLogs()
@@ -206,15 +220,16 @@ const processedLogs = computed(() => {
 
 async function getLiveStdLog() {
   if (route.params.id) {
-    const processes = await get_by_profile_path(route.params.id).catch(handleError)
+    const processes = (await get_by_profile_path(route.params.id).catch(handleError)) ?? []
     let returnValue
     if (processes.length === 0) {
-      returnValue = emptyText.join('\n')
+      returnValue = emptyText().join('\n')
     } else {
       const logCursor = await get_latest_log_cursor(
         props.instance.path,
         currentLiveLogCursor.value,
       ).catch(handleError)
+      if (!logCursor) return { name: 'Live Log', stdout: currentLiveLog.value ?? '', live: true }
       if (logCursor.new_file) {
         currentLiveLog.value = ''
       }
@@ -228,7 +243,7 @@ async function getLiveStdLog() {
 }
 
 async function getLogs() {
-  return (await get_logs(props.instance.path, true).catch(handleError))
+  return ((await get_logs(props.instance.path, true).catch(handleError)) ?? [])
     .filter(
       // filter out latest_stdout.log or anything without .log in it
       (log) =>
@@ -238,8 +253,8 @@ async function getLogs() {
         (log.filename.includes('.log') || log.filename.endsWith('.txt')),
     )
     .map((log) => {
-      log.name = log.filename || 'Unknown'
-      log.stdout = 'Loading...'
+      log.name = log.filename || tr('Без названия', 'Unknown')
+      log.stdout = tr('Загрузка…', 'Loading...')
       return log
     })
 }
@@ -266,7 +281,7 @@ const share = async () => {
       body: `content=${encodeURIComponent(logs.value[selectedLogIndex.value].stdout)}`,
     }).catch(handleError)
 
-    shareModal.value.show(url.url)
+    if (url?.url) shareModal.value.show(url.url)
   }
 }
 
@@ -275,12 +290,13 @@ watch(selectedLogIndex, async (newIndex) => {
   userScrolled.value = false
 
   if (logs.value.length > 1 && newIndex !== 0) {
-    logs.value[newIndex].stdout = 'Loading...'
-    logs.value[newIndex].stdout = await get_output_by_filename(
-      props.instance.path,
-      logs.value[newIndex].log_type,
-      logs.value[newIndex].filename,
-    ).catch(handleError)
+    logs.value[newIndex].stdout = tr('Загрузка…', 'Loading...')
+    logs.value[newIndex].stdout =
+      (await get_output_by_filename(
+        props.instance.path,
+        logs.value[newIndex].log_type,
+        logs.value[newIndex].filename,
+      ).catch(handleError)) ?? ''
   }
 })
 
@@ -468,8 +484,16 @@ onUnmounted(() => {
 .button-row {
   display: flex;
   flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
+}
+
+.text-filter {
+  flex: 1 1 14rem;
+  min-width: 12rem;
+  max-width: 24rem;
 }
 
 .button-group {
@@ -494,8 +518,9 @@ onUnmounted(() => {
 }
 
 .filter-checkbox {
-  margin-bottom: 0.3rem;
+  margin-bottom: 0;
   font-size: 1rem;
+  white-space: nowrap;
 
   svg {
     display: flex;
@@ -506,10 +531,11 @@ onUnmounted(() => {
 
 .filter-group {
   display: flex;
-  padding: 0.6rem;
+  padding: 0.4rem 0;
   flex-direction: row;
-  overflow: auto;
-  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.4rem 1rem;
 
   &::-webkit-scrollbar-track,
   &::-webkit-scrollbar-thumb {

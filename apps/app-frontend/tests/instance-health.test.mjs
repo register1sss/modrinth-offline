@@ -110,3 +110,16 @@ test('normal exit, manual stop and stale launch state never trigger crash repair
   assert.equal(shouldAnalyzeExit({ event: 'finished', exit_code: 1 }, 100), true)
   assert.equal(shouldAnalyzeExit({ event: 'finished', exit_code: null }, 100), true)
 })
+test('removal follows libraries bundled inside another JAR and names them', () => {
+  const graph = [
+    mod('fabric-api', [], { name: 'Fabric API', bundled: [{ id: 'fabric-key-binding-api-v1' }] }),
+    mod('zoom', [required('fabric-key-binding-api-v1')], { name: 'Zoomify' }),
+    mod('menu', [{ id: 'fabric-api', required: false }], { name: 'mods/menu.jar' }),
+  ]
+  const result = removalImpact(graph, ['mods/fabric-api.jar'])
+  assert.deepEqual(
+    result.affected.map((m) => [m.name, m.dependencyName]),
+    [['Zoomify', 'Fabric API']],
+  )
+  assert.equal(result.optional[0].name, 'menu')
+})

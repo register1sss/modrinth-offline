@@ -29,11 +29,11 @@ const image = computed(() => props.gallery[page.value - 1])
   <div class="gallery-image">
     <div v-if="logo" class="app-logo" aria-label="U3drinth">U3drinth</div>
     <div class="image-wrapper">
-      <img :src="image.url" :alt="image.title" />
+      <img :src="image.url" :alt="$u3t(image.title)" />
       <div class="text">
-        <h3>{{ image.title }}</h3>
+        <h3>{{ $u3t(image.title) }}</h3>
         <p>
-          {{ image.subtitle }}
+          {{ $u3t(image.subtitle) }}
         </p>
       </div>
       <Button :disabled="page === 1" class="left-button" icon-only @click="page--">

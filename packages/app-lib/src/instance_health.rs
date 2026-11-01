@@ -5,7 +5,7 @@ use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
 use std::{
     collections::BTreeSet,
-    io::Read,
+    io::{Read, Seek},
     path::{Component, Path, PathBuf},
     time::{Duration, SystemTime},
 };
@@ -14,6 +14,10 @@ fn err(e: impl std::fmt::Display) -> String {
     e.to_string()
 }
 const MAX_FILE: u64 = 256 * 1024 * 1024;
+// Jar-in-Jar contents are read in memory only, within these bounds.
+const MAX_NESTED_FILE: u64 = 16 * 1024 * 1024;
+const MAX_NESTED_TOTAL: u64 = 96 * 1024 * 1024;
+const MAX_NESTED_JARS: usize = 256;
 fn link(m: &std::fs::Metadata) -> bool {
     #[cfg(windows)]
     {
@@ -80,7 +84,16 @@ pub struct Dependency {
     pub required: bool,
     pub version: Value,
 }
-#[derive(Debug, Clone, Serialize, Deserialize)]
+/// A mod shipped inside another mod's JAR (Jar-in-Jar).
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct Bundled {
+    pub id: String,
+    #[serde(default)]
+    pub name: Option<String>,
+    #[serde(default)]
+    pub version: Option<String>,
+}
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct ModInfo {
     pub path: String,
     pub name: String,
@@ -91,6 +104,18 @@ pub struct ModInfo {
     pub bytes: u64,
     pub warnings: Vec<String>,
     pub metadata_complete: bool,
+    /// Version declared by the mod's own manifest.
+    #[serde(default)]
+    pub version: Option<String>,
+    /// Manifest families present in the JAR: fabric, quilt, neoforge, forge.
+    #[serde(default)]
+    pub loaders: Vec<String>,
+    /// Declared incompatibilities; `required` marks a hard break.
+    #[serde(default)]
+    pub conflicts: Vec<Dependency>,
+    /// Mods shipped inside nested JARs; their ids count as installed.
+    #[serde(default)]
+    pub bundled: Vec<Bundled>,
 }
 fn dep(id: &str, required: bool, version: Value) -> Dependency {
     Dependency {
@@ -99,8 +124,8 @@ fn dep(id: &str, required: bool, version: Value) -> Dependency {
         version,
     }
 }
-fn metadata(
-    z: &mut zip::ZipArchive<std::fs::File>,
+fn metadata<R: Read + Seek>(
+    z: &mut zip::ZipArchive<R>,
     name: &str,
 ) -> Result<String> {
     let mut f = z.by_name(name).map_err(err)?;
@@ -117,7 +142,8 @@ fn metadata(
     }
     Ok(text)
 }
-fn parse_json(v: &Value, quilt: bool, out: &mut ModInfo) {
+/// Parses fabric.mod.json or quilt.mod.json and returns the nested JAR paths it declares.
+fn parse_json(v: &Value, quilt: bool, out: &mut ModInfo) -> Vec<String> {
     let m = if quilt { &v["quilt_loader"] } else { v };
     if let Some(id) = m["id"].as_str() {
         out.ids.push(id.into());
@@ -127,6 +153,9 @@ fn parse_json(v: &Value, quilt: bool, out: &mut ModInfo) {
         .or_else(|| m["metadata"]["name"].as_str())
     {
         out.name = name.into();
+    }
+    if out.version.is_none() {
+        out.version = m["version"].as_str().map(str::to_owned);
     }
     if let Some(provides) = m["provides"].as_array() {
         for p in provides {
@@ -149,6 +178,13 @@ fn parse_json(v: &Value, quilt: bool, out: &mut ModInfo) {
                 }
             }
         }
+        if let Some(deps) = m["breaks"].as_array() {
+            for d in deps {
+                if let Some(id) = d.as_str().or_else(|| d["id"].as_str()) {
+                    out.conflicts.push(dep(id, true, d["versions"].clone()));
+                }
+            }
+        }
     } else {
         for (key, required) in [
             ("depends", true),
@@ -161,25 +197,46 @@ fn parse_json(v: &Value, quilt: bool, out: &mut ModInfo) {
                 }
             }
         }
+        for (key, hard) in [("breaks", true), ("conflicts", false)] {
+            if let Some(deps) = m[key].as_object() {
+                for (id, version) in deps {
+                    out.conflicts.push(dep(id, hard, version.clone()));
+                }
+            }
+        }
     }
     out.metadata_complete = !out.ids.is_empty() && out.warnings.is_empty();
-    if v["jars"].as_array().map_or(false, |x| !x.is_empty())
-        || m["jars"].as_array().map_or(false, |x| !x.is_empty())
-    {
-        out.metadata_complete = false;
-        out.warnings
-            .push("Nested JAR dependencies require loader validation".into());
+    let mut jars = vec![];
+    for list in [&v["jars"], &m["jars"]] {
+        for j in list.as_array().into_iter().flatten() {
+            if let Some(file) = j.as_str().or_else(|| j["file"].as_str()) {
+                jars.push(file.to_owned());
+            }
+        }
     }
+    jars.sort();
+    jars.dedup();
+    jars
 }
 fn parse_toml(text: &str, out: &mut ModInfo) -> Result<()> {
     let v: toml::Value = text.parse().map_err(err)?;
     if let Some(mods) = v.get("mods").and_then(|x| x.as_array()) {
+        let mut named = false;
         for m in mods {
             if let Some(id) = m.get("modId").and_then(|x| x.as_str()) {
                 out.ids.push(id.into());
             }
             if let Some(name) = m.get("displayName").and_then(|x| x.as_str()) {
-                out.name = name.into();
+                if !named {
+                    out.name = name.into();
+                    named = true;
+                }
+            }
+            if out.version.is_none() {
+                out.version = m
+                    .get("version")
+                    .and_then(|x| x.as_str())
+                    .map(str::to_owned);
             }
         }
     }
@@ -187,33 +244,36 @@ fn parse_toml(text: &str, out: &mut ModInfo) -> Result<()> {
         for (_, deps) in groups {
             if let Some(deps) = deps.as_array() {
                 for d in deps {
-                    if let Some(id) = d.get("modId").and_then(|x| x.as_str()) {
-                        if matches!(
-                            d.get("type").and_then(|x| x.as_str()),
-                            Some("incompatible" | "discouraged")
-                        ) {
-                            continue;
+                    let Some(id) = d.get("modId").and_then(|x| x.as_str())
+                    else {
+                        continue;
+                    };
+                    // Server-only entries do not affect whether a client starts.
+                    if d.get("side").and_then(|x| x.as_str()) == Some("SERVER") {
+                        continue;
+                    }
+                    let kind = d
+                        .get("type")
+                        .and_then(|x| x.as_str())
+                        .map(|x| x.to_ascii_lowercase());
+                    let range =
+                        json!(d.get("versionRange").and_then(|x| x.as_str()));
+                    match kind.as_deref() {
+                        Some("incompatible") => {
+                            out.conflicts.push(dep(id, true, range))
                         }
-                        let required = d
-                            .get("mandatory")
-                            .and_then(|x| x.as_bool())
-                            .unwrap_or_else(|| {
-                                d.get("type")
-                                    .and_then(|x| x.as_str())
-                                    .unwrap_or("required")
-                                    == "required"
-                            });
-                        // Server-only dependencies do not prevent a client from starting.
-                        if d.get("side").and_then(|x| x.as_str())
-                            != Some("SERVER")
-                        {
-                            out.dependencies.push(dep(
-                                id,
-                                required,
-                                json!(d
-                                    .get("versionRange")
-                                    .and_then(|x| x.as_str())),
-                            ));
+                        Some("discouraged") => {
+                            out.conflicts.push(dep(id, false, range))
+                        }
+                        _ => {
+                            let required = d
+                                .get("mandatory")
+                                .and_then(|x| x.as_bool())
+                                .unwrap_or_else(|| {
+                                    kind.as_deref().unwrap_or("required")
+                                        == "required"
+                                });
+                            out.dependencies.push(dep(id, required, range));
                         }
                     }
                 }
@@ -223,18 +283,126 @@ fn parse_toml(text: &str, out: &mut ModInfo) -> Result<()> {
     out.metadata_complete = !out.ids.is_empty();
     Ok(())
 }
+/// Forge's `${file.jarVersion}` placeholder resolves to the JAR manifest version.
+fn manifest_version<R: Read + Seek>(z: &mut zip::ZipArchive<R>) -> Option<String> {
+    metadata(z, "META-INF/MANIFEST.MF")
+        .ok()?
+        .lines()
+        .find_map(|l| l.strip_prefix("Implementation-Version:"))
+        .map(|x| x.trim().to_owned())
+        .filter(|x| !x.is_empty() && !x.contains("${"))
+}
+/// Reads the manifest of one archive into `out` and returns declared nested JAR paths.
+fn read_manifest<R: Read + Seek>(
+    z: &mut zip::ZipArchive<R>,
+    names: &BTreeSet<String>,
+    out: &mut ModInfo,
+) -> Result<Vec<String>> {
+    for (file, loader) in [
+        ("fabric.mod.json", "fabric"),
+        ("quilt.mod.json", "quilt"),
+        ("META-INF/neoforge.mods.toml", "neoforge"),
+        ("META-INF/mods.toml", "forge"),
+    ] {
+        if names.contains(file) {
+            out.loaders.push(loader.into());
+        }
+    }
+    let listed = if names.contains("fabric.mod.json") {
+        let v: Value = serde_json::from_str(&metadata(z, "fabric.mod.json")?)
+            .map_err(err)?;
+        parse_json(&v, false, out)
+    } else if names.contains("quilt.mod.json") {
+        let v: Value = serde_json::from_str(&metadata(z, "quilt.mod.json")?)
+            .map_err(err)?;
+        parse_json(&v, true, out)
+    } else if let Some(n) = ["META-INF/neoforge.mods.toml", "META-INF/mods.toml"]
+        .iter()
+        .find(|n| names.contains(**n))
+    {
+        parse_toml(&metadata(z, n)?, out)?;
+        vec![]
+    } else {
+        return Err("No supported Fabric/Quilt/Forge/NeoForge manifest".into());
+    };
+    if out.version.as_deref().map_or(false, |v| v.contains("${")) {
+        out.version = manifest_version(z);
+    }
+    Ok(listed)
+}
+/// Collects mods from nested JARs (read in memory, never extracted). Returns entries
+/// that could not be inspected.
+fn nested<R: Read + Seek>(
+    z: &mut zip::ZipArchive<R>,
+    depth: u8,
+    budget: &mut u64,
+    out: &mut ModInfo,
+) -> Vec<String> {
+    let jars: Vec<String> = z
+        .file_names()
+        .filter(|n| n.to_ascii_lowercase().ends_with(".jar"))
+        .map(str::to_owned)
+        .collect();
+    let mut skipped = vec![];
+    for name in jars {
+        if out.bundled.len() >= MAX_NESTED_JARS {
+            skipped.push(name);
+            continue;
+        }
+        let data = match z.by_name(&name) {
+            Ok(mut f) if f.size() <= MAX_NESTED_FILE && f.size() <= *budget => {
+                let mut data = vec![];
+                match f
+                    .by_ref()
+                    .take(MAX_NESTED_FILE + 1)
+                    .read_to_end(&mut data)
+                {
+                    Ok(_) if data.len() as u64 <= MAX_NESTED_FILE => Some(data),
+                    _ => None,
+                }
+            }
+            _ => None,
+        };
+        let Some(data) = data else {
+            skipped.push(name);
+            continue;
+        };
+        *budget = budget.saturating_sub(data.len() as u64);
+        let Ok(mut inner) = zip::ZipArchive::new(std::io::Cursor::new(data))
+        else {
+            skipped.push(name);
+            continue;
+        };
+        let names: BTreeSet<String> =
+            inner.file_names().map(str::to_owned).collect();
+        let mut info = ModInfo::default();
+        match read_manifest(&mut inner, &names, &mut info) {
+            Ok(_) => {}
+            // Plain libraries inside a mod have no mod manifest.
+            Err(_) if info.loaders.is_empty() => {}
+            Err(_) => skipped.push(name.clone()),
+        }
+        for id in &info.ids {
+            out.bundled.push(Bundled {
+                id: id.clone(),
+                name: Some(info.name.clone()).filter(|x| !x.is_empty()),
+                version: info.version.clone(),
+            });
+        }
+        if depth < 2 {
+            skipped.extend(nested(&mut inner, depth + 1, budget, out));
+        }
+    }
+    skipped
+}
 fn inspect(path: &Path, rel: String) -> Result<ModInfo> {
     let bytes = path.metadata().map_err(err)?.len();
     let mut out = ModInfo {
         name: rel.clone(),
         disabled: rel.ends_with(".disabled"),
         path: rel,
-        ids: vec![],
-        dependencies: vec![],
-        sha256: String::new(),
         bytes,
-        warnings: vec![],
-        metadata_complete: false,
+        ..Default::default()
     };
     if bytes > MAX_FILE {
         out.warnings
@@ -277,29 +445,18 @@ fn inspect(path: &Path, rel: String) -> Result<ModInfo> {
         return Ok(out);
     }
     let names: BTreeSet<String> = z.file_names().map(str::to_owned).collect();
-    let result = if names.contains("fabric.mod.json") {
-        metadata(&mut z, "fabric.mod.json").and_then(|s| {
-            let v = serde_json::from_str(&s).map_err(err)?;
-            parse_json(&v, false, &mut out);
-            Ok(())
-        })
-    } else if names.contains("quilt.mod.json") {
-        metadata(&mut z, "quilt.mod.json").and_then(|s| {
-            let v = serde_json::from_str(&s).map_err(err)?;
-            parse_json(&v, true, &mut out);
-            Ok(())
-        })
-    } else if let Some(n) =
-        ["META-INF/neoforge.mods.toml", "META-INF/mods.toml"]
-            .iter()
-            .find(|n| names.contains(**n))
-    {
-        metadata(&mut z, n).and_then(|s| parse_toml(&s, &mut out))
-    } else {
-        Err("No supported Fabric/Quilt/Forge/NeoForge manifest".into())
-    };
-    if let Err(e) = result {
-        out.warnings.push(e);
+    match read_manifest(&mut z, &names, &mut out) {
+        Ok(listed) => {
+            let mut budget = MAX_NESTED_TOTAL;
+            let skipped = nested(&mut z, 0, &mut budget, &mut out);
+            if !skipped.is_empty() || listed.iter().any(|j| !names.contains(j)) {
+                out.metadata_complete = false;
+                out.warnings.push(
+                    "Nested JAR dependencies require loader validation".into(),
+                );
+            }
+        }
+        Err(e) => out.warnings.push(e),
     }
     let mut inspected = 0u64;
     for i in 0..z.len() {
@@ -399,15 +556,11 @@ pub async fn inventory(id: &str) -> Result<Vec<ModInfo>> {
             let item =
                 child(&base, &rel).and_then(|p| inspect(&p, rel.clone()));
             result.push(item.unwrap_or_else(|e| ModInfo {
+                disabled: rel.ends_with(".disabled"),
                 path: rel,
                 name,
-                ids: vec![],
-                dependencies: vec![],
-                disabled: false,
-                sha256: String::new(),
-                bytes: 0,
                 warnings: vec![e],
-                metadata_complete: false,
+                ..Default::default()
             }));
         }
         result.sort_by(|a, b| a.path.cmp(&b.path));
@@ -443,6 +596,7 @@ pub async fn crash_report(id: &str, since_ms: u64) -> Result<Value> {
     f.take(512 * 1024).read_to_end(&mut data).map_err(err)?;
     let s = String::from_utf8_lossy(&data);
     let mut findings = vec![];
+    let mut evidence = vec![];
     for (pattern, kind) in [
         ("OutOfMemoryError", "memory"),
         ("UnsupportedClassVersionError", "java"),
@@ -454,15 +608,47 @@ pub async fn crash_report(id: &str, since_ms: u64) -> Result<Value> {
         ("Failed to download file", "files"),
         ("ZipException", "files"),
     ] {
-        if s.contains(pattern) {
+        if let Some(line) = s.lines().find(|l| l.contains(pattern)) {
             findings.push(kind);
+            evidence.push(json!({
+                "kind": kind,
+                "line": line.trim().chars().take(300).collect::<String>(),
+            }));
         }
     }
     findings.sort();
     findings.dedup();
-    Ok(
-        json!({"crashed": !findings.is_empty(), "findings": findings, "modified_ms": modified, "heuristic": true}),
-    )
+    Ok(json!({
+        "crashed": !findings.is_empty(),
+        "findings": findings,
+        "evidence": evidence,
+        "details": loader_details(&s),
+        "modified_ms": modified,
+        "heuristic": true,
+    }))
+}
+/// The loader's own explanation of unresolved or incompatible mods, line by line.
+fn loader_details(log: &str) -> Vec<String> {
+    let lines: Vec<&str> = log.lines().collect();
+    let mut details: Vec<String> = vec![];
+    for (i, line) in lines.iter().enumerate() {
+        if !(line.contains("Incompatible mods found")
+            || line.contains("Missing or unsupported mandatory dependencies"))
+        {
+            continue;
+        }
+        for next in lines.iter().skip(i + 1).take(40) {
+            let t = next.trim();
+            if t.starts_with("- ") || t.starts_with("Mod ID:") {
+                let t: String = t.chars().take(300).collect();
+                if !details.contains(&t) {
+                    details.push(t);
+                }
+            }
+        }
+    }
+    details.truncate(12);
+    details
 }
 async fn stopped(id: &str) -> Result<()> {
     if !process::get_by_profile_path(id)
@@ -589,13 +775,7 @@ mod tests {
         let mut m = ModInfo {
             path: "mods/a.jar".into(),
             name: "a".into(),
-            ids: vec![],
-            dependencies: vec![],
-            disabled: false,
-            sha256: String::new(),
-            bytes: 0,
-            warnings: vec![],
-            metadata_complete: false,
+            ..Default::default()
         };
         parse_json(
             &json!({"id":"a","provides":["alias"],"depends":{"fabric-api":">=1"},"recommends":{"b":"*"}}),
@@ -607,6 +787,15 @@ mod tests {
         assert!(!m.dependencies[1].required);
     }
     #[test]
+    fn loader_explanations_are_extracted() {
+        let log = "[main/ERROR]: Incompatible mods found!\nnet.fabricmc.loader.impl.FormattedException: Some of your mods are incompatible\nA potential solution has been determined:\n\t - Install fabric-api, any version.\nMore details:\n\t - Mod 'Sodium' (sodium) 0.5.8 requires any version of fabric-api, which is missing!\n\tat net.fabricmc.Main.main(Main.java:1)\n";
+        let d = loader_details(log);
+        assert_eq!(d.len(), 2);
+        assert_eq!(d[0], "- Install fabric-api, any version.");
+        assert!(d[1].starts_with("- Mod 'Sodium'"));
+        assert!(loader_details("[main/INFO]: - nothing").is_empty());
+    }
+    #[test]
     fn no_parent_paths() {
         let d = tempfile::tempdir().unwrap();
         assert!(child(d.path(), "../outside").is_err());
@@ -615,18 +804,96 @@ mod tests {
     }
     #[test]
     fn malformed_toml_is_error() {
-        let mut m = ModInfo {
-            path: String::new(),
-            name: String::new(),
-            ids: vec![],
-            dependencies: vec![],
-            disabled: false,
-            sha256: String::new(),
-            bytes: 0,
-            warnings: vec![],
-            metadata_complete: false,
-        };
+        let mut m = ModInfo::default();
         assert!(parse_toml("[not valid", &mut m).is_err());
+    }
+    #[test]
+    fn fabric_version_and_breaks_are_reported() {
+        let mut m = ModInfo::default();
+        parse_json(
+            &json!({"id":"a","version":"1.2.3","breaks":{"optifabric":"*"},"conflicts":{"b":"<2"}}),
+            false,
+            &mut m,
+        );
+        assert_eq!(m.version.as_deref(), Some("1.2.3"));
+        assert_eq!(m.conflicts.len(), 2);
+        assert!(m.conflicts.iter().any(|c| c.id == "optifabric" && c.required));
+        assert!(m.conflicts.iter().any(|c| c.id == "b" && !c.required));
+    }
+    #[test]
+    fn forge_incompatibility_and_jar_version() {
+        let toml = br#"modLoader = "javafml"
+loaderVersion = "[47,)"
+[[mods]]
+modId = "x"
+version = "${file.jarVersion}"
+displayName = "X Mod"
+[[dependencies.x]]
+modId = "forge"
+mandatory = true
+versionRange = "[47,)"
+side = "BOTH"
+[[dependencies.x]]
+modId = "badmod"
+type = "incompatible"
+versionRange = "[1,)"
+side = "CLIENT"
+[[dependencies.x]]
+modId = "serveronly"
+mandatory = true
+side = "SERVER"
+"#;
+        let (_d, p) = fixture(&[
+            ("META-INF/mods.toml", toml),
+            (
+                "META-INF/MANIFEST.MF",
+                b"Manifest-Version: 1.0\r\nImplementation-Version: 2.1.0\r\n",
+            ),
+        ]);
+        let m = inspect(&p, "mods/x.jar".into()).unwrap();
+        assert_eq!(m.name, "X Mod");
+        assert_eq!(m.version.as_deref(), Some("2.1.0"));
+        assert_eq!(m.loaders, ["forge"]);
+        assert!(m.metadata_complete);
+        assert_eq!(m.dependencies.len(), 1);
+        assert!(m.dependencies[0].required);
+        assert_eq!(m.conflicts.len(), 1);
+        assert_eq!(m.conflicts[0].id, "badmod");
+        assert!(m.conflicts[0].required);
+    }
+    fn jar_bytes(entries: &[(&str, &[u8])]) -> Vec<u8> {
+        use std::io::Write;
+        let mut zip = zip::ZipWriter::new(std::io::Cursor::new(Vec::new()));
+        for (name, bytes) in entries {
+            zip.start_file(*name, zip::write::FileOptions::default())
+                .unwrap();
+            zip.write_all(bytes).unwrap();
+        }
+        zip.finish().unwrap().into_inner()
+    }
+    #[test]
+    fn nested_mods_count_as_installed() {
+        let inner = jar_bytes(&[(
+            "fabric.mod.json",
+            br#"{"id":"fabric-api-base","name":"Fabric API Base","version":"0.4.31"}"#,
+        )]);
+        let library = jar_bytes(&[("com/example/Lib.class", b"library")]);
+        let (_d, p) = fixture(&[
+            (
+                "fabric.mod.json",
+                br#"{"id":"fabric-api","version":"0.92.0","jars":[{"file":"META-INF/jars/base.jar"},{"file":"META-INF/jars/lib.jar"}]}"#,
+            ),
+            ("META-INF/jars/base.jar", &inner),
+            ("META-INF/jars/lib.jar", &library),
+        ]);
+        let m = inspect(&p, "mods/fabric-api.jar".into()).unwrap();
+        assert_eq!(m.version.as_deref(), Some("0.92.0"));
+        assert_eq!(m.loaders, ["fabric"]);
+        assert!(m.metadata_complete, "{:?}", m.warnings);
+        assert_eq!(m.bundled.len(), 1);
+        assert_eq!(m.bundled[0].id, "fabric-api-base");
+        assert_eq!(m.bundled[0].name.as_deref(), Some("Fabric API Base"));
+        assert_eq!(m.bundled[0].version.as_deref(), Some("0.4.31"));
     }
     fn fixture(entries: &[(&str, &[u8])]) -> (tempfile::TempDir, PathBuf) {
         use std::io::Write;

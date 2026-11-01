@@ -4,7 +4,8 @@ import { tr, translate } from '@/i18n/index.js'
 import { useTheming } from '@/store/theme.js'
 import { BASE_THEMES, CUSTOM_THEMES, EFFECT_LEVELS } from '@/themes/catalog.js'
 import ThemePreview from '@/components/themes/ThemePreview.vue'
-import { get, set } from '@/helpers/settings.js'
+import { update } from '@/helpers/settings.js'
+import { matchesTheme } from '@/themes/preferences.js'
 import { CheckIcon } from '@modrinth/assets'
 
 const themeStore = useTheming()
@@ -20,9 +21,14 @@ const activeNumber = computed(() => {
 })
 const query = ref('')
 const filter = ref('all')
+const studioCount = CUSTOM_THEMES.filter((t) => t.collection === 'studio').length
 const filters = computed(() => [
+  {
+    id: 'favorites',
+    name: tr('Избранные', 'Favorites') + ` · ${themeStore.favoriteThemes.length}`,
+  },
   { id: 'all', name: tr('Все', 'All') },
-  { id: 'studio', name: tr('Новые · 19', 'New · 19') },
+  { id: 'studio', name: `Studio · ${studioCount}` },
   { id: 'dark', name: tr('Тёмные', 'Dark') },
   { id: 'light', name: tr('Светлые', 'Light') },
 ])
@@ -30,13 +36,17 @@ const filteredThemes = computed(() =>
   CUSTOM_THEMES.filter((theme) => {
     const matches =
       filter.value === 'all' ||
-      (filter.value === 'studio'
-        ? theme.collection === 'studio'
-        : filter.value === 'light'
-          ? theme.palette.light
-          : !theme.palette.light)
-    const text = [theme.id, theme.name, translate(theme.name)].join(' ').toLocaleLowerCase()
-    return matches && text.includes(query.value.trim().toLocaleLowerCase())
+      (filter.value === 'favorites'
+        ? themeStore.favoriteThemes.includes(theme.id)
+        : filter.value === 'studio'
+          ? theme.collection === 'studio'
+          : filter.value === 'light'
+            ? theme.palette.light
+            : !theme.palette.light)
+    return (
+      matches &&
+      matchesTheme(theme, query.value, translate(theme.name) + ' ' + translate(theme.effect))
+    )
   }),
 )
 async function selectTheme(theme) {
@@ -48,8 +58,7 @@ async function selectTheme(theme) {
   saveError.value = false
   try {
     // Merge into fresh native settings, not a stale page snapshot.
-    const settings = await get()
-    await set({ ...settings, theme: theme.id })
+    await update({ theme: theme.id })
     notice.value = tr('Сохранено.', 'Saved.')
   } catch {
     themeStore.setThemeState(previous)
@@ -205,7 +214,7 @@ async function selectTheme(theme) {
     <section class="collection" aria-labelledby="collection-heading">
       <div class="collection-heading">
         <h2 id="collection-heading">{{ tr('Все темы', 'All themes') }}</h2>
-        <span> {{ tr('19 новых атмосфер', '19 new atmospheres') }} </span>
+        <span> {{ filteredThemes.length }} / {{ CUSTOM_THEMES.length }} </span>
       </div>
       <div class="collection-toolbar">
         <div class="filter-options" role="group" :aria-label="tr('Фильтр тем', 'Theme filter')">
@@ -234,40 +243,63 @@ async function selectTheme(theme) {
           )
         }}
       </p>
+      <p v-if="themeStore.favoritesStorageError" class="save-notice error" role="alert">
+        {{
+          tr(
+            'Избранное изменено, но не сохранено на диске.',
+            'Favorites changed, but could not be saved.',
+          )
+        }}
+      </p>
       <div class="theme-grid" :aria-busy="saving">
-        <button
-          v-for="theme in filteredThemes"
-          :key="theme.id"
-          type="button"
-          class="theme-choice"
-          :class="{ selected: active.id === theme.id }"
-          :aria-pressed="active.id === theme.id"
-          :aria-label="tr(`Выбрать тему «${theme.name}»`, `Select ${translate(theme.name)} theme`)"
-          :disabled="saving"
-          :data-theme-id="theme.id"
-          @click="selectTheme(theme)"
-        >
-          <div class="card-preview-wrap">
-            <ThemePreview :theme="theme" />
-            <span v-if="theme.collection === 'studio'" class="new-theme-badge">STUDIO / 19</span>
-            <span class="theme-index">{{
-              String(CUSTOM_THEMES.indexOf(theme) + 1).padStart(2, '0')
-            }}</span>
-            <span v-if="active.id === theme.id" class="selected-mark"
-              ><CheckIcon aria-hidden="true" /><span>{{ tr('Выбрана', 'Selected') }}</span></span
-            >
-          </div>
-          <div class="theme-card-copy">
-            <div class="card-title-line">
-              <h3>{{ $u3t(theme.name) }}</h3>
-              <span class="card-swatches" aria-hidden="true"
-                ><i :style="{ background: theme.palette.accent }" /><i
-                  :style="{ background: theme.palette.secondary }"
-              /></span>
+        <article v-for="theme in filteredThemes" :key="theme.id" class="theme-entry">
+          <button
+            type="button"
+            class="theme-choice"
+            :class="{ selected: active.id === theme.id }"
+            :aria-pressed="active.id === theme.id"
+            :aria-label="
+              tr(`Выбрать тему «${theme.name}»`, `Select ${translate(theme.name)} theme`)
+            "
+            :disabled="saving"
+            :data-theme-id="theme.id"
+            @click="selectTheme(theme)"
+          >
+            <div class="card-preview-wrap">
+              <ThemePreview :theme="theme" />
+              <span class="theme-material">{{
+                theme.material || (theme.palette.light ? 'paper' : 'glass')
+              }}</span>
+              <span class="theme-index">{{
+                String(CUSTOM_THEMES.indexOf(theme) + 1).padStart(2, '0')
+              }}</span>
+              <span v-if="active.id === theme.id" class="selected-mark"
+                ><CheckIcon aria-hidden="true" /><span>{{ tr('Выбрана', 'Selected') }}</span></span
+              >
             </div>
-            <span class="particle-label">{{ $u3t(theme.effect) }}</span>
-          </div>
-        </button>
+            <div class="theme-card-copy">
+              <div class="card-title-line">
+                <h3>{{ $u3t(theme.name) }}</h3>
+                <span class="card-swatches" aria-hidden="true"
+                  ><i :style="{ background: theme.palette.accent }" /><i
+                    :style="{ background: theme.palette.secondary }"
+                /></span>
+              </div>
+              <span class="particle-label">{{ $u3t(theme.effect) }}</span>
+            </div>
+          </button>
+          <button
+            class="favorite-theme"
+            type="button"
+            :aria-pressed="themeStore.favoriteThemes.includes(theme.id)"
+            :aria-label="tr('Избранная тема: ', 'Favorite theme: ') + translate(theme.name)"
+            @click="themeStore.toggleFavorite(theme.id)"
+          >
+            <span aria-hidden="true">{{
+              themeStore.favoriteThemes.includes(theme.id) ? '★' : '☆'
+            }}</span>
+          </button>
+        </article>
       </div>
     </section>
 
@@ -303,6 +335,53 @@ async function selectTheme(theme) {
 </template>
 
 <style scoped>
+.theme-entry {
+  position: relative;
+  min-width: 0;
+}
+.favorite-theme {
+  position: absolute;
+  right: 8px;
+  top: 8px;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  border: 1px solid var(--theme-border);
+  background: var(--color-raised-bg);
+  color: var(--color-secondary);
+  font-size: 25px;
+  cursor: pointer;
+}
+.favorite-theme[aria-pressed='true'] {
+  color: var(--color-brand);
+  background: var(--color-bg);
+}
+.favorite-theme:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 3px;
+}
+.theme-material {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  padding: 4px 7px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-base);
+  background: var(--color-bg);
+  font-size: 10px;
+  font-weight: 650;
+}
+@media (prefers-reduced-motion: reduce) {
+  .theme-choice {
+    transition: none !important;
+    transform: none !important;
+  }
+}
+
 .studio-eyebrow {
   margin: 0 0 12px;
   color: var(--color-brand);
@@ -674,6 +753,8 @@ h1 {
 }
 .theme-choice {
   display: block;
+  width: 100%;
+  height: 100%;
   padding: 0;
   margin: 0;
   min-width: 0;
@@ -725,8 +806,9 @@ h1 {
 }
 .selected-mark {
   position: absolute;
-  top: 10px;
-  right: 10px;
+  bottom: 10px;
+  left: 12px;
+  width: fit-content;
   display: flex;
   align-items: center;
   gap: 5px;

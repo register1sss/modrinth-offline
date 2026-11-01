@@ -1,5 +1,7 @@
 // Development-only harness. Production index.html never loads this native API mock.
 import { mockIPC, mockWindows, mockConvertFileSrc } from '@tauri-apps/api/mocks'
+import { THEME_IDS } from '../src/themes/catalog.js'
+const requestedTheme = new URLSearchParams(location.search).get('theme')
 mockWindows('main')
 mockConvertFileSrc('windows')
 const saved = JSON.parse(localStorage.getItem('theme-test:native-settings') || 'null')
@@ -22,11 +24,14 @@ window.__nativeSettings = saved ?? {
   max_concurrent_writes: 10,
   discord_rpc: false,
 }
+if (THEME_IDS.includes(requestedTheme)) window.__nativeSettings.theme = requestedTheme
 window.__mockCalls = []
 window.__failThemeSave = false
 window.__aiAccess = localStorage.getItem('u3-test-access') !== 'false'
 window.__aiReady = false
 window.__aiActions = []
+window.__aiCalls = []
+window.__aiDelays = {}
 window.__aiEvents = {}
 
 mockIPC(async (cmd, args) => {
@@ -224,6 +229,8 @@ mockIPC(async (cmd, args) => {
   }
   if (cmd.startsWith('plugin:assistant|')) {
     const tool = cmd.split('|')[1]
+    window.__aiCalls.push({ tool, args: structuredClone(args) })
+    if (window.__aiDelays[tool]) await new Promise((r) => setTimeout(r, window.__aiDelays[tool]))
     if (tool === 'install') {
       window.__aiInstallAt = Date.now()
       window.__aiInstallCancelled = false
@@ -276,6 +283,7 @@ mockIPC(async (cmd, args) => {
     if (tool === 'profiles')
       return [
         { path: 'Test Profile', name: 'Test Profile', game_version: '1.21.11', loader: 'fabric' },
+        { path: 'Other Profile', name: 'Other Profile', game_version: '1.21.11', loader: 'fabric' },
       ]
     if (tool === 'search')
       return [
@@ -338,7 +346,10 @@ mockIPC(async (cmd, args) => {
   if (cmd === 'plugin:metadata|metadata_get_loader_versions') return { gameVersions: [] }
   if (cmd === 'plugin:metadata|metadata_get_game_versions') return { versions: [] }
   if (cmd === 'plugin:tags|tags_get_loaders') return []
-  if (cmd === 'plugin:profile|profile_get_many' || cmd === 'plugin:profile|profile_list') return []
+  if (cmd === 'plugin:profile|profile_get_many' || cmd === 'plugin:profile|profile_list') {
+    if (window.__profileListError) throw 'Test profile list error'
+    return []
+  }
   if (cmd === 'plugin:jre|get_java_versions') return {}
   if (cmd === 'plugin:jre|jre_get_max_memory') return 16777216
   if (cmd === 'is_dev') return true

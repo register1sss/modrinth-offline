@@ -256,7 +256,7 @@ export const CUSTOM_THEMES = Object.freeze(
       name: 'Кобальт',
       subtitle: 'Чистый синий с холодным свечением',
       particle: 'comet',
-      effect: 'Рубиновые кометы',
+      effect: 'Звёздные кометы',
       material: 'glass',
       collection: 'studio',
       palette: palette('#0c1629', '#152640', '#273c57', '#e9f3ff', '#b5cbe1', '#9dc9ff', '#a4eee5'),

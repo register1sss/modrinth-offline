@@ -1,26 +1,9 @@
 import { defineStore } from 'pinia'
 import { getTheme, THEME_IDS, themeVariables, EFFECT_LEVELS } from '@/themes/catalog.js'
 
-const EFFECTS_KEY = 'modrinth-offline:atmosphere:v1'
-function loadEffects() {
-  try {
-    const data = JSON.parse(localStorage.getItem(EFFECTS_KEY) ?? '{}')
-    return {
-      jellyEnabled: typeof data.jelly === 'boolean' ? data.jelly : true,
-      jellyLevel: data.jellyLevel === 'soft' ? 'soft' : 'spring',
-      effectsEnabled: typeof data.enabled === 'boolean' ? data.enabled : true,
-      effectsQuality: EFFECT_LEVELS.some((level) => level.id === data.quality)
-        ? data.quality
-        : 'balanced',
-    }
-  } catch {
-    return {
-      effectsEnabled: true,
-      effectsQuality: 'balanced',
-      jellyEnabled: true,
-      jellyLevel: 'spring',
-    }
-  }
+import { EFFECTS_KEY, FAVORITES_KEY, readEffects, readFavorites } from '@/themes/preferences.js'
+const storage = {
+  getItem: (key) => localStorage.getItem(key),
 }
 const managedProperties = Object.keys(themeVariables(getTheme('aurora')))
 
@@ -31,12 +14,26 @@ export const useTheming = defineStore('themeStore', {
     selectedTheme: 'dark',
     reducedMotion: false,
     effectsStorageError: false,
-    ...loadEffects(),
+    ...readEffects(storage),
+    favoriteThemes: readFavorites(storage),
+    favoritesStorageError: false,
   }),
   getters: {
     activeTheme: (state) => getTheme(state.selectedTheme),
   },
   actions: {
+    toggleFavorite(id) {
+      if (!this.themeOptions.includes(id)) return
+      this.favoriteThemes = this.favoriteThemes.includes(id)
+        ? this.favoriteThemes.filter((value) => value !== id)
+        : [...this.favoriteThemes, id]
+      try {
+        localStorage.setItem(FAVORITES_KEY, JSON.stringify(this.favoriteThemes))
+        this.favoritesStorageError = false
+      } catch {
+        this.favoritesStorageError = true
+      }
+    },
     setThemeState(newTheme) {
       if (!this.themeOptions.includes(newTheme)) return false
       this.selectedTheme = newTheme
@@ -53,13 +50,11 @@ export const useTheming = defineStore('themeStore', {
       const base = theme.id === 'oled' ? 'oled' : theme.palette.light ? 'light' : 'dark'
       root.classList.add(`${base}-mode`)
       root.style.colorScheme = theme.palette.light ? 'light' : 'dark'
-      if (theme.particle) {
-        root.dataset.customTheme = theme.id
-        for (const [name, value] of Object.entries(themeVariables(theme)))
-          root.style.setProperty(name, value)
-      } else {
-        delete root.dataset.customTheme
-      }
+      root.dataset.theme = theme.id
+      for (const [name, value] of Object.entries(themeVariables(theme)))
+        root.style.setProperty(name, value)
+      if (theme.particle) root.dataset.customTheme = theme.id
+      else delete root.dataset.customTheme
     },
     saveEffects() {
       try {

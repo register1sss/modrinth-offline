@@ -1,8 +1,11 @@
 <template>
-  <div
+  <button
     v-if="mode !== 'isolated'"
     ref="button"
     v-tooltip.right="'Minecraft accounts'"
+    type="button"
+    :aria-label="tr('Аккаунты Minecraft', 'Minecraft accounts')"
+    :aria-expanded="showCard"
     class="button-base avatar-button"
     :class="{ expanded: mode === 'expanded' }"
     @click="showCard = !showCard"
@@ -10,12 +13,10 @@
     <Avatar
       :size="mode === 'expanded' ? 'xs' : 'sm'"
       :src="
-        selectedAccount
-          ? `https://mc-heads.net/avatar/${selectedAccount.id}/128`
-          : 'https://launcher-files.modrinth.com/assets/steve_head.png'
+        selectedAccount ? `https://mc-heads.net/avatar/${selectedAccount.id}/128` : '/u3drinth.svg'
       "
     />
-  </div>
+  </button>
 
   <Modal ref="chooseAccountTypeModal" header="Choose new account type">
     <div class="choose-account-modal">
@@ -231,6 +232,17 @@ onUnmounted(() => {
 </script>
 
 <style scoped lang="scss">
+button.avatar-button {
+  border: 0;
+  padding: 0;
+  color: inherit;
+  background: transparent;
+  cursor: pointer;
+}
+button.avatar-button:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 3px;
+}
 .selected {
   background: var(--color-brand-highlight);
   border-radius: var(--radius-lg);

@@ -16,7 +16,7 @@ let ctx,
   nodes = [],
   focused = true
 function paint(t = 0, dt = 0) {
-  if (!ctx) return
+  if (!ctx || !panelCtx) return
   advanceParticles(particles, store.activeTheme.particle, w, h, dt, t)
   drawParticles(ctx, particles, store.activeTheme.particle, w, h, t)
   // drawPanel clears its own surface; use a separate small cached decorative layer.
@@ -43,7 +43,7 @@ function sync() {
     frame = requestAnimationFrame(tick)
 }
 function resize() {
-  if (!ctx) return
+  if (!ctx || !panelCtx) return
   const b = canvas.value.getBoundingClientRect()
   w = Math.max(1, b.width)
   h = Math.max(1, b.height)
@@ -82,7 +82,16 @@ onMounted(() => {
   document.addEventListener('visibilitychange', sync)
   resize()
 })
-watch(() => [store.selectedTheme, store.reducedMotion, store.effectsQuality], resize)
+watch(
+  () => [
+    store.selectedTheme,
+    store.reducedMotion,
+    store.effectsQuality,
+    store.effectsEnabled,
+    props.vertical,
+  ],
+  resize,
+)
 onBeforeUnmount(() => {
   stop()
   observer?.disconnect()

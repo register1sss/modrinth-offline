@@ -1,7 +1,15 @@
 <template>
-  <Modal ref="modal" header="Create instance" :noblur="!themeStore.advancedRendering">
+  <Modal
+    ref="modal"
+    :header="tr('Создать профиль', 'Create instance')"
+    :noblur="!themeStore.advancedRendering"
+  >
     <div class="modal-header">
-      <Chips v-model="creationType" :items="['custom', 'from file', 'import from launcher']" />
+      <Chips
+        v-model="creationType"
+        :items="['custom', 'from file', 'import from launcher']"
+        :format-label="creationLabel"
+      />
     </div>
     <hr class="card-divider" />
     <div v-if="creationType === 'custom'" class="modal-body">
@@ -37,7 +45,7 @@
             :options="game_versions"
             :multiple="false"
             :searchable="true"
-            placeholder="Select game version"
+            :placeholder="tr('Выбери версию игры', 'Select game version')"
             open-direction="top"
             :show-labels="false"
           />
@@ -45,7 +53,7 @@
             v-if="showAdvanced"
             v-model="showSnapshots"
             class="filter-checkbox"
-            label="Include snapshots"
+            :label="tr('Показывать снапшоты', 'Include snapshots')"
           />
         </div>
       </div>
@@ -61,7 +69,7 @@
             class="selector"
             :options="selectable_versions"
             :searchable="true"
-            placeholder="Select loader version"
+            :placeholder="tr('Выбери версию загрузчика', 'Select loader version')"
             open-direction="top"
             :show-labels="false"
           />
@@ -75,12 +83,16 @@
       <div class="input-group push-right">
         <Button @click="toggle_advanced">
           <CodeIcon />
-          {{ showAdvanced ? 'Hide advanced' : 'Show advanced' }}
+          {{
+            showAdvanced
+              ? tr('Меньше настроек', 'Hide advanced')
+              : tr('Больше настроек', 'Show advanced')
+          }}
         </Button>
         <Button @click="hide()"> <XIcon /> {{ $u3t('Cancel') }} </Button>
         <Button color="primary" :disabled="!check_valid || creating" @click="create_instance()">
           <PlusIcon v-if="!creating" />
-          {{ creating ? 'Creating...' : 'Create' }}
+          {{ creating ? tr('Создаём...', 'Creating...') : tr('Создать', 'Create') }}
         </Button>
       </div>
     </div>
@@ -204,6 +216,7 @@ import {
 } from '@modrinth/assets'
 import { Avatar, Button, Chips, Modal, Checkbox } from '@modrinth/ui'
 import { computed, onUnmounted, ref, shallowRef } from 'vue'
+import { tr } from '@/i18n/index.js'
 import { get_loaders } from '@/helpers/tags'
 import { create } from '@/helpers/profile'
 import { open } from '@tauri-apps/api/dialog'
@@ -223,6 +236,12 @@ import {
 import ProgressBar from '@/components/ui/ProgressBar.vue'
 
 const themeStore = useTheming()
+const creationLabel = (value) =>
+  ({
+    custom: tr('Свой профиль', 'Custom'),
+    'from file': tr('Из файла', 'From file'),
+    'import from launcher': tr('Из лаунчера', 'From launcher'),
+  })[value] ?? value
 
 const profile_name = ref('')
 const game_version = ref('')
@@ -515,6 +534,13 @@ const next = async () => {
 </script>
 
 <style lang="scss" scoped>
+.input-group {
+  flex-wrap: wrap;
+}
+.versions {
+  min-width: 0;
+  flex-wrap: wrap;
+}
 .modal-body {
   display: flex;
   flex-direction: column;
@@ -530,7 +556,7 @@ const next = async () => {
 }
 
 .text-input {
-  width: 20rem;
+  width: min(20rem, 100%);
 }
 
 .image-upload {

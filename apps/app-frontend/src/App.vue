@@ -2,6 +2,8 @@
 import { computed, ref, onMounted, onBeforeUnmount } from 'vue'
 import { language, setLanguage, tr, translate } from '@/i18n/index.js'
 import { invoke as rustInvoke } from '@tauri-apps/api/tauri'
+import { open as openExternal } from '@tauri-apps/api/shell'
+import { externalLink } from '@/helpers/links.js'
 import { updateRustSession } from '@/minecraft-rust/state.js'
 import { session as aiSession } from '@/assistant/state.js'
 import { RouterView, RouterLink, useRouter, useRoute } from 'vue-router'
@@ -68,11 +70,14 @@ const urlModal = ref(null)
 const isLoading = ref(true)
 
 const offline = ref(!navigator.onLine)
-window.addEventListener('offline', () => {
-  offline.value = true
-})
-window.addEventListener('online', () => {
-  offline.value = false
+const syncOnline = () => {
+  offline.value = !navigator.onLine
+}
+window.addEventListener('offline', syncOnline)
+window.addEventListener('online', syncOnline)
+onBeforeUnmount(() => {
+  window.removeEventListener('offline', syncOnline)
+  window.removeEventListener('online', syncOnline)
 })
 
 const showOnboarding = ref(false)
@@ -196,44 +201,43 @@ onMounted(() => {
   install.setModInstallModal(modInstallModal)
 })
 
-document.querySelector('body').addEventListener('click', function (e) {
-  let target = e.target
-  while (target != null) {
-    if (target.matches('a')) {
+function handleLinkClick(event) {
+  if (event.defaultPrevented || !(event.target instanceof Element)) return
+  const anchor = event.target.closest('a[href]')
+  if (!anchor) return
+  const url = externalLink(anchor.href, location.origin)
+  if (!url) {
+    // Do not hand unsupported schemes or credential-bearing external URLs to the WebView.
+    try {
+      const destination = new URL(anchor.href)
       if (
-        target.href &&
-        ['http://', 'https://', 'mailto:', 'tel:'].some((v) => target.href.startsWith(v)) &&
-        !target.classList.contains('router-link-active') &&
-        !target.href.startsWith('http://localhost') &&
-        !target.href.startsWith('https://tauri.localhost')
-      ) {
-        window.__TAURI_INVOKE__('tauri', {
-          __tauriModule: 'Shell',
-          message: {
-            cmd: 'open',
-            path: target.href,
-          },
-        })
-      }
-      e.preventDefault()
-      break
+        destination.protocol !== location.protocol ||
+        destination.host !== location.host ||
+        destination.origin !== location.origin
+      )
+        event.preventDefault()
+    } catch {
+      event.preventDefault()
     }
-    target = target.parentElement
+    return
   }
+  event.preventDefault()
+  openExternal(url).catch(handleError)
+}
+function handleAuxClick(event) {
+  if (event.button !== 1 || !(event.target instanceof Element)) return
+  const anchor = event.target.closest('a[href]')
+  if (!anchor) return
+  event.preventDefault()
+  anchor.click()
+}
+onMounted(() => {
+  document.body.addEventListener('click', handleLinkClick)
+  document.body.addEventListener('auxclick', handleAuxClick)
 })
-
-document.querySelector('body').addEventListener('auxclick', function (e) {
-  // disables middle click -> new tab
-  if (e.button === 1) {
-    e.preventDefault()
-    // instead do a left click
-    const event = new MouseEvent('click', {
-      view: window,
-      bubbles: true,
-      cancelable: true,
-    })
-    e.target.dispatchEvent(event)
-  }
+onBeforeUnmount(() => {
+  document.body.removeEventListener('click', handleLinkClick)
+  document.body.removeEventListener('auxclick', handleAuxClick)
 })
 
 const accounts = ref(null)

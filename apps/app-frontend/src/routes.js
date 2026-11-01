@@ -1,12 +1,32 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import * as Pages from '@/pages'
-import * as Project from '@/pages/project'
-import * as Instance from '@/pages/instance'
+const Pages = {
+  Index: () => import('@/pages/Index.vue'),
+  Browse: () => import('@/pages/Browse.vue'),
+  Library: () => import('@/pages/Library.vue'),
+  Settings: () => import('@/pages/Settings.vue'),
+  Themes: () => import('@/pages/Themes.vue'),
+  Assistant: () => import('@/pages/Assistant.vue'),
+  MinecraftRust: () => import('@/pages/MinecraftRust.vue'),
+}
+const Project = {
+  Index: () => import('@/pages/project/Index.vue'),
+  Description: () => import('@/pages/project/Description.vue'),
+  Versions: () => import('@/pages/project/Versions.vue'),
+  Gallery: () => import('@/pages/project/Gallery.vue'),
+  Version: () => import('@/pages/project/Version.vue'),
+}
+const Instance = {
+  Index: () => import('@/pages/instance/Index.vue'),
+  Mods: () => import('@/pages/instance/Mods.vue'),
+  Options: () => import('@/pages/instance/Options.vue'),
+  Logs: () => import('@/pages/instance/Logs.vue'),
+  Health: () => import('@/pages/instance/Health.vue'),
+}
 
 /**
  * Configures application routing. Add page to pages/index and then add to route table here.
  */
-export default new createRouter({
+export default createRouter({
   history: createWebHistory(),
   routes: [
     {
@@ -164,12 +184,10 @@ export default new createRouter({
   ],
   linkActiveClass: 'router-link-active',
   linkExactActiveClass: 'router-link-exact-active',
-  scrollBehavior() {
-    // Sometimes Vue's scroll behavior is not working as expected, so we need to manually scroll to top (especially on Linux)
+  async scrollBehavior() {
+    // This is an inner scroller, not the window. Wait for the routed component to mount.
+    await new Promise((resolve) => requestAnimationFrame(resolve))
     document.querySelector('.router-view')?.scrollTo(0, 0)
-    return {
-      el: '.router-view',
-      top: 0,
-    }
+    return false
   },
 })

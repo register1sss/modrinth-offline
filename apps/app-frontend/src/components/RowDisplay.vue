@@ -1,4 +1,5 @@
 <script setup>
+import { open as openExternal } from '@tauri-apps/api/shell'
 import {
   ClipboardCopyIcon,
   FolderOpenIcon,
@@ -165,13 +166,9 @@ const handleOptionsClick = async (args) => {
       break
     }
     case 'open_link':
-      window.__TAURI_INVOKE__('tauri', {
-        __tauriModule: 'Shell',
-        message: {
-          cmd: 'open',
-          path: `https://modrinth.com/${args.item.project_type}/${args.item.slug}`,
-        },
-      })
+      openExternal(
+        `https://modrinth.com/${args.item.project_type}/${encodeURIComponent(args.item.slug)}`,
+      ).catch(handleError)
       break
     case 'copy_link':
       await navigator.clipboard.writeText(

@@ -1,0 +1,15 @@
+{
+  "passed": true,
+  "checks": [
+    "35 theme choices applied, persisted and rendered",
+    "failed theme write restores the previous appearance",
+    "favorite persistence, filters, search and empty state",
+    "reduced motion and disabled effects",
+    "390px theme page has no horizontal overflow",
+    "modal traps/restores focus, closes on Escape and reopens safely",
+    "settings preserve quoted Java paths, empty values and equals",
+    "profile switches clear the editor; confirmed saves use the bound profile",
+    "settings, empty library, assistant and Rust routes mount"
+  ],
+  "errors": []
+}

@@ -1,6 +1,6 @@
 <template>
   <img
-    v-if="src"
+    v-if="src && !failed"
     ref="img"
     :class="`avatar size-${size} ${circle ? 'circle' : ''} ${noShadow ? 'no-shadow' : ''} ${
       pixelated ? 'pixelated' : ''
@@ -9,6 +9,7 @@
     :alt="alt"
     :loading="loading"
     @load="updatePixelated"
+    @error="failed = true"
   />
   <svg
     v-else
@@ -35,12 +36,13 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 
+const failed = ref(false)
 const pixelated = ref(false)
 const img = ref(null)
 
-defineProps({
+const props = defineProps({
   src: {
     type: String,
     default: null,
@@ -73,6 +75,12 @@ defineProps({
     default: false,
   },
 })
+watch(
+  () => props.src,
+  () => {
+    failed.value = false
+  },
+)
 
 function updatePixelated() {
   pixelated.value = Boolean(img.value && img.value.naturalWidth && img.value.naturalWidth <= 96)

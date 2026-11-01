@@ -216,6 +216,7 @@
 </template>
 
 <script setup>
+import { open as openExternal } from '@tauri-apps/api/shell'
 import {
   DownloadIcon,
   ReportIcon,
@@ -252,7 +253,7 @@ import { handleError } from '@/store/notifications.js'
 import { convertFileSrc } from '@tauri-apps/api/tauri'
 import ContextMenu from '@/components/ui/ContextMenu.vue'
 import { install as installVersion } from '@/store/install.js'
-import { get_project, get_project_many, get_team, get_version_many } from '@/helpers/cache.js'
+import { get_project, get_team, get_version_many } from '@/helpers/cache.js'
 
 dayjs.extend(relativeTime)
 
@@ -342,13 +343,9 @@ const handleOptionsClick = (args) => {
       install(null)
       break
     case 'open_link':
-      window.__TAURI_INVOKE__('tauri', {
-        __tauriModule: 'Shell',
-        message: {
-          cmd: 'open',
-          path: `https://modrinth.com/${args.item.project_type}/${args.item.slug}`,
-        },
-      })
+      openExternal(
+        `https://modrinth.com/${args.item.project_type}/${encodeURIComponent(args.item.slug)}`,
+      ).catch(handleError)
       break
     case 'copy_link':
       navigator.clipboard.writeText(

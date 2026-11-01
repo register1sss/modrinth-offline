@@ -86,14 +86,15 @@ onMounted(() => {
   focused = document.hasFocus()
   observer = new ResizeObserver(resize)
   observer.observe(canvas.value)
-  if (props.animated) {
-    document.addEventListener('visibilitychange', syncAnimation)
-    window.addEventListener('focus', focus)
-    window.addEventListener('blur', blur)
-  }
+  document.addEventListener('visibilitychange', syncAnimation)
+  window.addEventListener('focus', focus)
+  window.addEventListener('blur', blur)
   resize()
 })
-watch(() => [props.theme.id, props.quality, props.reducedMotion, props.animated], resize)
+watch(
+  () => [props.theme.id, props.quality, props.reducedMotion, props.animated, props.subdued],
+  resize,
+)
 onBeforeUnmount(() => {
   stop()
   observer?.disconnect()

@@ -8,7 +8,8 @@
     "build": "vite build",
     "lint": "eslint . && prettier --check .",
     "fix": "eslint . --fix && prettier --write .",
-    "test": "node --test tests/themes.test.mjs tests/branding.test.mjs tests/assistant.test.mjs tests/minecraft-rust.test.mjs tests/instance-health.test.mjs"
+    "test": "node --test tests/*.test.mjs",
+    "test:ui": "node tests/ui-smoke.mjs"
   },
   "dependencies": {
     "@modrinth/assets": "workspace:*",
@@ -33,6 +34,7 @@
     "@vitejs/plugin-vue": "^5.0.4",
     "eslint": "^8.57.0",
     "eslint-config-custom": "workspace:*",
+    "playwright": "1.56.1",
     "prettier": "^3.2.5",
     "sass": "^1.74.1",
     "tsconfig": "workspace:*",

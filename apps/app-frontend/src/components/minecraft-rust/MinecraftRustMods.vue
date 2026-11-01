@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch, computed, nextTick } from 'vue'
+import { ref, watch, computed, nextTick, onBeforeUnmount } from 'vue'
 import { invoke } from '@tauri-apps/api/tauri'
 import { open } from '@tauri-apps/api/shell'
 import { language } from '@/i18n/index.js'
@@ -22,8 +22,13 @@ const catalog = ref(null),
 let serial = 0,
   previousFocus
 async function load() {
-  if (props.busy) return
   const request = ++serial
+  catalog.value = null
+  chosen.value = null
+  if (props.busy) {
+    loading.value = false
+    return
+  }
   loading.value = true
   error.value = ''
   try {
@@ -41,6 +46,9 @@ async function load() {
   }
 }
 watch(() => [props.profile, props.busy, props.revision], load, { immediate: true })
+onBeforeUnmount(() => {
+  ++serial
+})
 const groups = computed(() => [
   { title: t('Моды U3', 'U3 mods'), entries: catalog.value?.own ?? [] },
   {

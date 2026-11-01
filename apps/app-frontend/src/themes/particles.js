@@ -16,7 +16,14 @@ export function seededRandom(seed) {
 }
 
 export function createParticles(theme, width, height, quality = 'balanced', preview = false) {
-  if (!theme.particle) return []
+  if (
+    !theme.particle ||
+    !Number.isFinite(width) ||
+    !Number.isFinite(height) ||
+    width <= 0 ||
+    height <= 0
+  )
+    return []
   const random = seededRandom(`${theme.id}:${quality}:${preview}`)
   const budget = EFFECT_LEVELS.find((level) => level.id === quality)?.count ?? 52
   const count = preview
@@ -35,7 +42,8 @@ export function createParticles(theme, width, height, quality = 'balanced', prev
 }
 
 export function advanceParticles(particles, kind, width, height, delta, time) {
-  const dt = Math.min(Math.max(delta, 0), 0.08)
+  const dt = Number.isFinite(delta) ? Math.min(Math.max(delta, 0), 0.08) : 0
+  time = Number.isFinite(time) ? time : 0
   for (const p of particles) {
     const drift = Math.sin(time * 0.45 + p.phase)
     let vx = drift * 7

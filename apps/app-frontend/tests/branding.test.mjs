@@ -33,7 +33,7 @@ test('launcher-facing text and onboarding wordmark are renamed', () => {
 test('branding does not break legacy data, endpoints or account identity', () => {
   assert.equal(config.tauri.bundle.identifier, 'ModrinthApp')
   assert.match(read('../../../packages/app-lib/src/state/dirs.rs'), /ModrinthApp_Offline/)
-  assert.match(read('../src/store/theme.js'), /modrinth-offline:atmosphere:v1/)
+  assert.match(read('../src/themes/preferences.js'), /modrinth-offline:atmosphere:v1/)
   assert.match(config.tauri.security.csp, /https:\/\/modrinth\.com/)
   assert.match(read('../src/pages/Settings.vue'), /Sign in to your Modrinth account/)
   assert.match(read('../../app/src/api/mr_auth.rs'), /\.title\("Sign into Modrinth"\)/)

@@ -1,0 +1,9 @@
+
+/vercel/sandbox/data/launcher/U3drinth/apps/app-frontend/src/components/ui/InstanceCreationModal.vue
+  226:8  warning  Using exported name 'Multiselect' as identifier for default export  import/no-named-as-default
+
+/vercel/sandbox/data/launcher/U3drinth/apps/app-frontend/src/pages/project/Index.vue
+  258:1  warning  Caution: `dayjs` also has a named export `extend`. Check if you meant to write `import {extend} from 'dayjs'` instead  import/no-named-as-default-member
+
+✖ 2 problems (0 errors, 2 warnings)
+

@@ -1,17 +1,13 @@
 <script setup>
 import { onMounted, onBeforeUnmount, ref } from 'vue'
-import { useRouter } from 'vue-router'
 import { useTheming } from '@/store/theme.js'
 import { particleArt } from '@/themes/particle-art.js'
 const canvas = ref(null),
-  store = useTheming(),
-  router = useRouter()
+  store = useTheming()
 let ctx,
   frame = 0,
   started = 0,
-  particles = [],
-  timer = 0,
-  pending = ''
+  particles = []
 function stop() {
   cancelAnimationFrame(frame)
   frame = 0
@@ -40,6 +36,7 @@ function tick(now) {
   frame = requestAnimationFrame(tick)
 }
 function click(e) {
+  if (!(e.target instanceof Element) || !ctx) return
   const control = e.target.closest(
     '.nav-container .btn,.nav-container .avatar-button,.navigation-controls button',
   )
@@ -54,9 +51,6 @@ function click(e) {
     control.getAttribute('aria-disabled') === 'true'
   )
     return
-  clearTimeout(timer)
-  timer = 0
-  pending = ''
   const theme = store.activeTheme
   if (!theme.particle || !store.effectsEnabled || store.reducedMotion) return
   const rect = control.getBoundingClientRect(),
@@ -89,19 +83,7 @@ function click(e) {
   })
   started = performance.now()
   frame = requestAnimationFrame(tick)
-  const link = control.closest('a[href]')
-  if (link && link.origin === location.origin && link.pathname !== router.currentRoute.value.path) {
-    e.preventDefault()
-    e.stopPropagation()
-    clearTimeout(timer)
-    pending = link.pathname + link.search + link.hash
-    timer = setTimeout(() => {
-      const to = pending
-      pending = ''
-      timer = 0
-      router.push(to)
-    }, 260)
-  }
+  // Decoration must never intercept navigation or delay an action.
 }
 function hidden() {
   if (document.hidden) stop()
@@ -113,7 +95,6 @@ onMounted(() => {
 })
 onBeforeUnmount(() => {
   stop()
-  clearTimeout(timer)
   document.removeEventListener('click', click, true)
   document.removeEventListener('visibilitychange', hidden)
 })

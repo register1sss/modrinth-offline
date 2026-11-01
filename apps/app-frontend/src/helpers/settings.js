@@ -4,6 +4,7 @@
  *  and deserialized into a usable JS object.
  */
 import { invoke } from '@tauri-apps/api/tauri'
+import { createSettingsUpdater } from './settings-model.js'
 
 // Settings object
 /*
@@ -37,6 +38,8 @@ export async function get() {
 export async function set(settings) {
   return await invoke('plugin:settings|settings_set', { settings })
 }
+
+export const update = createSettingsUpdater(get, set)
 
 // Changes the config dir
 // Seizes the entire application state until its done

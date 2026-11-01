@@ -1,10 +1,10 @@
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, onBeforeUnmount } from 'vue'
 import { language, setLanguage, tr, translate } from '@/i18n/index.js'
-import { LogOutIcon, LogInIcon, BoxIcon, FolderSearchIcon, UpdatedIcon } from '@modrinth/assets'
-import { Card, Slider, DropdownSelect, Toggle, Modal, Button } from '@modrinth/ui'
+import { LogOutIcon, LogInIcon, BoxIcon, FolderSearchIcon } from '@modrinth/assets'
+import { Card, Slider, DropdownSelect, Toggle, Button } from '@modrinth/ui'
 import { handleError, useTheming } from '@/store/state'
-import { is_dir_writeable, change_config_dir, get, set } from '@/helpers/settings'
+import { get, update } from '@/helpers/settings'
 import { get_java_versions, get_max_memory, set_java_version } from '@/helpers/jre'
 import { get as getCreds, logout } from '@/helpers/mr_auth.js'
 import JavaSelector from '@/components/ui/JavaSelector.vue'
@@ -12,20 +12,21 @@ import ModrinthLoginScreen from '@/components/ui/tutorial/ModrinthLoginScreen.vu
 import { mixpanel_opt_out_tracking, mixpanel_opt_in_tracking } from '@/helpers/mixpanel'
 import { open } from '@tauri-apps/api/dialog'
 import { getOS } from '@/helpers/utils.js'
-import { getVersion } from '@tauri-apps/api/app'
 import { get_user } from '@/helpers/cache.js'
+
+import { getTheme } from '@/themes/catalog.js'
+
+import { formatLaunchArgs, nativeSettings, settingsChanges } from '@/helpers/settings-model.js'
 
 const pageOptions = ['Home', 'Library']
 
 const themeStore = useTheming()
 
-const version = await getVersion()
-
 const accessSettings = async () => {
   const settings = await get()
 
-  settings.launchArgs = settings.extra_launch_args.join(' ')
-  settings.envVars = settings.custom_env_vars.map((x) => x.join('=')).join(' ')
+  settings.launchArgs = formatLaunchArgs(settings.extra_launch_args)
+  settings.envVars = formatLaunchArgs(settings.custom_env_vars.map((x) => x.join('=')))
 
   return settings
 }
@@ -37,46 +38,51 @@ const settings = ref(fetchSettings)
 
 const maxMemory = ref(Math.floor((await get_max_memory().catch(handleError)) / 1024))
 
+let lastSaved = nativeSettings(settings.value)
+let saveTimer,
+  pendingSave = Promise.resolve()
+function saveSettings() {
+  clearTimeout(saveTimer)
+  saveTimer = null
+  // Capture the current editor snapshot; serialize saves and don't overwrite unrelated changes.
+  let snapshot
+  try {
+    snapshot = nativeSettings(settings.value)
+  } catch (error) {
+    handleError(error)
+    return
+  }
+  pendingSave = pendingSave
+    .catch(() => {})
+    .then(async () => {
+      const patch = settingsChanges(lastSaved, snapshot)
+      if (!Object.keys(patch).length) return
+      try {
+        await update(patch)
+      } catch (error) {
+        if ('theme' in patch && settings.value.theme === snapshot.theme) {
+          settings.value.theme = lastSaved.theme
+          themeStore.setThemeState(lastSaved.theme)
+        }
+        throw error
+      }
+      lastSaved = snapshot
+      if (snapshot.telemetry) mixpanel_opt_out_tracking()
+      else mixpanel_opt_in_tracking()
+    })
+    .catch(handleError)
+}
 watch(
   settings,
-  async (oldSettings, newSettings) => {
-    if (oldSettings.loaded_config_dir !== newSettings.loaded_config_dir) {
-      return
-    }
-
-    const setSettings = JSON.parse(JSON.stringify(newSettings))
-
-    if (setSettings.telemetry) {
-      mixpanel_opt_out_tracking()
-    } else {
-      mixpanel_opt_in_tracking()
-    }
-
-    setSettings.extra_launch_args = setSettings.launchArgs.trim().split(/\s+/).filter(Boolean)
-    setSettings.custom_env_vars = setSettings.envVars
-      .trim()
-      .split(/\s+/)
-      .filter(Boolean)
-      .map((x) => x.split('=').filter(Boolean))
-
-    if (!setSettings.hooks.pre_launch) {
-      setSettings.hooks.pre_launch = null
-    }
-    if (!setSettings.hooks.wrapper) {
-      setSettings.hooks.wrapper = null
-    }
-    if (!setSettings.hooks.post_exit) {
-      setSettings.hooks.post_exit = null
-    }
-
-    if (!setSettings.custom_dir) {
-      setSettings.custom_dir = null
-    }
-
-    await set(setSettings)
+  () => {
+    clearTimeout(saveTimer)
+    saveTimer = setTimeout(saveSettings, 350)
   },
   { deep: true },
 )
+onBeforeUnmount(() => {
+  if (saveTimer) saveSettings()
+})
 
 const javaVersions = ref(await get_java_versions().catch(handleError))
 async function updateJavaVersion(version) {
@@ -93,7 +99,6 @@ async function updateJavaVersion(version) {
 
 async function fetchCredentials() {
   const creds = await getCreds().catch(handleError)
-  console.log(creds)
   if (creds && creds.user_id) {
     creds.user = await get_user(creds.user_id).catch(handleError)
   }
@@ -201,7 +206,7 @@ async function findLauncherDir() {
           id="theme"
           name="Theme dropdown"
           :options="themeStore.themeOptions"
-          :display-name="translate"
+          :display-name="(id) => translate(getTheme(id).name)"
           :default-value="settings.theme"
           :model-value="settings.theme"
           class="theme-dropdown"
@@ -214,7 +219,7 @@ async function findLauncherDir() {
         />
       </div>
       <RouterLink to="/themes" class="btn">
-        {{ $u3t('Темы - 13 новых палитр и эффекты частиц') }}
+        {{ tr('Открыть галерею тем', 'Open theme gallery') }} · {{ themeStore.themeOptions.length }}
       </RouterLink>
       <div class="adjacent-input">
         <label for="advanced-rendering">
@@ -353,11 +358,14 @@ async function findLauncherDir() {
       </div>
       <div class="adjacent-input">
         <label for="opt-out-analytics">
-          <span class="label__title"> {{ $u3t('Telemetry') }} </span>
+          <span class="label__title">
+            {{ tr('Не отправлять аналитику', 'Do not send analytics') }}
+          </span>
           <span class="label__description">
             {{
-              $u3t(
-                'When enabled, U3drinth sends launcher analytics to the existing Modrinth analytics service. Disable this option to opt out of launcher analytics.',
+              tr(
+                'Включено - аналитика лаунчера не отправляется. Каталоги и авторизация по-прежнему используют сеть.',
+                'When enabled, launcher analytics are not sent. Catalogs and sign-in still use the network.',
               )
             }}
           </span>
@@ -397,8 +405,8 @@ async function findLauncherDir() {
           <span class="label__title size-card-header"> {{ $u3t('Java settings') }} </span>
         </h3>
       </div>
-      <template v-for="version in [21, 17, 8]">
-        <label :for="'java-' + version">
+      <template v-for="version in [21, 17, 8]" :key="version">
+        <label :for="'java-selector-' + version">
           <span class="label__title"> {{ $u3t('Java') }} {{ version }} location</span>
         </label>
         <JavaSelector
@@ -574,6 +582,21 @@ async function findLauncherDir() {
 </template>
 
 <style lang="scss" scoped>
+.settings-page select {
+  min-height: 44px;
+  min-width: 140px;
+  padding: 8px 12px;
+  background: var(--color-button-bg);
+  color: var(--color-base);
+  border: 1px solid var(--theme-border, var(--color-secondary));
+  border-radius: 8px;
+  font: inherit;
+}
+.settings-page select:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 3px;
+}
+
 .settings-page {
   margin: 1rem;
 }

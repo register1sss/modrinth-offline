@@ -57,3 +57,10 @@ generated
 
 # app testing dir
 app-playground-data/*
+# Browser QA captures
+apps/app-frontend/qa-output/
+
+# Local credentials and environment files
+.env
+.env.*
+!.env.example

@@ -13,13 +13,23 @@ const previewStyle = computed(() => {
     '--preview-secondary': p.secondary,
     '--preview-line': rgba(p.muted, 0.35),
     '--preview-tint': rgba(p.accent, 0.15),
+    '--preview-glow': rgba(p.secondary, 0.22),
+    '--preview-grid': rgba(p.accent, 0.08),
   }
 })
 </script>
 
 <template>
-  <div class="theme-preview" :class="{ large }" :style="previewStyle" aria-hidden="true">
+  <div
+    class="theme-preview"
+    :class="{ large }"
+    :style="previewStyle"
+    :data-scene="theme.particle"
+    :data-material="theme.material || (theme.palette.light ? 'paper' : 'glass')"
+    aria-hidden="true"
+  >
     <div class="preview-halo" />
+    <div class="preview-landscape" />
     <ParticleCanvas :theme="theme" :animated="false" class="preview-particles" />
     <div class="mini-window">
       <div class="mini-sidebar"><i /><i /><i class="active" /><i /><i class="last" /></div>
@@ -35,6 +45,60 @@ const previewStyle = computed(() => {
 </template>
 
 <style scoped>
+.preview-landscape {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 12% 80%, var(--preview-glow), transparent 65%),
+    linear-gradient(130deg, transparent 25%, var(--preview-tint), transparent 75%);
+}
+[data-scene='rain'] .preview-landscape {
+  background: repeating-linear-gradient(115deg, transparent 0 24px, var(--preview-grid) 25px 26px),
+    linear-gradient(15deg, var(--preview-bg), var(--preview-glow));
+}
+[data-scene='crystal'] .preview-landscape {
+  background: conic-gradient(
+    from 55deg at 80% 80%,
+    var(--preview-tint),
+    transparent 25%,
+    var(--preview-glow) 45%,
+    transparent 60%,
+    var(--preview-tint)
+  );
+}
+[data-scene='bubble'] .preview-landscape,
+[data-scene='plankton'] .preview-landscape {
+  background: radial-gradient(ellipse at 15% -30%, var(--preview-glow), transparent 70%),
+    radial-gradient(ellipse at 100% 100%, var(--preview-tint), transparent 65%);
+}
+[data-scene='sand'] .preview-landscape {
+  background: repeating-radial-gradient(
+    ellipse at 10% 180%,
+    transparent 0 22px,
+    var(--preview-grid) 23px 24px
+  );
+}
+[data-scene='star'] .preview-landscape,
+[data-scene='comet'] .preview-landscape {
+  background: radial-gradient(ellipse at 25% 75%, var(--preview-glow), transparent 55%),
+    linear-gradient(25deg, transparent 35%, var(--preview-tint), transparent 70%);
+}
+[data-scene='ember'] .preview-landscape {
+  background: radial-gradient(ellipse at 50% 120%, var(--preview-glow), transparent 70%);
+}
+[data-material='velvet'] .mini-window {
+  box-shadow:
+    0 12px 28px #00000045,
+    inset 0 1px 0 var(--preview-tint);
+}
+[data-material='paper'] .mini-window {
+  transform: rotate(-1deg);
+  box-shadow: 4px 5px 0 var(--preview-tint);
+}
+[data-material='obsidian'] .mini-window {
+  box-shadow: none;
+  border-radius: 3px;
+}
+
 .theme-preview {
   position: relative;
   height: 134px;

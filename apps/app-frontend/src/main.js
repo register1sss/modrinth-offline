@@ -3,6 +3,7 @@ import { startJellyMotion } from '@/visual/spring.js'
 import { localization } from '@/i18n/index.js'
 import { startHealthMonitor } from '@/instance-health/monitor.js'
 import { startAssistantMonitor } from '@/assistant/monitor.js'
+import 'vue-multiselect/dist/vue-multiselect.css'
 import '@/assets/stylesheets/motion.scss'
 import router from '@/routes'
 import App from '@/App.vue'
@@ -80,13 +81,16 @@ initialize_state()
       .catch((err) => {
         console.error(err)
       })
-      .finally(() => {
-        mountedApp.initialize()
+      .finally(async () => {
+        try {
+          await mountedApp.initialize()
+        } catch (error) {
+          await mountedApp.failure(error)
+          return
+        }
         startAssistantMonitor().catch(console.error)
         startHealthMonitor().catch(console.error)
-        get_opening_command().then((command) => {
-          console.log(JSON.stringify(command)) // change me to use whatever FE command handler is made
-        })
+        get_opening_command().catch(console.error)
       })
   })
   .catch((err) => {

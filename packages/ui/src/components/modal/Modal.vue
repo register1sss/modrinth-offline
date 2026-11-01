@@ -17,14 +17,22 @@
       />
       <div class="modal-container" :class="{ shown: actuallyShown }">
         <div
+          ref="dialog"
           class="modal-body"
+          tabindex="-1"
           role="dialog"
           :aria-modal="actuallyShown ? 'true' : undefined"
           :aria-label="props.header || undefined"
         >
           <div v-if="props.header" class="header">
             <h1>{{ props.header }}</h1>
-            <button v-if="closable" class="btn icon-only transparent" @click="hide">
+            <button
+              v-if="closable"
+              type="button"
+              aria-label="Close dialog"
+              class="btn icon-only transparent"
+              @click="hide"
+            >
               <XIcon />
             </button>
           </div>
@@ -40,7 +48,8 @@
 
 <script setup>
 import { XIcon } from '@modrinth/assets'
-import { ref } from 'vue'
+import { ref, nextTick, onBeforeUnmount } from 'vue'
+import { registerDialog, unregisterDialog, isTopDialog } from './dialog-stack.js'
 
 const props = defineProps({
   header: {
@@ -65,21 +74,91 @@ const props = defineProps({
 
 const shown = ref(false)
 const actuallyShown = ref(false)
+const dialog = ref(null)
+const id = Symbol('dialog')
+let hideTimer,
+  previousFocus,
+  generation = 0,
+  registered = false
+const focusable = () =>
+  [
+    ...(dialog.value?.querySelectorAll(
+      'button:not([disabled]),a[href],input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])',
+    ) ?? []),
+  ].filter((el) => el.getClientRects().length && !el.closest('[inert]'))
+function keydown(event) {
+  if (!isTopDialog(id) || !actuallyShown.value) return
+  if (event.key === 'Escape' && props.closable) {
+    event.preventDefault()
+    event.stopPropagation()
+    hide()
+  }
+  if (event.key !== 'Tab') return
+  const nodes = focusable()
+  if (!nodes.length) {
+    event.preventDefault()
+    dialog.value?.focus()
+    return
+  }
+  const index = nodes.indexOf(document.activeElement)
+  if (
+    index < 0 ||
+    (event.shiftKey && index === 0) ||
+    (!event.shiftKey && index === nodes.length - 1)
+  ) {
+    event.preventDefault()
+    nodes[event.shiftKey ? nodes.length - 1 : 0]?.focus()
+  }
+}
+function containFocus(event) {
+  if (isTopDialog(id) && actuallyShown.value && !dialog.value?.contains(event.target))
+    (focusable()[0] ?? dialog.value)?.focus()
+}
+function release() {
+  if (!registered) return
+  registered = false
+  unregisterDialog(id)
+  document.removeEventListener('keydown', keydown, true)
+  document.removeEventListener('focusin', containFocus)
+}
 
-function show() {
+async function show() {
+  if (shown.value && actuallyShown.value) return
+  clearTimeout(hideTimer)
+  const current = ++generation
+  previousFocus = document.activeElement
   shown.value = true
-  setTimeout(() => {
-    actuallyShown.value = true
-  }, 50)
+  await nextTick()
+  if (current !== generation || !shown.value) return
+  registerDialog(id)
+  registered = true
+  document.addEventListener('keydown', keydown, true)
+  document.addEventListener('focusin', containFocus)
+  actuallyShown.value = true
+  await nextTick()
+  if (current === generation) (focusable()[0] ?? dialog.value)?.focus()
 }
 
 function hide() {
-  props.onHide()
+  if (!shown.value || (!actuallyShown.value && hideTimer)) return
+  ++generation
   actuallyShown.value = false
-  setTimeout(() => {
+  release()
+  if (previousFocus?.isConnected) previousFocus.focus()
+  props.onHide()
+  clearTimeout(hideTimer)
+  hideTimer = setTimeout(() => {
     shown.value = false
+    hideTimer = null
   }, 300)
 }
+onBeforeUnmount(() => {
+  ++generation
+  clearTimeout(hideTimer)
+  const restore = isTopDialog(id)
+  release()
+  if (restore && previousFocus?.isConnected) previousFocus.focus()
+})
 
 defineExpose({
   show,

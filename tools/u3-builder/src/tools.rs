@@ -382,16 +382,7 @@ fn elevated(
         quote(&exe.display().to_string()),
         list.join(",")
     );
-    let mut cmd = Command::new("powershell.exe");
-    cmd.args([
-        "-NoProfile",
-        "-NonInteractive",
-        "-ExecutionPolicy",
-        "Bypass",
-        "-Command",
-        &script,
-    ]);
-    proc::wait(ui, &mut cmd, label)
+    proc::wait(ui, &mut powershell(&script), label)
 }
 
 /// The bootstrapper is downloaded from aka.ms: accept it only with a valid Microsoft signature.
@@ -400,23 +391,48 @@ fn microsoft_signed(ui: &Ui, exe: &Path) -> Result<(), String> {
         "$s = Get-AuthenticodeSignature -LiteralPath '{}'; if ($s.Status -eq 'Valid' -and $s.SignerCertificate.Subject -match 'O=Microsoft Corporation') {{ exit 0 }}; Write-Output $s.Status; exit 1",
         exe.display().to_string().replace('\'', "''")
     );
-    let mut cmd = Command::new("powershell.exe");
-    cmd.args([
+    proc::capture(ui, &mut powershell(&script))
+        .map(|_| ())
+        .map_err(|e| format!("у загруженного установщика Visual Studio нет действительной подписи Microsoft ({e})"))
+}
+
+/// Windows PowerShell from System32 running `script`. Without the inherited PSModulePath: started
+/// from PowerShell 7 it lists PowerShell 7's own modules first, which Windows PowerShell cannot load,
+/// and then even Get-AuthenticodeSignature and Start-Process are missing.
+fn powershell(script: &str) -> Command {
+    let root = std::env::var_os("SystemRoot")
+        .map(PathBuf::from)
+        .unwrap_or_else(|| PathBuf::from(r"C:\Windows"));
+    let mut cmd = Command::new(
+        root.join(r"System32\WindowsPowerShell\v1.0\powershell.exe"),
+    );
+    cmd.env_remove("PSModulePath").args([
         "-NoProfile",
         "-NonInteractive",
         "-ExecutionPolicy",
         "Bypass",
         "-Command",
-        &script,
+        script,
     ]);
-    proc::capture(ui, &mut cmd)
-        .map(|_| ())
-        .map_err(|e| format!("у загруженного установщика Visual Studio нет действительной подписи Microsoft ({e})"))
+    cmd
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn windows_powershell_starts_without_the_inherited_module_path() {
+        let cmd = powershell("exit 0");
+        assert!(cmd
+            .get_program()
+            .to_string_lossy()
+            .ends_with(r"System32\WindowsPowerShell\v1.0\powershell.exe"));
+        assert!(cmd
+            .get_envs()
+            .any(|(k, v)| k == "PSModulePath" && v.is_none()));
+        assert_eq!(cmd.get_args().last().unwrap(), "exit 0");
+    }
 
     #[test]
     fn tools_live_in_versioned_folders_and_come_first_on_path() {

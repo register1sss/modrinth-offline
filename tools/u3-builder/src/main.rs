@@ -328,7 +328,7 @@ fn run(ui: &Ui, args: &Args, home: &Path) -> Result<Option<Done>, String> {
     }
 
     ui.step(4, total, "Зависимости");
-    app::dependencies(ui, &tools, home, &work)?;
+    app::dependencies(ui, &tools, &work)?;
     let mut step = 5;
     if args.tests {
         ui.step(step, total, "Тесты");

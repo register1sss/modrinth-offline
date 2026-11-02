@@ -12,12 +12,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
-pub fn dependencies(
-    ui: &Ui,
-    tools: &Tools,
-    home: &Path,
-    work: &Path,
-) -> Result<(), String> {
+pub fn dependencies(ui: &Ui, tools: &Tools, work: &Path) -> Result<(), String> {
     let mut install = tools.command(tools.pnpm());
     install
         .args([
@@ -26,7 +21,7 @@ pub fn dependencies(
             "--ignore-scripts",
             "--store-dir",
         ])
-        .arg(home.join("pnpm-store"))
+        .arg(tools.pnpm_store())
         .current_dir(work);
     proc::run(ui, &mut install, "pnpm install")?;
     let mut esbuild = tools.command(tools.pnpm());

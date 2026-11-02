@@ -55,6 +55,12 @@ impl Tools {
         self.home.join("downloads")
     }
 
+    /// pnpm's package store. Every pnpm command gets it: `pnpm rebuild` refuses dependencies
+    /// linked from another store than the one it would use.
+    pub fn pnpm_store(&self) -> PathBuf {
+        self.home.join("pnpm-store")
+    }
+
     pub fn pnpm(&self) -> PathBuf {
         self.pnpm_dir.join("pnpm.exe")
     }
@@ -91,6 +97,7 @@ impl Tools {
         cmd.env("PATH", path)
             .env("RUSTUP_HOME", &self.rustup_home)
             .env("CARGO_HOME", &self.cargo_home)
+            .env("npm_config_store_dir", self.pnpm_store())
             .env("CI", "true")
             .env("TURBO_TELEMETRY_DISABLED", "1")
             .env("DO_NOT_TRACK", "1")
@@ -451,6 +458,8 @@ mod tests {
             .to_string_lossy()
             .into_owned();
         assert!(path.starts_with(&tools.node.display().to_string()));
+        assert!(cmd.get_envs().any(|(k, v)| k == "npm_config_store_dir"
+            && v == Some(tools.pnpm_store().as_os_str())));
         let removed: Vec<_> = cmd
             .get_envs()
             .filter(|(_, v)| v.is_none())

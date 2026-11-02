@@ -67,3 +67,6 @@ apps/app-frontend/qa-output/
 
 # The prebuilt U3 Fixes engine built by CI (.github/u3-engine)
 /u3-engine/
+
+# U3drinth Builder
+/tools/u3-builder/target/

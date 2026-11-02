@@ -2,6 +2,10 @@ name: U3drinth Windows installer
 on:
   push:
     branches: [u3drinth/windows-installer]
+    paths-ignore:
+      - 'tools/u3-builder/**'
+      - '.github/workflows/u3-builder.yml'
+      - 'docs/u3drinth/builder.md'
   workflow_dispatch:
 permissions:
   contents: read

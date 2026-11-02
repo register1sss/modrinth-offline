@@ -1,0 +1,151 @@
+name: U3drinth Builder
+on:
+  push:
+    branches: [u3drinth/windows-installer]
+    paths:
+      - 'tools/u3-builder/**'
+      - '.github/workflows/u3-builder.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: u3-builder-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  builder:
+    name: Build U3drinthBuilder.exe
+    runs-on: windows-2022
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: tools/u3-builder
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - name: Unit tests
+        run: cargo test --locked
+      - name: Lints
+        run: cargo clippy --locked --all-targets -- -D warnings
+      - name: Build
+        run: cargo build --locked --release
+      - name: It starts
+        shell: pwsh
+        run: |
+          $out = & target/release/U3drinthBuilder.exe --help | Out-String
+          if ($LASTEXITCODE -ne 0 -or $out -notmatch 'U3drinth Builder') { throw "--help failed: $out" }
+          $out
+      - uses: actions/upload-artifact@v4
+        with:
+          name: U3drinthBuilder
+          path: tools/u3-builder/target/release/U3drinthBuilder.exe
+          if-no-files-found: error
+          retention-days: 14
+
+  e2e:
+    # What a user does: the source zip on the builder, twice (the second build reuses the tools,
+    # the engine and compiled code), then the installer it made is installed and started.
+    name: Build U3drinth with the builder, install and start it
+    needs: builder
+    runs-on: windows-2022
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: src
+      - uses: actions/download-artifact@v4
+        with:
+          name: U3drinthBuilder
+          path: bin
+      - name: The source as a zip
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force drop | Out-Null
+          git -C src archive --format=zip --prefix=U3drinth/ -o "$pwd\drop\U3drinth-source.zip" HEAD
+          if ($LASTEXITCODE -ne 0) { throw 'git archive failed' }
+          'Source zip: {0:N1} MB' -f ((Get-Item drop\U3drinth-source.zip).Length / 1MB)
+      - name: First build (installs every tool, builds the engine)
+        shell: pwsh
+        run: |
+          # A computer without the tools: only Windows' own folders on the PATH, so the build uses
+          # what the builder brings (Rust, Node.js, pnpm, Python), not what the runner has.
+          $env:PATH = "$env:SystemRoot\system32;$env:SystemRoot;$env:SystemRoot\System32\Wbem;$env:SystemRoot\System32\WindowsPowerShell\v1.0"
+          foreach ($name in 'CARGO_HOME', 'RUSTUP_HOME', 'PYTHONHOME', 'PYTHONPATH', 'NODE_PATH', 'PNPM_HOME') {
+            Remove-Item "Env:$name" -ErrorAction SilentlyContinue
+          }
+          $sw = [Diagnostics.Stopwatch]::StartNew()
+          & bin\U3drinthBuilder.exe drop\U3drinth-source.zip --yes --version 1.1.1
+          if ($LASTEXITCODE -ne 0) { throw "builder exited with $LASTEXITCODE" }
+          'First build: {0:N1} min' -f $sw.Elapsed.TotalMinutes
+          if (-not (Test-Path drop\U3drinth1.1.1.exe)) { throw 'U3drinth1.1.1.exe was not made' }
+      - name: Second build (everything cached)
+        shell: pwsh
+        run: |
+          # A computer without the tools: only Windows' own folders on the PATH, so the build uses
+          # what the builder brings (Rust, Node.js, pnpm, Python), not what the runner has.
+          $env:PATH = "$env:SystemRoot\system32;$env:SystemRoot;$env:SystemRoot\System32\Wbem;$env:SystemRoot\System32\WindowsPowerShell\v1.0"
+          foreach ($name in 'CARGO_HOME', 'RUSTUP_HOME', 'PYTHONHOME', 'PYTHONPATH', 'NODE_PATH', 'PNPM_HOME') {
+            Remove-Item "Env:$name" -ErrorAction SilentlyContinue
+          }
+          $sw = [Diagnostics.Stopwatch]::StartNew()
+          & bin\U3drinthBuilder.exe drop\U3drinth-source.zip --yes --version 1.1.2
+          if ($LASTEXITCODE -ne 0) { throw "builder exited with $LASTEXITCODE" }
+          'Second build: {0:N1} min' -f $sw.Elapsed.TotalMinutes
+      - name: Install silently and start the launcher
+        shell: pwsh
+        run: |
+          $setup = Get-Item drop\U3drinth1.1.2.exe
+          'Installer: {0:N1} MB' -f ($setup.Length / 1MB)
+          if ($setup.Length -lt 15MB) { throw 'the installer is too small to hold the engine' }
+          $p = Start-Process $setup.FullName -ArgumentList '/S' -Wait -PassThru
+          if ($p.ExitCode -ne 0) { throw "the installer exited with $($p.ExitCode)" }
+          $engine = Get-ChildItem "$env:LOCALAPPDATA\U3drinth", "$env:ProgramFiles\U3drinth" -Recurse -Filter horizon-client.exe -ErrorAction SilentlyContinue | Select-Object -First 1
+          if (-not $engine) { throw 'the prebuilt engine was not installed' }
+          $dir = Split-Path (Split-Path $engine.FullName)
+          Get-ChildItem $dir | Format-Table Name, Length | Out-String | Write-Host
+          $key = Get-ItemProperty 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\U3drinth' -ErrorAction SilentlyContinue
+          "Installed version: $($key.DisplayVersion)"
+          if ($key -and $key.DisplayVersion -ne '1.1.2') { throw "the installed version is $($key.DisplayVersion)" }
+          $exe = Get-ChildItem $dir -Filter *.exe | Where-Object { $_.Name -notmatch 'uninstall' } | Select-Object -First 1
+          $app = Start-Process $exe.FullName -PassThru
+          Start-Sleep -Seconds 40
+          if ($app.HasExited) { throw "the launcher exited with $($app.ExitCode)" }
+          $webviews = @(Get-CimInstance Win32_Process -Filter "Name='msedgewebview2.exe'" | Where-Object { $_.ParentProcessId -eq $app.Id })
+          $app.Refresh()
+          "WebView2 processes: $($webviews.Count), window: '$($app.MainWindowTitle)'"
+          Stop-Process -Id $app.Id -Force
+          if ($webviews.Count -eq 0) { throw 'the launcher did not start its interface' }
+      - name: Keep the logs
+        if: always()
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force drop\logs | Out-Null
+          Copy-Item "$env:LOCALAPPDATA\U3drinthBuilder\logs\*.log" drop\logs -ErrorAction SilentlyContinue
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: builder-e2e
+          path: |
+            drop/U3drinth1.1.2.exe
+            drop/logs
+          if-no-files-found: ignore
+          retention-days: 7
+
+  vs-install:
+    # The path of a computer without Visual Studio: Microsoft's Build Tools installer as run by
+    # the builder, then found by it.
+    name: Visual Studio Build Tools install
+    needs: builder
+    runs-on: windows-2022
+    timeout-minutes: 90
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: U3drinthBuilder
+          path: bin
+      - name: Install the Build Tools
+        shell: pwsh
+        run: |
+          & bin\U3drinthBuilder.exe --vs-only --force-vs-install --yes
+          if ($LASTEXITCODE -ne 0) { throw "builder exited with $LASTEXITCODE" }

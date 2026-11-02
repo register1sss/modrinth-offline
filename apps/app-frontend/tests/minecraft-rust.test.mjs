@@ -48,7 +48,8 @@ test('installation and preparation are not shown as a running game', () => {
   assert.equal(rustSession.value.running, false)
 })
 
-import { installRequest, modInstalled } from '../src/minecraft-rust/mods.js'
+import { installRequest, listedMods, modInstalled } from '../src/minecraft-rust/mods.js'
+import { listedPacks } from '../src/minecraft-rust/packs.js'
 test('native install requires explicit consent and a supported entry', () => {
   const mod = { id: 'u3_edit', checksum: 'a'.repeat(64), available: true }
   const catalog = {
@@ -98,4 +99,21 @@ test('automatic patch status belongs to the current profile, not the U3 Mods edi
     ),
     false,
   )
+})
+
+test('only installable mods and packs are listed', () => {
+  const zoom = { id: 'zoom', available: true }
+  assert.deepEqual(listedMods([zoom, { id: 'blockscope', available: false }, { id: 'x' }]), [zoom])
+  assert.deepEqual(listedMods(undefined), [])
+  const safe = { id: 'safe', available: true, local: false }
+  const data = {
+    entries: [
+      safe,
+      { id: 'old', available: false },
+      { id: 'local', available: true, local: true },
+      { id: 'unknown' },
+    ],
+  }
+  assert.deepEqual(listedPacks(data), [safe])
+  assert.deepEqual(listedPacks(null), [])
 })

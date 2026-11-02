@@ -1,0 +1,5 @@
+# The embedded Horizon native mods are hashed byte for byte: the launcher's checksums, the name
+# Horizon gives their build and the prebuilt U3 Fixes engine (.github/u3-engine) all need the same
+# LF bytes on every platform, Windows CI checkouts included.
+packages/app-lib/src/minecraft_rust/u3_fixes/** text eol=lf
+packages/app-lib/src/minecraft_rust/u3_edit/** text eol=lf

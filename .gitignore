@@ -64,3 +64,6 @@ apps/app-frontend/qa-output/
 .env
 .env.*
 !.env.example
+
+# The prebuilt U3 Fixes engine built by CI (.github/u3-engine)
+/u3-engine/

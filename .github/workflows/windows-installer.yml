@@ -9,12 +9,57 @@ concurrency:
   group: windows-installer-${{ github.ref }}
   cancel-in-progress: true
 jobs:
+  engine:
+    # The U3 Fixes engine a player's first start would otherwise compile for 20-30 minutes,
+    # built once with Horizon's own native-build and cached until its sources or runtime change.
+    name: Prebuilt U3 Fixes engine
+    runs-on: windows-2022
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Engine cache key
+        id: key
+        shell: bash
+        run: echo "key=u3-fixes-engine-$(python .github/u3-engine/build.py --key)" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@v4
+        id: cache
+        with:
+          path: u3-engine
+          key: ${{ steps.key.outputs.key }}
+      - name: Build with Horizon's native-build
+        if: steps.cache.outputs.cache-hit != 'true'
+        shell: bash
+        run: python .github/u3-engine/build.py u3-engine
+      - name: Keep Horizon's build log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: u3-fixes-engine-build-log
+          path: ${{ runner.temp }}/u3-engine/launcher/native/build.log
+          if-no-files-found: ignore
+          retention-days: 7
+      - uses: actions/upload-artifact@v4
+        with:
+          name: u3-fixes-engine
+          path: |
+            u3-engine/horizon-client.exe
+            u3-engine/engine.json
+          if-no-files-found: error
+          retention-days: 14
   installer:
     name: Test and build Windows x64 NSIS
+    needs: engine
     runs-on: windows-2022
     timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: u3-fixes-engine
+          path: apps/app/u3-engine
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - uses: pnpm/action-setup@v4
@@ -31,10 +76,13 @@ jobs:
       - name: Frontend regression tests
         run: pnpm --filter @modrinth/app-frontend test
       - name: Native launcher regression tests
+        env:
+          # The shipped engine must be the build of the embedded U3 Fixes (engine.rs).
+          U3_ENGINE_DIR: ${{ github.workspace }}/apps/app/u3-engine
         run: cargo test -p theseus --lib --locked --release
       - name: Build Windows installer
         working-directory: apps/app
-        run: pnpm exec tauri build --bundles nsis
+        run: pnpm exec tauri build --bundles nsis --config tauri.u3-engine.conf.json
       - name: Write installer checksums
         shell: pwsh
         run: |

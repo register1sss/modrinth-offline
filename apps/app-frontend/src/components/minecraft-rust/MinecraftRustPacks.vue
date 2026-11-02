@@ -1,9 +1,10 @@
 <script setup>
-import { ref, watch, onBeforeUnmount } from 'vue'
+import { ref, computed, watch, onBeforeUnmount } from 'vue'
 import { invoke } from '@tauri-apps/api/tauri'
 import { open as chooseFile } from '@tauri-apps/api/dialog'
 import { open } from '@tauri-apps/api/shell'
 import { language } from '@/i18n/index.js'
+import { listedPacks } from '@/minecraft-rust/packs.js'
 const props = defineProps({
   profile: { type: String, default: '' },
   busy: Boolean,
@@ -16,6 +17,7 @@ const tab = ref('pvp'),
   search = ref(''),
   offset = ref(0),
   data = ref(null)
+const listed = computed(() => listedPacks(data.value))
 const loading = ref(false),
   error = ref(''),
   protect = ref(true)
@@ -112,8 +114,8 @@ const shortFile = (file) =>
     <p class="packs-muted">
       {{
         t(
-          'PvP и Обычные - паки из твоих архивов. Для трёх локальных паков один раз добавь PvP.zip. Остальные скачиваются с Modrinth. Миры и моды не изменяются.',
-          'PvP and Regular contain packs from your archives. Import PvP.zip once for the three local packs. Others download from Modrinth. Worlds and mods are not changed.',
+          'PvP и Обычные - паки из твоих архивов, которые работают в 26.3 и скачиваются с Modrinth. Паки, которых нет на Modrinth, появятся после добавления PvP.zip. Миры и моды не изменяются.',
+          'PvP and Regular contain packs from your archives that work in 26.3 and download from Modrinth. Packs that are not on Modrinth appear after you add PvP.zip. Worlds and mods are not changed.',
         )
       }}
     </p>
@@ -170,13 +172,17 @@ const shortFile = (file) =>
     <p v-if="tab === 'modrinth'" class="packs-muted">
       {{
         t(
-          'Весь каталог Modrinth с отметкой Minecraft 26.3, с поиском и страницами. Метка версии не гарантирует поддержку всех функций Horizon: OptiFine, CIT и CEM могут не работать.',
-          'The full Modrinth catalog tagged Minecraft 26.3, with search and pagination. A version tag does not guarantee Horizon feature support: OptiFine, CIT and CEM may not work.',
+          'Каталог Modrinth с отметкой Minecraft 26.3, с поиском и страницами. Показаны только паки, которые можно установить: несовместимые с 26.3 и слишком большие скрыты. OptiFine, CIT и CEM могут не работать.',
+          'The Modrinth catalog tagged Minecraft 26.3, with search and pagination. Only packs that can be installed are shown: packs incompatible with 26.3 or too large are hidden. OptiFine, CIT and CEM may not work.',
         )
       }}
     </p>
     <p v-if="loading" role="status">
-      {{ t('Загрузка ресурс-паков...', 'Loading resource packs...') }}
+      {{
+        tab === 'modrinth'
+          ? t('Загрузка и проверка ресурс-паков...', 'Loading and checking resource packs...')
+          : t('Загрузка ресурс-паков...', 'Loading resource packs...')
+      }}
     </p>
     <div v-if="error" class="packs-error" role="alert">
       <p>
@@ -193,11 +199,19 @@ const shortFile = (file) =>
       </details>
     </div>
     <template v-if="data">
-      <p v-if="!data.entries.length">
+      <p v-if="!listed.length">
         {{ t('Ресурс-паки не найдены.', 'No resource packs found.') }}
       </p>
+      <p v-if="tab === 'modrinth' && data.hidden" class="packs-muted">
+        {{
+          t(
+            `Скрыто на этой странице: ${data.hidden} (не работают в 26.3 или слишком большие).`,
+            `Hidden on this page: ${data.hidden} (not working in 26.3 or too large).`,
+          )
+        }}
+      </p>
       <div class="packs-grid">
-        <article v-for="entry in data.entries" :key="entry.id" class="pack-card">
+        <article v-for="entry in listed" :key="entry.id" class="pack-card">
           <h3>{{ entry.name }}</h3>
           <p v-if="entry.author || entry.version" class="packs-muted">
             {{ entry.author || entry.version }}
@@ -219,26 +233,10 @@ const shortFile = (file) =>
               )
             }}
           </p>
-          <p v-if="!entry.available" class="packs-warning">
-            {{
-              t(
-                'Формат этого архива несовместим с 26.3. Установка заблокирована.',
-                'This archive’s format is incompatible with 26.3. Installation blocked.',
-              )
-            }}
-          </p>
-          <p v-else-if="entry.local" class="packs-muted">
-            {{
-              t(
-                'Локальный пак: сначала добавь PvP.zip кнопкой выше.',
-                'Local pack: first add PvP.zip using the button above.',
-              )
-            }}
-          </p>
           <div class="packs-actions">
             <button
               class="btn btn-primary"
-              :disabled="busy || !supported || !entry.available || entry.local"
+              :disabled="busy || !supported"
               @click="action('pack_install', { project: entry.id, protect_gui: protect })"
             >
               {{ t('Установить', 'Install') }}

@@ -75,6 +75,7 @@ const labels = computed(() => ({
   pack_repair: t('Защита интерфейса', 'Protecting interface'),
   mod_install: t('Установка мода', 'Installing mod'),
   install_fixes: t('Установка исправлений Horizon', 'Installing Horizon fixes'),
+  install_engine: t('Установка готового движка U3 Fixes', 'Installing prebuilt U3 Fixes engine'),
   build_native: t('Сборка игры с модами', 'Building game with mods'),
   refresh: t('Проверка', 'Checking'),
   install: t('Установка', 'Installing'),
@@ -302,11 +303,19 @@ onBeforeUnmount(() => {
     </button>
     <section class="rust-card rust-launch rust-quick-play">
       <h2>{{ t('Играть в Minecraft Rust', 'Play Minecraft Rust') }}</h2>
-      <p>
+      <p v-if="state.prebuilt_engine">
         {{
           t(
-            'Нажми «Играть». Лаунчер сам установит Horizon, найдёт Minecraft и подготовит игру. U3 Fixes включится автоматически. При первой подготовке нужны интернет и 20-30 минут на сборку.',
-            'Press Play. The launcher will install Horizon, find Minecraft and prepare the game. U3 Fixes is enabled automatically. Initial preparation requires internet and a 20-30 minute build.',
+            'Нажми «Играть». Лаунчер сам установит Horizon, найдёт Minecraft 26.3 и подготовит игру. Движок с U3 Fixes уже собран и встроен в лаунчер, поэтому ничего не компилируется: первый запуск занимает несколько минут, нужен только интернет для загрузки Horizon и файлов Minecraft.',
+            'Press Play. The launcher will install Horizon, find Minecraft 26.3 and prepare the game. The U3 Fixes engine is already built into the launcher, so nothing is compiled: the first start takes a few minutes and only needs internet to download Horizon and Minecraft files.',
+          )
+        }}
+      </p>
+      <p v-else>
+        {{
+          t(
+            'Нажми «Играть». Лаунчер сам установит Horizon, найдёт Minecraft 26.3 и подготовит игру. U3 Fixes включится автоматически. В этой сборке нет готового движка, поэтому при первой подготовке нужны интернет и 20-30 минут на сборку.',
+            'Press Play. The launcher will install Horizon, find Minecraft 26.3 and prepare the game. U3 Fixes is enabled automatically. This build has no prebuilt engine, so initial preparation requires internet and a 20-30 minute build.',
           )
         }}
       </p>

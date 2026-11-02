@@ -3,9 +3,13 @@
 use super::*;
 use sha2::Sha512;
 use std::{
-    collections::BTreeSet,
+    collections::{BTreeSet, HashMap},
     io::{Cursor, Read, Write},
+    sync::{Mutex, OnceLock},
+    time::Instant,
 };
+mod remote;
+use remote::Verdict;
 const MAX_PACK: usize = 128 << 20;
 const MAX_EXPANDED: u64 = 512 << 20;
 const MAX_ENTRIES: usize = 30000;
@@ -164,18 +168,129 @@ fn write_new(path: &Path, data: &[u8]) -> Result<()> {
     }
     Ok(())
 }
+fn trusted(url: &str) -> Option<url::Url> {
+    let u = url::Url::parse(url).ok()?;
+    (u.scheme() == "https"
+        && u.host_str() == Some("cdn.modrinth.com")
+        && u.port().is_none()
+        && u.username().is_empty()
+        && u.password().is_none())
+    .then_some(u)
+}
 async fn download(url: &str) -> Result<Vec<u8>> {
-    let u = url::Url::parse(url).map_err(|e| e.to_string())?;
-    if u.scheme() != "https"
-        || u.host_str() != Some("cdn.modrinth.com")
-        || u.port().is_some()
-        || !u.username().is_empty()
-        || u.password().is_some()
-    {
-        return Err("Untrusted resource pack download".into());
-    }
+    let u = trusted(url).ok_or("Untrusted resource pack download")?;
     let response = client()?.get(u).send().await.map_err(|e| e.to_string())?;
     response_bytes(response, MAX_PACK).await
+}
+async fn versions(id: &str) -> Result<Value> {
+    api(
+        &format!("project/{id}/version"),
+        &[("game_versions", "[\"26.3\"]".into())],
+    )
+    .await
+}
+/// The file `pack_install` takes: the newest 26.3 version's primary file, else its first.
+fn pack_file(versions: &Value) -> std::result::Result<&Value, &'static str> {
+    let v = versions
+        .as_array()
+        .into_iter()
+        .flatten()
+        .find(|v| {
+            v["game_versions"]
+                .as_array()
+                .is_some_and(|a| a.iter().any(|x| x == "26.3"))
+        })
+        .ok_or("No resource pack version for Minecraft 26.3")?;
+    v["files"]
+        .as_array()
+        .and_then(|a| a.iter().find(|f| f["primary"] == true).or(a.first()))
+        .ok_or("No pack download")
+}
+/// Exactly bytes `start..end` of a pack, by an HTTP range.
+async fn ranged(
+    client: &reqwest::Client,
+    url: &url::Url,
+    start: u64,
+    end: u64,
+) -> Option<Vec<u8>> {
+    if end <= start {
+        return Some(Vec::new());
+    }
+    let response = client
+        .get(url.clone())
+        .header(reqwest::header::RANGE, format!("bytes={start}-{}", end - 1))
+        .header(reqwest::header::ACCEPT_ENCODING, "identity")
+        .send()
+        .await
+        .ok()?;
+    let status = response.status();
+    if status != reqwest::StatusCode::PARTIAL_CONTENT
+        && !(status == reqwest::StatusCode::OK && start == 0)
+    {
+        return None;
+    }
+    let len = (end - start) as usize;
+    let data = response_bytes(response, len).await.ok()?;
+    (data.len() == len).then_some(data)
+}
+/// Checked Modrinth projects: whether they install, kept for half an hour.
+fn checked() -> &'static Mutex<HashMap<String, (Instant, bool)>> {
+    static CHECKED: OnceLock<Mutex<HashMap<String, (Instant, bool)>>> =
+        OnceLock::new();
+    CHECKED.get_or_init(Default::default)
+}
+/// Whether `pack_install` could install a Modrinth project: the same file, size and checksum
+/// rules, and `transform`'s checks on the zip read by ranges, without downloading the pack.
+async fn installable(client: &reqwest::Client, id: &str) -> Verdict {
+    if identifier(id).is_err() {
+        return Verdict::Blocked("invalid project");
+    }
+    let known = checked().lock().ok().and_then(|c| c.get(id).copied());
+    if let Some((at, ok)) = known {
+        if at.elapsed() < Duration::from_secs(30 * 60) {
+            return if ok {
+                Verdict::Installable
+            } else {
+                Verdict::Blocked("checked before")
+            };
+        }
+    }
+    let check = async {
+        let Ok(versions) = versions(id).await else {
+            return Verdict::Unknown("versions");
+        };
+        let f = match pack_file(&versions) {
+            Ok(f) => f,
+            Err(e) => return Verdict::Blocked(e),
+        };
+        let Some(url) = f["url"].as_str().and_then(trusted) else {
+            return Verdict::Blocked("untrusted download");
+        };
+        if f["hashes"]["sha512"]
+            .as_str()
+            .map_or(true, |h| h.len() != 128)
+        {
+            return Verdict::Blocked("checksum");
+        }
+        match f["size"].as_u64() {
+            Some(size) if size <= MAX_PACK as u64 => {
+                remote::check(size, |s, e| ranged(client, &url, s, e)).await
+            }
+            _ => Verdict::Blocked("too large"),
+        }
+    };
+    let verdict = tokio::time::timeout(Duration::from_secs(25), check)
+        .await
+        .unwrap_or(Verdict::Unknown("timeout"));
+    if !matches!(verdict, Verdict::Unknown(_)) {
+        if let Ok(mut c) = checked().lock() {
+            c.insert(
+                id.to_owned(),
+                (Instant::now(), verdict == Verdict::Installable),
+            );
+        }
+    }
+    verdict
 }
 async fn source(root: &Path, project: &str) -> Result<Vec<u8>> {
     if let Some(e) = library().into_iter().find(|e| e["id"] == project) {
@@ -204,25 +319,8 @@ async fn source(root: &Path, project: &str) -> Result<Vec<u8>> {
     if p["project_type"] != "resourcepack" {
         return Err("The selected project is not a resource pack".into());
     }
-    let versions = api(
-        &format!("project/{id}/version"),
-        &[("game_versions", "[\"26.3\"]".into())],
-    )
-    .await?;
-    let v = versions
-        .as_array()
-        .into_iter()
-        .flatten()
-        .find(|v| {
-            v["game_versions"]
-                .as_array()
-                .is_some_and(|a| a.iter().any(|x| x == "26.3"))
-        })
-        .ok_or("No resource pack version for Minecraft 26.3")?;
-    let f = v["files"]
-        .as_array()
-        .and_then(|a| a.iter().find(|f| f["primary"] == true).or(a.first()))
-        .ok_or("No pack download")?;
+    let versions = versions(id).await?;
+    let f = pack_file(&versions)?;
     let hash = f["hashes"]["sha512"]
         .as_str()
         .ok_or("Missing SHA-512 checksum")?;
@@ -697,7 +795,7 @@ pub async fn catalog(
         json!([])
     };
     let mut entries = Vec::new();
-    let mut total = 0;
+    let (mut total, mut hidden) = (0, 0);
     if tab == "modrinth" {
         let value = api(
             "search",
@@ -715,8 +813,27 @@ pub async fn catalog(
         )
         .await?;
         total = value["total_hits"].as_u64().unwrap_or(0);
-        for p in value["hits"].as_array().into_iter().flatten() {
-            if p["project_type"] != "resourcepack" {
+        let hits: Vec<&Value> = value["hits"]
+            .as_array()
+            .into_iter()
+            .flatten()
+            .filter(|p| p["project_type"] == "resourcepack")
+            .collect();
+        // Only packs that install are listed: no 26.3 file, too large, or refused by
+        // `transform` (format, metadata, paths) are hidden. Unchecked packs stay.
+        let checks = reqwest::Client::builder()
+            .user_agent("U3drinth/1.0 (Horizon resource packs)")
+            .timeout(Duration::from_secs(20))
+            .redirect(reqwest::redirect::Policy::none())
+            .build()
+            .map_err(|e| e.to_string())?;
+        let verdicts = futures::future::join_all(hits.iter().map(|p| {
+            installable(&checks, p["project_id"].as_str().unwrap_or(""))
+        }))
+        .await;
+        for (p, verdict) in hits.into_iter().zip(verdicts) {
+            if let Verdict::Blocked(_) = verdict {
+                hidden += 1;
                 continue;
             }
             entries.push(json!({"id":format!("mr:{}",p["project_id"].as_str().unwrap_or("")),"name":p["title"],"summary":p["description"],"author":p["author"],"available":true,"local":false,"project":p["project_id"]}));
@@ -731,9 +848,15 @@ pub async fn catalog(
             {
                 continue;
             }
-            p["available"] = json!(compatible(&p["meta"]));
-            p["local"] =
-                json!(p["url"].is_null() && cache_read(&root, &p).is_err());
+            // Packs without a download appear once their archive was imported.
+            if !compatible(&p["meta"])
+                || (p["url"].is_null() && cache_read(&root, &p).is_err())
+            {
+                hidden += 1;
+                continue;
+            }
+            p["available"] = json!(true);
+            p["local"] = json!(false);
             entries.push(p);
         }
     }
@@ -745,7 +868,7 @@ pub async fn catalog(
     // Do not expose local filesystem paths in the frontend catalog.
     let installed:Vec<Value>=installed.as_array().into_iter().flatten().map(|p| {let r=profile_path.as_ref().map(|h|record(h,p["file"].as_str().unwrap_or(""))).unwrap_or(json!({}));json!({"file":p["file"],"enabled":p["enabled"],"description":p["description"],"name":r["name"],"project":r["project"],"protect_gui":r["protect_gui"]})}).collect();
     Ok(
-        json!({"entries":entries,"installed":installed,"total":total,"offset":offset,"limit":PAGE}),
+        json!({"entries":entries,"installed":installed,"total":total,"offset":offset,"limit":PAGE,"hidden":hidden}),
     )
 }
 
@@ -865,11 +988,13 @@ mod tests {
         .is_err());
     }
     #[test]
-    fn catalog_has_52_exact_packs_with_only_three_local_archives() {
+    fn catalog_has_33_installable_packs_with_only_two_local_archives() {
         let packs = library();
-        assert_eq!(packs.len(), 52);
-        assert_eq!(packs.iter().filter(|p| p["url"].is_null()).count(), 3);
-        assert_eq!(packs.iter().filter(|p| p["category"] == "pvp").count(), 14);
+        assert_eq!(packs.len(), 33);
+        assert_eq!(packs.iter().filter(|p| p["url"].is_null()).count(), 2);
+        assert_eq!(packs.iter().filter(|p| p["category"] == "pvp").count(), 7);
+        // Packs whose format does not take 26.3 were removed, not listed as blocked.
+        assert!(packs.iter().all(|p| compatible(&p["meta"])));
         let mut ids = BTreeSet::new();
         for p in packs {
             assert!(ids.insert(p["id"].as_str().unwrap().to_owned()));
@@ -962,7 +1087,7 @@ mod tests {
                 p["sha256"]
             );
         }
-        eprintln!("Compatible safe copies: {good}/52");
+        eprintln!("Compatible safe copies: {good}/{}", library().len());
     }
 }
 
@@ -1010,6 +1135,55 @@ mod live_tests {
         transform(&data, true, false).unwrap();
         assert_eq!(cache_read(&dir, &pack).unwrap(), data);
         std::fs::remove_dir_all(dir).unwrap();
+    }
+    #[tokio::test]
+    #[ignore = "Uses the real Modrinth API and CDN"]
+    async fn range_checks_agree_with_full_downloads() {
+        let value = api(
+            "search",
+            &[
+                (
+                    "facets",
+                    "[[\"project_type:resourcepack\"],[\"versions:26.3\"]]"
+                        .into(),
+                ),
+                ("limit", "60".into()),
+                ("index", "downloads".into()),
+            ],
+        )
+        .await
+        .unwrap();
+        let client = reqwest::Client::new();
+        let (mut compared, mut blocked) = (0, 0);
+        for p in value["hits"].as_array().unwrap() {
+            let id = p["project_id"].as_str().unwrap();
+            let verdict = installable(&client, id).await;
+            let versions = versions(id).await.unwrap();
+            let f = pack_file(&versions).unwrap();
+            let size = f["size"].as_u64().unwrap();
+            eprintln!("{verdict:?} {} ({size} bytes)", p["title"]);
+            if matches!(verdict, Verdict::Blocked(_)) {
+                blocked += 1;
+            }
+            // Full downloads stay small enough for a quick run.
+            if size > 24 << 20 {
+                continue;
+            }
+            let data = download(f["url"].as_str().unwrap()).await.unwrap();
+            let full = transform(&data, true, false);
+            match verdict {
+                Verdict::Installable => {
+                    assert!(full.is_ok(), "{}: {:?}", p["title"], full.err())
+                }
+                Verdict::Blocked(why) => {
+                    assert!(full.is_err(), "{}: {why}", p["title"])
+                }
+                Verdict::Unknown(why) => panic!("{}: {why}", p["title"]),
+            }
+            compared += 1;
+        }
+        eprintln!("Compared {compared} packs in full, {blocked} hidden");
+        assert!(compared > 20 && blocked > 0);
     }
     #[test]
     #[ignore = "Uses the supplied PvP.zip collection"]

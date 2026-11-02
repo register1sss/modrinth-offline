@@ -18,6 +18,7 @@ use tokio::io::{AsyncRead, AsyncReadExt, AsyncWriteExt};
 #[cfg(test)]
 #[path = "minecraft_rust/u3_edit/runtime.rs"]
 mod editor_tests;
+mod engine;
 pub mod mods;
 pub mod resourcepacks;
 
@@ -44,6 +45,8 @@ pub struct Snapshot {
     pub runtime: bool,
     pub prepared: bool,
     pub offline_ready: bool,
+    /// The installer ships the prebuilt U3 Fixes engine: the first start needs no local compile.
+    pub prebuilt_engine: bool,
     pub release: String,
     pub running: bool,
     pub action: String,
@@ -66,6 +69,7 @@ impl Default for Snapshot {
             runtime: false,
             prepared: false,
             offline_ready: false,
+            prebuilt_engine: false,
             release: RELEASE.into(),
             running: false,
             action: String::new(),
@@ -339,11 +343,17 @@ async fn cli(root: &Path, args: &[&str], capture: bool) -> Result<Vec<u8>> {
         cmd.env_remove(key);
     }
     if args.first() == Some(&"native-build") {
-        cmd.env("CARGO_BUILD_JOBS", "2");
+        cmd.env("CARGO_BUILD_JOBS", build_jobs().to_string());
     }
     let auth = args == ["account", "sign-in"];
     let play = args.first() == Some(&"play");
     run_command(cmd, capture, auth, play).await
+}
+/// Compile jobs of a local native build (only when no prebuilt engine fits): half the logical CPUs,
+/// 2 to 6, faster than the former fixed 2 while the computer stays usable and memory bounded.
+fn build_jobs() -> usize {
+    std::thread::available_parallelism()
+        .map_or(2, |n| (n.get() / 2).clamp(2, 6))
 }
 async fn run_command(
     mut cmd: tokio::process::Command,
@@ -404,6 +414,10 @@ async fn query(root: &Path, args: &[&str]) -> Result<Value> {
     })
 }
 async fn refresh(root: &Path) -> Result<()> {
+    let prebuilt_engine = tokio::task::spawn_blocking(engine::available)
+        .await
+        .unwrap_or(false);
+    change(|s| s.prebuilt_engine = prebuilt_engine);
     if !binary(root).exists() {
         change(|s| {
             s.runtime = false;

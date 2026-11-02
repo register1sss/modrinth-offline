@@ -1,0 +1,7 @@
+{
+  "tauri": {
+    "bundle": {
+      "resources": ["u3-engine/horizon-client.exe", "u3-engine/engine.json"]
+    }
+  }
+}

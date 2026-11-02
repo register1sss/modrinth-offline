@@ -3,7 +3,7 @@ import { ref, watch, computed, nextTick, onBeforeUnmount } from 'vue'
 import { invoke } from '@tauri-apps/api/tauri'
 import { open } from '@tauri-apps/api/shell'
 import { language } from '@/i18n/index.js'
-import { installRequest, modInstalled, modSummary } from '@/minecraft-rust/mods.js'
+import { installRequest, listedMods, modInstalled, modSummary } from '@/minecraft-rust/mods.js'
 const props = defineProps({
   profile: { type: String, default: '' },
   busy: Boolean,
@@ -53,7 +53,7 @@ const groups = computed(() => [
   { title: t('Моды U3', 'U3 mods'), entries: catalog.value?.own ?? [] },
   {
     title: t('Моды других авторов', 'Community mods'),
-    entries: (catalog.value?.community ?? []).filter((e) =>
+    entries: listedMods(catalog.value?.community).filter((e) =>
       `${e.name} ${(e.authors ?? []).join(' ')}`.toLowerCase().includes(search.value.toLowerCase()),
     ),
   },
@@ -200,9 +200,6 @@ async function source(entry) {
                 }}
               </p>
             </details>
-            <p v-if="!entry.available" class="mods-note">
-              {{ t('Эта версия пока не поддерживается.', 'This version is not supported yet.') }}
-            </p>
             <div class="mod-actions">
               <button
                 class="btn btn-primary"

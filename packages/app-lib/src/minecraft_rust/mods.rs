@@ -80,6 +80,75 @@ fn embedded() -> Result<Vec<u8>> {
     }
     Ok(z.finish().map_err(|e| e.to_string())?.into_inner())
 }
+/// The embedded U3 Fixes bundle's archive entries (`horizon-native.json`, then its mixin sources).
+/// Their exact bytes decide the native build's version (`engine::fixes_version`), so they are kept
+/// LF on every platform (.gitattributes) and CI's prebuilt engine is made from these same entries.
+pub(super) const FIXES: &[(&str, &str)] = &[
+    (
+        "horizon-native.json",
+        include_str!("u3_fixes/horizon-native.json"),
+    ),
+    (
+        "mixins/u3_fixes/horizon-mixin.toml",
+        include_str!("u3_fixes/horizon-mixin.toml"),
+    ),
+    (
+        "mixins/u3_fixes/runtime.rs",
+        include_str!("u3_fixes/runtime.rs"),
+    ),
+    (
+        "mixins/u3_fixes/motion.rs",
+        include_str!("u3_fixes/motion.rs"),
+    ),
+    ("mixins/u3_fixes/tick.rs", include_str!("u3_fixes/tick.rs")),
+    ("mixins/u3_fixes/list.rs", include_str!("u3_fixes/list.rs")),
+    (
+        "mixins/u3_fixes/instrument_registry.rs",
+        include_str!("u3_fixes/instrument_registry.rs"),
+    ),
+    ("mixins/u3_fixes/horn.rs", include_str!("u3_fixes/horn.rs")),
+    (
+        "mixins/u3_fixes/horn_use.rs",
+        include_str!("u3_fixes/horn_use.rs"),
+    ),
+    (
+        "mixins/u3_fixes/horn_remote.rs",
+        include_str!("u3_fixes/horn_remote.rs"),
+    ),
+    (
+        "mixins/u3_fixes/horn_tick.rs",
+        include_str!("u3_fixes/horn_tick.rs"),
+    ),
+    (
+        "mixins/u3_fixes/tnt_runtime.rs",
+        include_str!("u3_fixes/tnt_runtime.rs"),
+    ),
+    (
+        "mixins/u3_fixes/tnt_tick.rs",
+        include_str!("u3_fixes/tnt_tick.rs"),
+    ),
+    (
+        "mixins/u3_fixes/gameplay.rs",
+        include_str!("u3_fixes/gameplay.rs"),
+    ),
+    (
+        "mixins/u3_fixes/input.rs",
+        include_str!("u3_fixes/input.rs"),
+    ),
+    (
+        "mixins/u3_fixes/boat_menu.rs",
+        include_str!("u3_fixes/boat_menu.rs"),
+    ),
+    (
+        "mixins/u3_fixes/boat_detect.rs",
+        include_str!("u3_fixes/boat_detect.rs"),
+    ),
+    (
+        "mixins/u3_fixes/sleep.rs",
+        include_str!("u3_fixes/sleep.rs"),
+    ),
+];
+pub(super) const FIXES_VERSION: &str = "0.3.0";
 fn own_bundle(project: &str) -> Result<Vec<u8>> {
     if project == "u3_edit" {
         return embedded();
@@ -92,72 +161,8 @@ fn own_bundle(project: &str) -> Result<Vec<u8>> {
         .compression_method(zip::CompressionMethod::Stored)
         .last_modified_time(zip::DateTime::default())
         .unix_permissions(0o644);
-    for (name, content) in [
-        (
-            "horizon-native.json",
-            include_str!("u3_fixes/horizon-native.json"),
-        ),
-        (
-            "mixins/u3_fixes/horizon-mixin.toml",
-            include_str!("u3_fixes/horizon-mixin.toml"),
-        ),
-        (
-            "mixins/u3_fixes/runtime.rs",
-            include_str!("u3_fixes/runtime.rs"),
-        ),
-        (
-            "mixins/u3_fixes/motion.rs",
-            include_str!("u3_fixes/motion.rs"),
-        ),
-        ("mixins/u3_fixes/tick.rs", include_str!("u3_fixes/tick.rs")),
-        ("mixins/u3_fixes/list.rs", include_str!("u3_fixes/list.rs")),
-        (
-            "mixins/u3_fixes/instrument_registry.rs",
-            include_str!("u3_fixes/instrument_registry.rs"),
-        ),
-        ("mixins/u3_fixes/horn.rs", include_str!("u3_fixes/horn.rs")),
-        (
-            "mixins/u3_fixes/horn_use.rs",
-            include_str!("u3_fixes/horn_use.rs"),
-        ),
-        (
-            "mixins/u3_fixes/horn_remote.rs",
-            include_str!("u3_fixes/horn_remote.rs"),
-        ),
-        (
-            "mixins/u3_fixes/horn_tick.rs",
-            include_str!("u3_fixes/horn_tick.rs"),
-        ),
-        (
-            "mixins/u3_fixes/tnt_runtime.rs",
-            include_str!("u3_fixes/tnt_runtime.rs"),
-        ),
-        (
-            "mixins/u3_fixes/tnt_tick.rs",
-            include_str!("u3_fixes/tnt_tick.rs"),
-        ),
-        (
-            "mixins/u3_fixes/gameplay.rs",
-            include_str!("u3_fixes/gameplay.rs"),
-        ),
-        (
-            "mixins/u3_fixes/input.rs",
-            include_str!("u3_fixes/input.rs"),
-        ),
-        (
-            "mixins/u3_fixes/boat_menu.rs",
-            include_str!("u3_fixes/boat_menu.rs"),
-        ),
-        (
-            "mixins/u3_fixes/boat_detect.rs",
-            include_str!("u3_fixes/boat_detect.rs"),
-        ),
-        (
-            "mixins/u3_fixes/sleep.rs",
-            include_str!("u3_fixes/sleep.rs"),
-        ),
-    ] {
-        z.start_file(name, opt).map_err(|e| e.to_string())?;
+    for (name, content) in FIXES {
+        z.start_file(*name, opt).map_err(|e| e.to_string())?;
         z.write_all(content.as_bytes()).map_err(|e| e.to_string())?;
     }
     Ok(z.finish().map_err(|e| e.to_string())?.into_inner())
@@ -272,8 +277,10 @@ fn entries(index: &Value) -> Vec<Value> {
         let api = v["api"].as_str().unwrap_or("");
         let native = p["kind"] == "native-mod" && api.starts_with("native-") && api.ends_with(MIXINS);
         let no_deps = v["dependencies"].as_array().map_or(v["dependencies"].is_null(), |a| a.is_empty());
-        let available = native && no_deps && v["game"] == "26.3" && !revoked(index, project, checksum);
-        Some(json!({"id":project,"name":p["name"],"authors":p["authors"],"summary":p["summary"],"source":p["source"],"version":v["version"],"checksum":checksum,"available":available,"native":native,"reason":if available { "" } else { "Эта версия пока не поддерживается" }}))
+        // Only mods this Horizon build loads are listed: other native APIs, WASM mods,
+        // dependencies and revoked files are left out, not shown as unsupported.
+        if !(native && no_deps && v["game"] == "26.3" && !revoked(index, project, checksum)) { return None; }
+        Some(json!({"id":project,"name":p["name"],"authors":p["authors"],"summary":p["summary"],"source":p["source"],"version":v["version"],"checksum":checksum,"available":true,"native":true}))
     }).collect()
 }
 pub(super) fn profile_home(
@@ -462,7 +469,7 @@ async fn make_catalog(
     };
     let bytes = embedded()?;
     let own = json!({"id":"u3_edit","name":"U3 Edit","authors":["U3"],"source":"https://github.com/register1sss/modrinth-offline/tree/main/packages/app-lib/src/minecraft_rust/u3_edit","summary":"Выделение, заливка, замена блоков и стены. До 32768 блоков. Без отмены изменений.","version":"0.1.0","checksum":digest(&bytes),"available":true,"native":true});
-    let mut fixes = json!({"id":"u3_fixes","name":"U3 Fixes","authors":["U3"],"source":"https://github.com/register1sss/modrinth-offline/tree/main/packages/app-lib/src/minecraft_rust/u3_fixes","summary":"Исправление багов в майнкрафт на Rust","version":"0.3.0","checksum":digest(&own_bundle("u3_fixes")?),"available":true,"native":true,"automatic":true});
+    let mut fixes = json!({"id":"u3_fixes","name":"U3 Fixes","authors":["U3"],"source":"https://github.com/register1sss/modrinth-offline/tree/main/packages/app-lib/src/minecraft_rust/u3_fixes","summary":"Исправление багов в майнкрафт на Rust","version":FIXES_VERSION,"checksum":digest(&own_bundle("u3_fixes")?),"available":true,"native":true,"automatic":true});
     let selected = if profile.is_empty() {
         "horizon"
     } else {
@@ -664,6 +671,27 @@ async fn install_checked(
     }
     let inputs = enabled_inputs(&home, &after)?;
     let settings = settings_hash(&home)?;
+    if only_embedded_fixes(&after, &inputs)? {
+        change(|s| {
+            s.stage = "install_engine".into();
+            s.total = 0;
+        });
+        match engine::prepare(root, &base).await {
+            Ok(Some(version)) => log_line(
+                &format!(
+                    "U3 Fixes engine {version} is prebuilt: no local compile"
+                ),
+                false,
+            ),
+            Ok(None) => {}
+            Err(e) => log_line(
+                &format!(
+                    "Prebuilt U3 Fixes engine not used ({e}); building locally"
+                ),
+                false,
+            ),
+        }
+    }
     change(|s| {
         s.stage = "build_native".into();
         s.total = 0;
@@ -750,6 +778,18 @@ async fn install_checked(
     change(|s| s.result_profile = Some(target_id));
     Ok(())
 }
+/// Whether the build about to run is exactly the embedded U3 Fixes: its file the only native mod
+/// and the only one on, so Horizon names the build `engine::fixes_version()`.
+fn only_embedded_fixes(
+    files: &BTreeMap<String, String>,
+    enabled: &BTreeMap<String, String>,
+) -> Result<bool> {
+    let checksum = digest(&own_bundle("u3_fixes")?);
+    Ok(files.len() == 1
+        && files.get("u3_fixes.hnmod") == Some(&checksum)
+        && enabled.len() == 1
+        && enabled.get("u3_fixes").map(String::as_str) == Some(FIXES_VERSION))
+}
 fn automatic_installed(
     root: &Path,
     instances: &Value,
@@ -765,7 +805,7 @@ fn automatic_installed(
     files.get("u3_fixes.hnmod").map(String::as_str) == Some(checksum)
         && check_build(root, instances, profile).is_ok()
         && enabled_inputs(&home, &files).ok().is_some_and(|m| {
-            m.get("u3_fixes").map(String::as_str) == Some("0.3.0")
+            m.get("u3_fixes").map(String::as_str) == Some(FIXES_VERSION)
         })
 }
 fn build_result_profile(target: &str, automatic: bool) -> &str {
@@ -810,7 +850,7 @@ pub(super) async fn ensure_fixes(root: &Path, profile: &str) -> Result<()> {
     let ready =
         !files.is_empty() && check_build(root, &instances, profile).is_ok();
     let enabled = enabled_inputs(&home, &files).ok().is_some_and(|m| {
-        m.get("u3_fixes").map(String::as_str) == Some("0.3.0")
+        m.get("u3_fixes").map(String::as_str) == Some(FIXES_VERSION)
     });
     let exact_embedded = files.get("u3_fixes.hnmod") == Some(&checksum);
     let own_receipt = exact_embedded
@@ -991,6 +1031,25 @@ mod tests {
         ));
     }
     #[test]
+    fn only_the_exact_embedded_fixes_use_the_prebuilt_engine() {
+        let checksum = digest(&own_bundle("u3_fixes").unwrap());
+        let files = BTreeMap::from([("u3_fixes.hnmod".to_owned(), checksum)]);
+        let on =
+            BTreeMap::from([("u3_fixes".to_owned(), FIXES_VERSION.to_owned())]);
+        assert!(only_embedded_fixes(&files, &on).unwrap());
+        let mut more = files.clone();
+        more.insert("u3_edit.hnmod".into(), "b".repeat(64));
+        assert!(!only_embedded_fixes(&more, &on).unwrap());
+        let changed =
+            BTreeMap::from([("u3_fixes.hnmod".to_owned(), "c".repeat(64))]);
+        assert!(!only_embedded_fixes(&changed, &on).unwrap());
+        let mut both = on.clone();
+        both.insert("u3_edit".into(), "0.1.0".into());
+        assert!(!only_embedded_fixes(&files, &both).unwrap());
+        let old = BTreeMap::from([("u3_fixes".to_owned(), "0.2.0".to_owned())]);
+        assert!(!only_embedded_fixes(&files, &old).unwrap());
+    }
+    #[test]
     fn embedded_bundle_is_deterministic_source_only() {
         let bytes = embedded().unwrap();
         assert_eq!(bytes, embedded().unwrap());
@@ -1153,14 +1212,20 @@ mod tests {
         assert!(id("u3_edit"));
     }
     #[test]
-    fn wasm_and_revoked_entries_cannot_install() {
+    fn wasm_other_api_and_revoked_entries_are_not_listed() {
         let mut idx = json!({"projects":[{"id":"zoom","kind":"mod","name":"Zoom","versions":[{"api":"0.1","game":"26.3","file":{"sha256":"a".repeat(64)}}]}],"revoked":[]});
-        assert_eq!(entries(&idx)[0]["available"], false);
+        assert!(entries(&idx).is_empty());
         idx["projects"][0]["kind"] = json!("native-mod");
+        idx["projects"][0]["versions"][0]["api"] =
+            json!("native-1/revision/3f99a5c60d0000000000000000000000000000");
+        assert!(entries(&idx).is_empty());
         idx["projects"][0]["versions"][0]["api"] =
             json!(format!("native-1/revision/{MIXINS}"));
         assert_eq!(entries(&idx)[0]["available"], true);
+        idx["projects"][0]["versions"][0]["dependencies"] = json!(["fabric"]);
+        assert!(entries(&idx).is_empty());
+        idx["projects"][0]["versions"][0]["dependencies"] = json!([]);
         idx["revoked"] = json!([{"id":"zoom","sha256":"a".repeat(64)}]);
-        assert_eq!(entries(&idx)[0]["available"], false);
+        assert!(entries(&idx).is_empty());
     }
 }

@@ -43,6 +43,7 @@ mockIPC(async (cmd, args) => {
       runtime: false,
       prepared: false,
       offline_ready: false,
+      prebuilt_engine: true,
       release: 'launcher@0.2.28',
       running: false,
       stage: 'idle',
@@ -73,14 +74,14 @@ mockIPC(async (cmd, args) => {
                 gui: true,
                 project: 'abcd1234',
               },
-              { id: 'old', name: 'Old incompatible pack', available: false },
-              { id: 'local', name: 'Local pack', local: true, available: true, optifine: true },
+              { id: 'optifine', name: 'OptiFine pack', available: true, optifine: true },
             ]
       return {
         entries: all.filter((p) => p.name.toLowerCase().includes(args.search.toLowerCase())),
         total: 45,
         limit: 20,
         offset: args.offset,
+        hidden: args.tab === 'modrinth' ? 3 : 0,
         installed: window.__rustPackInstalled
           ? [
               {
@@ -140,16 +141,6 @@ mockIPC(async (cmd, args) => {
             summary: 'Coordinates and direction on your screen.',
             available: true,
             native: true,
-          },
-          {
-            id: 'blockscope',
-            name: 'Blockscope',
-            authors: ['Domanffe'],
-            version: '0.2.0',
-            checksum: 'd'.repeat(64),
-            summary: 'The block under your crosshair.',
-            available: false,
-            native: false,
           },
         ],
         trust_token: 'e'.repeat(64),

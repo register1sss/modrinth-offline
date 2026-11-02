@@ -9,6 +9,10 @@ export function installRequest(entry, catalog, profile, consent) {
     trust_native_code: true,
   }
 }
+// Only mods that can be installed are listed; the catalog already leaves the others out.
+export function listedMods(entries) {
+  return (entries ?? []).filter((entry) => entry?.available === true)
+}
 export function modInstalled(entry, catalog) {
   if (entry?.automatic) return entry.installed === true
   return catalog?.ready && catalog.files?.[`${entry.id}.hnmod`] === entry.checksum

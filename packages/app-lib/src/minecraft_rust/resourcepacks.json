@@ -74,36 +74,6 @@
     "gui": false
   },
   {
-    "id": "d310100ca1c681a120f5",
-    "category": "default",
-    "name": "Default-Dark-Mode-1.21.11-2026.4.0",
-    "sha256": "d310100ca1c681a120f58bf458e25b135d1f93a3f5f6ab58fcdd6b3b69006ed5",
-    "size": 753448,
-    "url": "https://cdn.modrinth.com/data/6SLU7tS5/versions/sPDc9hXF/Default-Dark-Mode-1.21.11-2026.4.0.zip",
-    "project": "6SLU7tS5",
-    "version": "2026.4.0-1.21.11",
-    "meta": {
-      "pack": {
-        "pack_format": 63,
-        "supported_formats": {
-          "min_inclusive": 63,
-          "max_inclusive": 75
-        },
-        "min_format": [
-          63,
-          0
-        ],
-        "max_format": [
-          75,
-          0
-        ],
-        "description": "Welcome to the dark side!\n§8by nebulr • 1.21.11 • 2026.4.0"
-      }
-    },
-    "optifine": true,
-    "gui": true
-  },
-  {
     "id": "cbeeccd774f910ed270d",
     "category": "default",
     "name": "Better-Leaves-9.6",
@@ -122,55 +92,6 @@
         "min_format": 15,
         "max_format": 255,
         "description": "§2Version 9.6 §aVanilla Edition\n§e©Motschen 2026 | MIT Licence"
-      }
-    },
-    "optifine": false,
-    "gui": false
-  },
-  {
-    "id": "066c771efeee2bccd3c1",
-    "category": "default",
-    "name": "Amazing Mace 3D",
-    "sha256": "066c771efeee2bccd3c17c6b6f76cec1bc1b3c2f1d2b6e343bea14b496784532",
-    "size": 109082,
-    "url": "https://cdn.modrinth.com/data/8fds9qyj/versions/lrIYRbFr/Amazing%20Mace%203D.zip",
-    "project": "8fds9qyj",
-    "version": "2.0",
-    "meta": {
-      "pack": {
-        "pack_format": 84.0,
-        "supported_formats": [
-          1.0,
-          999.0
-        ],
-        "min_format": 1.0,
-        "max_format": 999.0,
-        "description": [
-          {
-            "text": "Amazing ",
-            "color": "aqua",
-            "bold": true
-          },
-          {
-            "text": "Mace ",
-            "color": "gold",
-            "bold": true
-          },
-          {
-            "text": "3D\n",
-            "color": "green",
-            "bold": true
-          },
-          {
-            "text": "Created by ",
-            "color": "white"
-          },
-          {
-            "text": "SpunkyInsaan",
-            "color": "yellow",
-            "bold": true
-          }
-        ]
       }
     },
     "optifine": false,
@@ -359,53 +280,6 @@
     "gui": false
   },
   {
-    "id": "e2f254c578d719688fe8",
-    "category": "default",
-    "name": "No-Fog-26.1-26.2",
-    "sha256": "e2f254c578d719688fe83bd718502658055809df6926c901f6b0cfade7504de0",
-    "size": 11753,
-    "url": "https://cdn.modrinth.com/data/nEIVEFEF/versions/26zDltl6/No-Fog-26.1-26.2.zip",
-    "project": "nEIVEFEF",
-    "version": "26.2",
-    "meta": {
-      "pack": {
-        "pack_format": 88,
-        "min_format": 84,
-        "max_format": 88,
-        "description": "No Fog for Minecraft 26.1-26.2"
-      }
-    },
-    "optifine": false,
-    "gui": false
-  },
-  {
-    "id": "4ee4d1928f44d7d3cc8a",
-    "category": "default",
-    "name": "Rethoughted Elytra",
-    "sha256": "4ee4d1928f44d7d3cc8a5c7d0feaa2d4005d22fe75d17d874bed9b1679548910",
-    "size": 7479,
-    "url": "https://cdn.modrinth.com/data/PrcvOIgx/versions/QEq8YXBa/Rethoughted%20Elytra.zip",
-    "project": "PrcvOIgx",
-    "version": "1.1",
-    "meta": {
-      "pack": {
-        "min_format": 69,
-        "max_format": 75,
-        "description": [
-          {
-            "text": "§6v§a1.1"
-          },
-          "\n",
-          {
-            "text": "§6By §aCatFromNet §f"
-          }
-        ]
-      }
-    },
-    "optifine": false,
-    "gui": true
-  },
-  {
     "id": "26c23daae1ec0c4e71fd",
     "category": "default",
     "name": "Simple Grass Flowers v2.0.0",
@@ -437,25 +311,6 @@
     },
     "optifine": true,
     "gui": false
-  },
-  {
-    "id": "da1f0516a9c188da75a5",
-    "category": "default",
-    "name": "[1.6] Enhanced Boss Bars",
-    "sha256": "da1f0516a9c188da75a5acd94ff48f5c69eb718cdd445e34f664e5572043e8af",
-    "size": 123265,
-    "url": "https://cdn.modrinth.com/data/U5SedJ9S/versions/ShyA8a0U/%5B1.6%5D%20Enhanced%20Boss%20Bars.zip",
-    "project": "U5SedJ9S",
-    "version": "1.6",
-    "meta": {
-      "pack": {
-        "description": "§8Better Bars for 26.1-26.3. \n§6By: Naku",
-        "min_format": 84,
-        "max_format": 97.1
-      }
-    },
-    "optifine": false,
-    "gui": true
   },
   {
     "id": "5afa2f2647b22e52205c",
@@ -949,28 +804,6 @@
     "gui": false
   },
   {
-    "id": "623ef37ea6821f3d02e6",
-    "category": "default",
-    "name": "NewGlowingOres-[Border]",
-    "sha256": "623ef37ea6821f3d02e68631fcca20ac18fe95647af580a279604a9314203f0b",
-    "size": 344937,
-    "url": "https://cdn.modrinth.com/data/oL18adaQ/versions/BG46xXmQ/NewGlowingOres-%C2%A76%5BBorder%5D%C2%A7r.zip",
-    "project": "oL18adaQ",
-    "version": "2.0-1.21-border",
-    "meta": {
-      "pack": {
-        "pack_format": 34,
-        "supported_formats": {
-          "min_inclusive": 8,
-          "max_inclusive": 69
-        },
-        "description": "§6v2.0-1.21+ §r| by GridExpert"
-      }
-    },
-    "optifine": true,
-    "gui": false
-  },
-  {
     "id": "94d0bd8ed5e2f18c5285",
     "category": "default",
     "name": "Os' Colorful Grasses (Tall)",
@@ -1189,49 +1022,6 @@
     "gui": false
   },
   {
-    "id": "83f73f1f018cffe553c5",
-    "category": "default",
-    "name": "animated-items 1.21.x-26.3 - v1.6.3",
-    "sha256": "83f73f1f018cffe553c5f0fe7e785c7f00df84ea32dbeba37c873a9939fd91ed",
-    "size": 1783851,
-    "url": "https://cdn.modrinth.com/data/uBBepXuH/versions/OwMX7WV9/animated-items%201.21.x-26.3%20-%20v1.6.3.zip",
-    "project": "uBBepXuH",
-    "version": "1.6.3",
-    "meta": {
-      "pack": {
-        "pack_format": 97.1,
-        "min_format": 34,
-        "max_format": 97.1,
-        "supported_formats": {
-          "min_inclusive": 34,
-          "max_inclusive": 97.1
-        },
-        "description": "§b- Animated Items -§r\n§7v1.6.3§r • by Palette"
-      }
-    },
-    "optifine": true,
-    "gui": false
-  },
-  {
-    "id": "dd1e277cf4f3051535ca",
-    "category": "default",
-    "name": "Better Lanterns v1.3.2 - 26.1",
-    "sha256": "dd1e277cf4f3051535cacce39f8ebd3409fe149105e34b9a563b25588d0793aa",
-    "size": 72588,
-    "url": "https://cdn.modrinth.com/data/PGGrfcvL/versions/wfM00H4G/Better%20Lanterns%20v1.3.2%20-%2026.1.zip",
-    "project": "PGGrfcvL",
-    "version": "1.3.2-mc26.1",
-    "meta": {
-      "pack": {
-        "min_format": 84,
-        "max_format": 84,
-        "description": "§73D Lanterns & Chains\n§7By §3Nico4play §7| §926.1    §7v1.3.2"
-      }
-    },
-    "optifine": false,
-    "gui": false
-  },
-  {
     "id": "d67740dffd0f9d332f57",
     "category": "default",
     "name": "Blue Netherite[1.2.1]",
@@ -1254,79 +1044,6 @@
       "credits": {
         "ThatCuteOne": "I made the pack",
         "Ewan Howell": "Got emissve textures template from"
-      }
-    },
-    "optifine": false,
-    "gui": false
-  },
-  {
-    "id": "d63df002bd227c00ee11",
-    "category": "default",
-    "name": "crops-3d(2)",
-    "sha256": "d63df002bd227c00ee11b8b5f64b751b152b3e0f883a135c2496564703bf67c5",
-    "size": 483678,
-    "url": "https://cdn.modrinth.com/data/PgpTtNoI/versions/iKYRZwnm/crops-3d%282%29.zip",
-    "project": "PgpTtNoI",
-    "version": "3",
-    "meta": {
-      "pack": {
-        "pack_format": 55,
-        "description": "Grow your bossoms"
-      }
-    },
-    "optifine": false,
-    "gui": false
-  },
-  {
-    "id": "76deb1da9dba48e4d397",
-    "category": "default",
-    "name": "Dark Smooth GUI 26.1.x blue-3D94FF-5EA6FF-0049A3-00316E",
-    "sha256": "76deb1da9dba48e4d397da43ee843053050318321d59124c3e330a5c5afa50c9",
-    "size": 2148310,
-    "url": "https://cdn.modrinth.com/data/3BPM3cU5/versions/x4qfUjqP/Dark%20Smooth%20GUI%2026.1.x%20blue-3D94FF-5EA6FF-0049A3-00316E.zip",
-    "project": "3BPM3cU5",
-    "version": "0.14.1+26.1.x-blue",
-    "meta": {
-      "pack": {
-        "description": [
-          {
-            "color": "gold",
-            "text": "Dark Smooth GUI"
-          },
-          {
-            "color": "dark_red",
-            "text": " [by Aeldit]"
-          },
-          {
-            "color": "dark_aqua",
-            "text": "\nv0.14.1+26.1.x"
-          }
-        ],
-        "max_format": 84,
-        "min_format": 84,
-        "pack_format": 84
-      }
-    },
-    "optifine": true,
-    "gui": true
-  },
-  {
-    "id": "d8fc06b80bf8000cda06",
-    "category": "default",
-    "name": "Dimanic Beds v2",
-    "sha256": "d8fc06b80bf8000cda065330d40fc9f1a3a29b4f90d0aa47a175f5d6ec001626",
-    "size": 71254,
-    "url": "https://cdn.modrinth.com/data/HtIrK6OV/versions/A1jRGYHY/Dimanic%20Beds%20v2.zip",
-    "project": "HtIrK6OV",
-    "version": "v2",
-    "meta": {
-      "pack": {
-        "pack_format": 34,
-        "supported_formats": {
-          "min_inclusive": 34,
-          "max_inclusive": 70
-        },
-        "description": "idk, just beds and flowuh"
       }
     },
     "optifine": false,
@@ -1585,25 +1302,6 @@
       }
     },
     "optifine": false,
-    "gui": false
-  },
-  {
-    "id": "3f82eeab406a48fe18dd",
-    "category": "default",
-    "name": "Glowing Ores - Borderful Edition (8.0.1v) (1)",
-    "sha256": "3f82eeab406a48fe18ddb61fb6961ead83eb93f38b15762aacecd18812e5a664",
-    "size": 3939253,
-    "url": "https://cdn.modrinth.com/data/26bFJKVz/versions/3SYXdd58/Glowing%20Ores%20-%20Borderful%20Edition%20%288.0.1v%29.zip",
-    "project": "26bFJKVz",
-    "version": "8.0.1",
-    "meta": {
-      "pack": {
-        "description": "§bEnhancedVisuals §9Glowing Ores! Borderful Edition §78.0.1v",
-        "min_format": 65,
-        "max_format": 88
-      }
-    },
-    "optifine": true,
     "gui": false
   },
   {
@@ -1876,44 +1574,6 @@
     "gui": true
   },
   {
-    "id": "aff7570317795ebec0ff",
-    "category": "pvp",
-    "name": "PigPack",
-    "sha256": "aff7570317795ebec0ff4a76140326570b2201d2bf6a85f98f5243602029429c",
-    "size": 32732076,
-    "url": null,
-    "project": null,
-    "version": "",
-    "meta": {
-      "pack": {
-        "description": "§4Pigs got aura",
-        "pack_format": 75,
-        "min_format": 75,
-        "max_format": 86
-      }
-    },
-    "optifine": true,
-    "gui": true
-  },
-  {
-    "id": "9b02bf0dfdc129091a5f",
-    "category": "pvp",
-    "name": "small_totem_pop",
-    "sha256": "9b02bf0dfdc129091a5f63407761bcf841aad71adaf4ae0f5d219f7a83ef991e",
-    "size": 87351,
-    "url": "https://cdn.modrinth.com/data/YSKIEHWP/versions/AUGbouxz/small_totem_pop.zip",
-    "project": "YSKIEHWP",
-    "version": "1.0.0",
-    "meta": {
-      "pack": {
-        "description": "Makes the totem animation smaller, so you can see better!",
-        "pack_format": 7
-      }
-    },
-    "optifine": false,
-    "gui": false
-  },
-  {
     "id": "a6a02ded5a6e349f0e28",
     "category": "pvp",
     "name": "Transparent Shield - Mini",
@@ -1942,25 +1602,6 @@
     },
     "optifine": false,
     "gui": false
-  },
-  {
-    "id": "a136d9101a4748558587",
-    "category": "pvp",
-    "name": "Faithful 64x - December 2025 Release",
-    "sha256": "a136d9101a4748558587980dace3cd7447b758fb72c4684d15fb805d0a812dac",
-    "size": 16053919,
-    "url": "https://cdn.modrinth.com/data/r4GILswZ/versions/vyty9ijM/Faithful%2064x%20-%20December%202025%20Release.zip",
-    "project": "r4GILswZ",
-    "version": "Release-12",
-    "meta": {
-      "pack": {
-        "description": "The go-to 64x texture pack for Minecraft. By HARYA_ and many others.",
-        "min_format": 68,
-        "max_format": 75
-      }
-    },
-    "optifine": true,
-    "gui": true
   },
   {
     "id": "25fc89fedc6d47fe2480",
@@ -2232,93 +1873,6 @@
     },
     "optifine": true,
     "gui": true
-  },
-  {
-    "id": "681a3fe9996d4ac2f60b",
-    "category": "pvp",
-    "name": "Crystal Vanilla Tweaks 26.3 1.3",
-    "sha256": "681a3fe9996d4ac2f60b7eb6e25a040af4403c3a9ad925015991160cbc89415b",
-    "size": 990438,
-    "url": "https://cdn.modrinth.com/data/sn2HxtR3/versions/8QBpHAxy/Crystal%20Vanilla%20Tweaks%2026.3%201.3.zip",
-    "project": "sn2HxtR3",
-    "version": "1.3",
-    "meta": {
-      "pack": {
-        "min_format": 97.1,
-        "max_format": 97.1,
-        "description": "Crystal Vanilla Tweaks"
-      }
-    },
-    "optifine": true,
-    "gui": true
-  },
-  {
-    "id": "b012296bf1d3ead895a6",
-    "category": "pvp",
-    "name": "Dripped 26.3",
-    "sha256": "b012296bf1d3ead895a6b39cbbf290ab3f246893e68e24b24af7f48dc756cc32",
-    "size": 380880,
-    "url": "https://cdn.modrinth.com/data/r1IbSpu7/versions/ItSxlPK0/Dripped%2026.3.zip",
-    "project": "r1IbSpu7",
-    "version": "26.3",
-    "meta": {
-      "pack": {
-        "min_format": 97.1,
-        "max_format": 97.1,
-        "description": "Get Dripped out for PVP"
-      }
-    },
-    "optifine": false,
-    "gui": true
-  },
-  {
-    "id": "44e0cafe274bc7d76eb4",
-    "category": "pvp",
-    "name": "PvP Utils 1.2.2",
-    "sha256": "44e0cafe274bc7d76eb4a7b7002e507d122c374bea4d7c7baa96fc6e56236e53",
-    "size": 415032,
-    "url": "https://cdn.modrinth.com/data/U95n28SF/versions/AjntKsW7/PvP%20Utils%201.2.2.zip",
-    "project": "U95n28SF",
-    "version": "1.2.2",
-    "meta": {
-      "pack": {
-        "description": {
-          "text": "§3🔥 §7Adds many QoL Changes"
-        },
-        "pack_format": 48,
-        "supported_formats": {
-          "max_inclusive": 74,
-          "min_inclusive": 48
-        }
-      }
-    },
-    "optifine": false,
-    "gui": true
-  },
-  {
-    "id": "a67f152722ba3c916e7e",
-    "category": "pvp",
-    "name": "shorterswords",
-    "sha256": "a67f152722ba3c916e7e97d87c368ab0252ff03009f96f234ef34e78646394d0",
-    "size": 5236,
-    "url": "https://cdn.modrinth.com/data/BpaObV8j/versions/TSnvYpcx/shorterswords.zip",
-    "project": "BpaObV8j",
-    "version": "1.0.5",
-    "meta": {
-      "pack": {
-        "description": "§e§k-§r §5§lPvP §d§lSwords §r§e§k-§r",
-        "min_format": [
-          69,
-          0
-        ],
-        "max_format": [
-          88,
-          0
-        ]
-      }
-    },
-    "optifine": false,
-    "gui": false
   },
   {
     "id": "1d441b5ffd95eb900a77",
